@@ -2,7 +2,7 @@
 
 Handover note so a new conversation can pick up without re-reading everything.
 For the schedule and the step by step plan, see `BLUEPRINT.md`.
-Last updated: 20 August 2026, end of day one.
+Last updated: 20 August 2026. Weeks 1 and 2 both complete on day one.
 
 ---
 
@@ -43,6 +43,12 @@ The idea: daily pollution data for one Indian city, most likely Delhi. Predict c
 | `software_setup_guide_aqi_forecast.md` | Data sources, packages, working order for this project |
 | `data/delhi_clean.csv` | THE dataset. 3,093 usable days, 2016-11-09 to 2026-08-27. Built from `data/delhi.csv` by step 1b. |
 | `data/delhi.csv` | Raw download, kept so the cleaning can be rerun with different thresholds. |
+| `step05_rolling.py` | The rolling origin harness. Every model plugs into one loop; the loop carries the leakage test. |
+| `forecasts_rolling.csv` | 2,303 origins over 6.8 years, 6 models by 3 horizons. **These are the reportable numbers.** |
+| `evaluation.py` | Shared scoring. Steps 3 onward import it so every model is scored by identical code. |
+| `step03_benchmarks.py` | Naive, carried-forward naive, seasonal naive and climatology. |
+| `step04_arima.py` | ARIMA with Fourier exog on log concentration, plus a no-Fourier ablation. |
+| `forecasts_classical.csv` | Long forecast table, 7 models by 3 horizons on the test block. |
 | `step01b_clean.py` | Working script: reports impossible values with context, applies coverage and plausibility rules only when told. |
 | `step00_fetch_openaq.py` | Working script: finds Delhi stations, downloads the daily PM2.5 series from OpenAQ v3, S3 archive fallback. Parsing tested against fixtures and a stubbed API. Not yet run against the live API. |
 | `step01_data_check.py` | Working script: data viability check, ADF test, periodogram, plots. Tested. |
@@ -182,10 +188,129 @@ in-sample criterion.
 balance 29.7 percent at h=1, 2 and 3. Suggested chronological split: train to
 2023-11-17, validation to 2025-04-05, test from 2025-04-06.
 
+### Week 2, complete
+
+**The split had to be changed before any result was trustworthy.** The first
+attempt used the last 15 percent as test, which happened to cover one winter and
+two low seasons: exceedance rate 17.8 percent against 30.8 in training, and half
+the volatility. Every model scored beautifully for reasons unrelated to the
+models. The test block is now the last 20 percent, spanning two winters, at 25.1
+against 33.6 percent. `step03_benchmarks.py` prints the character of all three
+blocks on every run so this cannot hide again.
+
+**rMAE was added alongside MASE.** MASE divides by the training period's
+volatility, so on a calmer test period every model's MASE falls including the
+naive forecast's, which reads as though persistence beats persistence. rMAE
+divides by the naive forecast's error on identical rows, so naive is exactly
+1.000 and everything else is directly interpretable. Read rMAE first.
+
+**Results on the test block, 2024-09-11 to 2026-08-27.** rMAE, lower is better.
+
+| Model | h=1 | h=2 | h=3 |
+|---|---|---|---|
+| ARIMA(1,1,1) + Fourier, median | **0.903** | **0.850** | **0.798** |
+| ARIMA(1,1,1) + Fourier, mean | 0.921 | 0.856 | 0.817 |
+| ARIMA(1,1,1), no Fourier | 0.948 | 0.916 | 0.901 |
+| naive and naive carried forward | 1.000 | 1.000 | 1.000 |
+| climatology | 1.394 | 1.075 | 0.956 |
+| seasonal naive, lag 7 | 1.711 | 1.325 | 1.187 |
+
+Four things in that table are worth reporting rather than just recording.
+
+1. ARIMA beats persistence at every horizon and its margin grows with horizon,
+   from 10 percent at one day to 20 percent at three. Persistence degrades faster
+   than the model does.
+2. **The Fourier terms earn their place, and increasingly so with horizon:** 4.5
+   points of rMAE at h=1, 6.6 at h=2, 10 at h=3. Recent information decays and
+   seasonal information does not, which is exactly the expected mechanism. Keep
+   the ablation in the report; it turns a design choice into evidence.
+3. **The back-transform behaves as theory says.** The median variant wins on MAE
+   at every horizon and the mean variant wins on RMSE at every horizon. That is
+   not a contradiction, it is the definition of the two quantities, and it is a
+   cheap demonstration that the log scale was handled deliberately.
+4. Seasonal naive is the worst benchmark everywhere, rMAE 1.19 to 1.71. A
+   benchmark that assumes a weekly cycle loses to one that assumes nothing.
+   Quantitative support for the finding above.
+
+**A tension to raise with Dr Tian.** The order search chose d = 1 by a clear AIC
+margin, 1892.5 against 1912.1 for the best d = 0 specification, even though the
+ADF test rejects a unit root. ADF has low power on a strongly seasonal series,
+and the two disagree. Worth a sentence in the report rather than quietly
+following whichever one suits.
+
+**As a warning system, the numbers are sobering.** At h=1 persistence achieves a
+hit rate of 0.860 at 89 alarms per year; ARIMA with Fourier reaches 0.902 at 96;
+climatology reaches 0.970 at 115. A system raising an alarm on a quarter to a
+third of all days is not obviously useful, and no amount of model accuracy fixes
+that. It is fixed by moving the decision threshold, which is the sweep in week 5.
+
+**A trend that affects the week 3 design.** Day-to-day volatility has fallen
+steadily: mean absolute daily change was 38.9 in 2017 and 15.8 so far in 2026,
+with the annual mean drifting down too. An expanding training window therefore
+keeps feeding the model an era that no longer resembles the present. Test a fixed
+width rolling window against the expanding one in step 5 rather than assuming.
+
+### Week 3, complete. The harness exists and these are now the real numbers.
+
+2,303 origins from 2019-11-09 to 2026-08-24, spanning 6.8 years, three year
+burn-in, parameters re-estimated every 90 days, state advanced daily in between.
+
+**The single split was flattering ARIMA.** rMAE at h=1 was 0.903 on the single
+block and is 0.940 under rolling origin; at h=3 it was 0.798 and is 0.836. The
+honest numbers are worse, which is the entire reason for building the harness.
+Report the rolling numbers and mention the single split only to show why it was
+abandoned.
+
+| Model | h=1 | h=2 | h=3 |
+|---|---|---|---|
+| ARIMA + Fourier, mean back-transform | **0.939** | 0.875 | 0.837 |
+| ARIMA + Fourier, median back-transform | 0.940 | **0.873** | **0.836** |
+| ARIMA, no Fourier | 0.973 | 0.915 | 0.894 |
+| naive carried forward | 1.000 | 1.000 | 1.000 |
+| climatology | 1.417 | 1.054 | 0.948 |
+| seasonal naive, lag 7 | 1.736 | 1.286 | 1.157 |
+
+**The leakage test is inside the harness and runs before any forecast is
+produced.** It corrupts the series from a cut date, reruns every model through
+the same loop, and asserts that no forecast issued before the cut changed. It
+passes with the ARIMA in the loop, which is the case that matters, because a
+model carrying filter state across origins is the one that could plausibly leak.
+
+**Expanding window against a three year rolling window: no material difference
+for ARIMA**, 0.940 against 0.946 at h=1 and 0.836 against 0.841 at h=3. So the
+declining volatility does not justify a shorter window, and expanding is kept
+because it is simpler and uses more data. That question is now answered rather
+than assumed.
+
+**But it matters a great deal for climatology**, which improves from 1.417 to
+1.341 at h=1 and from 0.948 to 0.897 at h=3, with its bias falling from +11.1 to
++4.7. The reason is worth a paragraph in the report: ARIMA differences the series,
+d = 1, so a slow downward drift in the level cancels out. Climatology is a pure
+level estimate with no differencing, so a decade of higher concentrations biases
+it upward and a shorter window tracks the decline. The drift hurts exactly the
+model that cannot absorb it.
+
+**The back-transform choice is a warning system decision, not a cosmetic one.**
+The median variant under-forecasts by 6.4 at h=1 and 9.5 at h=3, because the
+median of a right skewed distribution sits below its mean. The bias corrected
+mean variant is unbiased, +1.3 at every horizon. On MAE they are indistinguishable
+and the median wins by 0.001; on RMSE the mean wins clearly, 36.28 against 37.56
+at h=1. As a warning system the mean variant catches more: hit rate 0.932 against
+0.900 at h=1, at the cost of 116 alarms per year against 107. **Take this to Dr
+Tian.** A systematic tendency to under-forecast is exactly the wrong failure mode
+for a hazard warning, and the choice between the two back-transforms should be
+made on that argument rather than on a decimal place of MAE.
+
+**ARIMA with Fourier has the best CSI at every horizon**, 0.790 at h=1 against
+0.776 for persistence and 0.732 for climatology. Climatology still has the
+highest raw hit rate, 0.937, but buys it with 126 alarms per year.
+
 ### Immediate next steps
 
-Week 1 finished on 20 August, six days early. Set up git, then week 2:
-benchmarks and ARIMA with Fourier exog, on log PM2.5.
+Week 4: the machine learning suite on `features.csv`, plugged into the same
+harness as new `Forecaster` subclasses. Ridge, random forest and
+`HistGradientBoosting`. They must beat 0.940, 0.873 and 0.836 to have earned
+their place, and the report should say so plainly if they do not.
 
 ### Environment, settled
 
