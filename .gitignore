@@ -1,0 +1,5 @@
+.venv/
+__pycache__/
+features.csv
+*.png
+.DS_Store
