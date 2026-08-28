@@ -43,6 +43,8 @@ The idea: daily pollution data for one Indian city, most likely Delhi. Predict c
 | `software_setup_guide_aqi_forecast.md` | Data sources, packages, working order for this project |
 | `data/delhi_clean.csv` | THE dataset. 3,093 usable days, 2016-11-09 to 2026-08-27. Built from `data/delhi.csv` by step 1b. |
 | `data/delhi.csv` | Raw download, kept so the cleaning can be rerun with different thresholds. |
+| `step06_ml.py` | Ridge, random forest and histogram gradient boosting as Forecaster subclasses, level and change targets. |
+| `forecasts_all.csv` | 9 models by 3 horizons over 2,303 origins. **The RQ1 result.** |
 | `step05_rolling.py` | The rolling origin harness. Every model plugs into one loop; the loop carries the leakage test. |
 | `forecasts_rolling.csv` | 2,303 origins over 6.8 years, 6 models by 3 horizons. **These are the reportable numbers.** |
 | `evaluation.py` | Shared scoring. Steps 3 onward import it so every model is scored by identical code. |
@@ -305,12 +307,68 @@ made on that argument rather than on a decimal place of MAE.
 0.776 for persistence and 0.732 for climatology. Climatology still has the
 highest raw hit rate, 0.937, but buys it with 126 alarms per year.
 
+### Week 4, complete. Research Question 1 has an answer, and it is a negative one.
+
+rMAE under rolling origin, 2,303 origins. Lower is better; 1.000 is persistence.
+
+| Model | h=1 | h=2 | h=3 |
+|---|---|---|---|
+| **ARIMA + Fourier** | **0.940** | **0.883** | **0.832** |
+| random forest, change target | 0.962 | 0.918 | 0.898 |
+| random forest, level target | 0.985 | 0.929 | 0.882 |
+| gradient boosting, change target | 0.978 | 0.937 | 0.881 |
+| gradient boosting, level target | 1.007 | 0.943 | 0.886 |
+| ridge | 0.997 | 0.952 | 0.897 |
+| naive carried forward | 1.000 | 1.000 | 1.000 |
+| climatology | 1.415 | 1.060 | 0.947 |
+| seasonal naive | 1.759 | 1.325 | 1.168 |
+
+**The classical model beats every machine learning model at every horizon.** Dr
+Tian asked for machine learning, so this needs to be delivered as a finding with
+its reasons rather than as a disappointment. The likely mechanism: on a strongly
+persistent series the optimal forecast is close to a smooth function of the recent
+past, which ARIMA represents exactly and a tree can only approximate in steps,
+and three thousand daily observations is a small sample for a flexible learner.
+This is the outcome the forecasting competition literature would predict.
+
+**The first version of this result was wrong and had to be corrected.** With
+fixed hyperparameters, gradient boosting scored 1.152 at h=1, worse than
+persistence, which would have been a striking claim. A check on validation showed
+the configuration was overfitting: 400 iterations over 31 leaf nodes gave 1.085,
+four leaf nodes over 200 iterations gave 0.970. Capacity is now chosen at every
+refit from a small explicit grid, scored on the last fifth of the training window
+held out in time order. Gradient boosting improved from 1.152 to 1.007 at h=1 and
+from 1.011 to 0.886 at h=3. **The conclusion survived the correction, which is
+what makes it reportable.** Put this episode in the report: a negative result
+about a model class is only worth stating once you have shown it is not a
+negative result about your own hyperparameters.
+
+**Modelling the change rather than the level helps the tree models**, from 0.985
+to 0.962 for the random forest at h=1 and from 1.007 to 0.978 for gradient
+boosting. Trees cannot extrapolate beyond the targets they were trained on and
+this series drifts downward; handing them the persistence for free and asking
+them to model a roughly stationary residual removes that handicap. Report both
+forms.
+
+**The one leakage trap specific to supervised learning**, and it is now handled
+and tested: at origin t the label on feature row t' is the value at t' + h, so
+the training set ends at **t minus h**, not t. A separate model per horizon is
+required by that arithmetic. The error would have been three rows per refit and
+completely invisible in the output.
+
+**As a warning system the ranking reverses.** At h=1 gradient boosting reaches a
+hit rate of 0.948 and CSI 0.800 against ARIMA at 0.906 and 0.798, because ARIMA's
+median back-transform biases it low by 6.4 and the tree models are close to
+unbiased. So the best model on average error is not the best warning system. That
+tension is the substance of Research Question 2 and should not be resolved by
+picking whichever number flatters.
+
 ### Immediate next steps
 
-Week 4: the machine learning suite on `features.csv`, plugged into the same
-harness as new `Forecaster` subclasses. Ridge, random forest and
-`HistGradientBoosting`. They must beat 0.940, 0.873 and 0.836 to have earned
-their place, and the report should say so plainly if they do not.
+Week 5: the direct classification arm and the decision threshold sweep. Both arms
+of Research Question 2 come from `features.csv`, and the sweep over the decision
+threshold answers Research Question 3 and produces the figure the report is built
+around.
 
 ### Environment, settled
 
