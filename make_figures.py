@@ -220,6 +220,77 @@ def fig_annual(clean):
     plt.close(fig)
 
 
+
+
+# ---------------------------------------------------------------- figure 5
+def fig_warning(sweep_path="threshold_sweep.csv"):
+    """The figure the report is built around.
+
+    Top row is the classical trade: hit rate against false alarm rate. Bottom row
+    replaces the false alarm rate with alarms raised per year, which is the same
+    information expressed in the units an operator actually budgets in. A false
+    alarm rate of 0.10 sounds negligible and is roughly one wasted alarm every ten
+    quiet days.
+
+    Monochrome, so identity is carried by line style and a direct label at the end
+    of each curve rather than by colour. Four curves per panel is the limit at
+    which that stays readable, so one representative of each family is shown.
+    """
+    sw = pd.read_csv(sweep_path)
+
+    show = [
+        ("arima_fourier", "ARIMA", "-", "black", 1.3),
+        ("hist_gbm_delta", "gradient boosting", "--", "0.35", 1.1),
+        ("hgb_clf", "classifier", "-.", "0.5", 1.1),
+        ("naive_carry", "persistence", ":", "0.6", 1.1),
+    ]
+    present = [x for x in show if x[0] in set(sw["model"])]
+
+    fig, axes = plt.subplots(2, 3, figsize=(W, 4.4), sharey=True,
+                             gridspec_kw={"hspace": 0.45, "wspace": 0.12,
+                                          "right": 0.88})
+
+    for col, h in enumerate([1, 2, 3]):
+        for row, xcol in enumerate(["false_alarm_rate", "alarms_per_year"]):
+            ax = axes[row, col]
+            for name, label, ls, colr, lw in present:
+                g = sw[(sw.model == name) & (sw.horizon == h)].sort_values("threshold")
+                g = g.dropna(subset=[xcol, "hit_rate"])
+                if not len(g):
+                    continue
+                ax.plot(g[xcol], g["hit_rate"], ls=ls, color=colr, lw=lw, zorder=3)
+                if col == 2 and row == 0:
+                    # Direct label on the curve at the right hand edge of the
+                    # visible range, found by interpolation rather than by taking
+                    # the last point, which lies outside the axis limits.
+                    xs = g[xcol].values
+                    ys = g["hit_rate"].values
+                    order = np.argsort(xs)
+                    yv = float(np.interp(0.135, xs[order], ys[order]))
+                    ax.annotate(label, xy=(0.135, yv), xytext=(4, 0),
+                                textcoords="offset points", fontsize=6.8,
+                                va="center", color=colr)
+            if row == 0:
+                ax.set_xlim(0, 0.15)
+                ax.set_xlabel("false alarm rate")
+                ax.set_title(f"{h} day{'s' if h > 1 else ''} ahead", loc="left")
+            else:
+                ax.set_xlim(0, 200)
+                ax.set_xlabel("alarms per year")
+                for b in (60, 120):
+                    ax.axvline(b, color="0.85", lw=0.7, zorder=1)
+                if col == 0:
+                    ax.text(62, 0.06, "60", fontsize=6.5, color="0.5")
+                    ax.text(122, 0.06, "120 alarms/yr", fontsize=6.5, color="0.5")
+            ax.set_ylim(0, 1.02)
+            if col == 0:
+                ax.set_ylabel("hit rate")
+            strip(ax)
+
+    fig.savefig("fig5_warning.png")
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     raw = load(RAW)
     clean = load(CLEAN)
@@ -227,6 +298,11 @@ if __name__ == "__main__":
     fig_coverage(raw)
     fig_weekly(clean)
     fig_annual(clean)
+    try:
+        fig_warning()
+        print("wrote fig5_warning.png")
+    except FileNotFoundError:
+        print("threshold_sweep.csv not found; skipping figure 5")
     _, r2 = deseasonalise(clean)
     print(f"annual Fourier K=4 on log PM2.5: R2 = {r2:.3f}")
     print("wrote fig1_series.png fig2_coverage.png fig3_weekly.png fig4_annual.png")

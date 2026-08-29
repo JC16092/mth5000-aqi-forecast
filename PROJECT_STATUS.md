@@ -43,6 +43,8 @@ The idea: daily pollution data for one Indian city, most likely Delhi. Predict c
 | `software_setup_guide_aqi_forecast.md` | Data sources, packages, working order for this project |
 | `data/delhi_clean.csv` | THE dataset. 3,093 usable days, 2016-11-09 to 2026-08-27. Built from `data/delhi.csv` by step 1b. |
 | `data/delhi.csv` | Raw download, kept so the cleaning can be rerun with different thresholds. |
+| `step07_warning.py` | Direct classification arm plus the decision threshold sweep. RQ2 and RQ3. |
+| `threshold_sweep.csv` | Every model at every decision threshold. The source of the main figure. |
 | `step06_ml.py` | Ridge, random forest and histogram gradient boosting as Forecaster subclasses, level and change targets. |
 | `forecasts_all.csv` | 9 models by 3 horizons over 2,303 origins. **The RQ1 result.** |
 | `step05_rolling.py` | The rolling origin harness. Every model plugs into one loop; the loop carries the leakage test. |
@@ -363,12 +365,53 @@ unbiased. So the best model on average error is not the best warning system. Tha
 tension is the substance of Research Question 2 and should not be resolved by
 picking whichever number flatters.
 
+### Week 5, complete. And it produced the finding the report should be built on.
+
+**RQ3 first, because it reframes everything else.** Sweeping the decision
+threshold while holding the event fixed at 121 gives, at h = 1:
+
+| Alarm budget per year | Best hit rate available |
+|---|---|
+| 40 | 0.377 |
+| 60 | 0.567 |
+| 80 | 0.727 |
+| 100 | 0.873 |
+
+Now compare that against what the choice of model buys. At a fixed budget of 60
+alarms per year, h = 1: ARIMA 0.567, gradient boosting 0.573, logistic 0.571,
+persistence 0.558, climatology 0.521. At h = 3: ARIMA 0.533, gradient boosting
+0.535, classifier 0.539, persistence 0.524, **climatology 0.537**.
+
+**The spread across models is about five points of hit rate. The spread across
+alarm budgets is fifty.** At three days ahead, climatology, which knows nothing
+whatever about recent conditions, matches the best model to within four
+thousandths. The operational question is which alarm budget can be justified, and
+the modelling question is close to a rounding error beside it.
+
+This is the argument the project exists to make and it should be the spine of the
+report. Everything in weeks 2 to 4 becomes supporting evidence for it rather than
+the point. `fig5_warning.png` shows it: the curves very nearly coincide.
+
+**RQ2: neither arm dominates.** Forecast then threshold wins at some horizon and
+budget combinations, direct classification at others, and no pattern in the
+winners survives inspection. Given that, prefer the forecast then threshold arm
+on grounds other than accuracy: it yields a concentration, which can be
+rethresholded for any policy without refitting, while a classifier is welded to
+the threshold it was trained on. Say that explicitly rather than presenting a
+coin flip as a result.
+
+**A caution to state in the report.** These hit rates are lower than the earlier
+tables suggest because those used a decision threshold equal to the event
+threshold, which raises about 100 alarms a year. Any headline number must state
+the alarm budget it was obtained under. A hit rate quoted without its false alarm
+cost is not a result.
+
 ### Immediate next steps
 
-Week 5: the direct classification arm and the decision threshold sweep. Both arms
-of Research Question 2 come from `features.csv`, and the sweep over the decision
-threshold answers Research Question 3 and produces the figure the report is built
-around.
+Week 6: the recurrent network, then freeze. Given the finding above, the honest
+expectation is that it changes nothing material, and the report should say so.
+Do not let it eat more than three days. Then the sensitivity run without
+`--max-value 1000`, and modelling stops on 30 September.
 
 ### Environment, settled
 
