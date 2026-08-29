@@ -406,6 +406,37 @@ threshold, which raises about 100 alarms a year. Any headline number must state
 the alarm budget it was obtained under. A hit rate quoted without its false alarm
 cost is not a result.
 
+### A reproducibility defect found and fixed on 29 August
+
+Running the identical pipeline on two machines gave individual gradient boosting
+forecasts differing by up to **85 micrograms per cubic metre**. Two causes
+compounded. Scikit-learn's histogram gradient boosting parallelises with OpenMP,
+so floating point summation order depends on the machine's thread count and a
+fixed `random_state` is not enough for bit reproducibility. Those small
+differences then flipped which configuration the capacity search selected at some
+refits, turning a rounding difference into a different fitted model.
+
+Both are now fixed in `step06_ml.py` and `step07_warning.py`: threads are pinned
+to one inside every tuned fit and prediction, and the search only abandons an
+incumbent configuration when a later one beats it by more than half a percent, so
+noise cannot decide the choice.
+
+**The conclusions were never at risk.** Aggregated over 2,303 origins the two
+machines agreed to within **0.0039** of relative mean absolute error on every one
+of the 27 model and horizon cells, and no ordering changed except among the
+near-tied tree models. ARIMA, ridge, climatology, persistence and seasonal naive
+were bit identical.
+
+**But state that number in the report, because it is part of the argument.** The
+machine to machine numerical noise of 0.004 is the same order as the gap between
+adjacent machine learning models in the results table, for instance gradient
+boosting at 0.978 against random forest at 0.985. When switching computers moves
+a model as much as switching models does, the claim that the model choice matters
+little is not rhetoric.
+
+The final reported numbers should come from a rerun under the fixed code at the
+freeze point, not from the current CSVs.
+
 ### Immediate next steps
 
 Week 6: the recurrent network, then freeze. Given the finding above, the honest

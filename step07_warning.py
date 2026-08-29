@@ -51,7 +51,8 @@ try:
     from step03_benchmarks import HORIZONS
     from step04_arima import fourier_terms
     from step05_rolling import Naive, rolling_origin
-    from step06_ml import SklearnForecaster, load_features, TunedRegressor
+    from step06_ml import (SklearnForecaster, load_features, TunedRegressor,
+                           _single_threaded)
     import evaluation as ev
 except ImportError as e:
     sys.exit(f"Needs steps 1 to 6 and evaluation.py beside this script. {e}")
@@ -115,7 +116,7 @@ class ProbaTuned(TunedRegressor):
         if cut > 50 and n - cut > 30 and len(np.unique(y[:cut])) > 1:
             for cfg in self.grid:
                 m = self.build(**cfg)
-                with warnings.catch_warnings():
+                with warnings.catch_warnings(), _single_threaded():
                     warnings.simplefilter("ignore")
                     m.fit(X[:cut], y[:cut])
                     p = m.predict_proba(X[cut:])[:, 1]
@@ -123,19 +124,24 @@ class ProbaTuned(TunedRegressor):
                     score = log_loss(y[cut:], p, labels=[0, 1])
                 except ValueError:
                     score = np.inf
-                if score < best_score:
+                # Same margin as the regressors: numerical noise must not decide
+                # which configuration is fitted.
+                if score < best_score * (1.0 - self.margin):
+                    best, best_score = cfg, score
+                elif best is None:
                     best, best_score = cfg, score
         if best is None:
             best = self.grid[0]
         self.chosen_ = best
         self.model_ = self.build(**best)
-        with warnings.catch_warnings():
+        with warnings.catch_warnings(), _single_threaded():
             warnings.simplefilter("ignore")
             self.model_.fit(X, y)
         return self
 
     def predict_proba(self, X):
-        return self.model_.predict_proba(X)
+        with _single_threaded():
+            return self.model_.predict_proba(X)
 
 
 def make_logistic():
@@ -163,7 +169,7 @@ def make_forest_clf():
     def build(**kw):
         return Pipeline([
             ("impute", SimpleImputer(strategy="median")),
-            ("model", RandomForestClassifier(n_estimators=200, n_jobs=-1,
+            ("model", RandomForestClassifier(n_estimators=200, n_jobs=1,
                                              random_state=0,
                                              class_weight="balanced_subsample",
                                              **kw)),

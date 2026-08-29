@@ -92,288 +92,238 @@ story.append(Spacer(1, 10))
 # ---------------------------------------------------------------- 1
 story.append(Paragraph("1. Summary", h1))
 story.append(Paragraph(
-    "The data pipeline is complete. A ten year daily PM2.5 series for Delhi has been "
-    "acquired, audited, cleaned and converted into a supervised feature table, and the "
-    "code that does so is tested and reproducible. This was the whole of the first "
-    "planned week and it is finished ahead of schedule.", body))
+    "The modelling is complete and the central result is not the one the proposal "
+    "anticipated. Forecast accuracy differs very little between methods, while the "
+    "choice of decision threshold changes performance by an order of magnitude more. "
+    "At one day ahead, moving from an alarm budget of forty per year to one hundred "
+    "raises the hit rate from 0.38 to 0.87. Across every model at a fixed budget of "
+    "sixty, the hit rate varies only between 0.52 and 0.57. At three days ahead a "
+    "climatological forecast, which uses no recent information whatever, matches the "
+    "best model to within four thousandths.", body))
 story.append(Paragraph(
-    "Two problems were found in the source data during the audit, one of which was "
-    "silently corrupting the series, and both are documented in Section 3. One "
-    "assumption in the approved proposal has been contradicted by the data and the "
-    "model specification changes as a result, which is set out in Section 4. Four "
-    "decisions require your input and are listed in Section 5.", body))
+    "The recommendation is that the report be built around that finding, with the "
+    "model comparison as supporting evidence rather than as the destination. "
+    "Sections 2 to 4 describe what was built and why it can be believed; Section 5 "
+    "gives the results; Section 6 lists four decisions that require your input.", body))
 
 # ---------------------------------------------------------------- 2
-story.append(Paragraph("2. Work completed", h1))
-
-story.append(Paragraph("2.1 Station selection", h2))
+story.append(Paragraph("2. The data", h1))
 story.append(Paragraph(
-    "Five candidate monitoring stations within 25 km of central Delhi were compared on "
-    "data coverage rather than on nominal length of record. Coverage is the share of the "
-    "calendar carrying a usable daily mean, and gap is the longest unbroken run of days "
-    "with no usable value.", body))
-story.extend(table([
-    ["Location", "Provider", "First", "Years", "Coverage", "Gap", "Exceed"],
-    ["17, R K Puram", "CPCB", "2025-02-19", "1.5", "85.9%", "11", "21.2%"],
-    ["50, Punjabi Bagh", "CPCB", "2025-02-19", "1.5", "85.2%", "11", "20.7%"],
-    ["235, Anand Vihar", "CPCB", "2025-02-19", "1.5", "86.8%", "10", "23.9%"],
-    ["8118, New Delhi", "AirNow", "2016-11-09", "9.8", "89.4%", "31", "30.0%"],
-    ["5404, Pusa", "CPCB", "2025-02-19", "1.5", "76.2%", "10", "15.1%"],
-], [95, 52, 62, 34, 52, 30, 45], highlight_row=4))
-story.append(Paragraph(
-    "The decisive result is in the third column. Every CPCB station returns measurements "
-    "only from 19 February 2025, roughly eighteen months, even though the OpenAQ location "
-    "metadata advertises a first observation of 5 February 2016. Four independent stations "
-    "sharing an identical cutoff is a systematic limit on what the measurements endpoint "
-    "serves rather than a coincidence. Only station 8118 returns the full record, so it "
-    "was selected.", body))
-story.append(Paragraph(
-    "This carries a cost that must be stated in the report. Station 8118 is supplied "
-    "through AirNow and is almost certainly the United States diplomatic post monitor "
-    "rather than part of the Indian official network. The project therefore forecasts at "
-    "one well characterised reference site in Delhi, which is common in this literature, "
-    "and cites OpenAQ and the United States Department of State rather than CPCB.", body))
-
-story.append(Paragraph("2.2 Two defects in the source data", h2))
-story.append(Paragraph(
-    "<b>Physically impossible values.</b> The raw series contained five negative "
-    "concentrations, to a minimum of -7.3, and a maximum of 1990. The value 1990.0 "
-    "appeared three times, identically, on unrelated dates, which is the signature of a "
-    "clipped instrument ceiling rather than a measurement. One of the three fell on 2 "
-    "September, in the monsoon, between neighbouring days of 42 and 178.", body))
-story.append(Paragraph(
-    "<b>A wrong coverage denominator.</b> OpenAQ reports the completeness of each daily "
-    "aggregate as the observation count divided by an expected count of 24, assuming "
-    "hourly reporting. This sensor reported half hourly from 2016 to 2024 and hourly from "
-    "2025. The visible symptom is a reported completeness above 100 percent, which is "
-    "impossible. The damaging symptom is invisible: a day holding 24 of a real 48 readings "
-    "is scored as fully complete, so a mean computed from half a day of a polluted "
-    "afternoon enters the series as though it were a genuine daily mean. Days at 50 to 75 "
-    "percent true coverage were approximately nine times more likely to exceed 500 than "
-    "days above 90 percent, which identifies this as the mechanism producing the "
-    "impossible extremes.", body))
-story.extend(figure("fig2_coverage.png", 1,
-    "The coverage defect. Panel (a) shows the number of readings contributing to each "
-    "daily mean, with the cadence estimated from the data each year as the solid line. "
-    "The sensor reported roughly half hourly until the end of 2024 and hourly thereafter, "
-    "while the denominator used to report completeness stayed at 24 throughout. Panel (b) "
-    "shows the rate of physically implausible values by true coverage. Days observed for "
-    "more than 90 percent of their length yield such values at roughly one seventh the "
-    "rate of days below that, which identifies incomplete days as the mechanism rather "
-    "than a coincidence."))
-story.append(Paragraph(
-    "The correction takes the reporting cadence from the data itself, using the ninetieth "
-    "percentile of observation counts within each year, which follows the 2025 change in "
-    "reporting interval automatically. Recomputed on that basis, 1,085 of 3,199 observed "
-    "days fall below 75 percent coverage rather than the 268 the published figure implies.", body))
-
-story.append(Paragraph("2.3 Cleaning applied", h2))
-story.extend(table([
-    ["Rule", "Days removed", "Basis"],
-    ["Value below zero", "5", "Mass concentration cannot be negative"],
-    ["Coverage below 50 percent", "270", "Against the true cadence, not the published one"],
-    ["Value above 1000", "7", "Judgement, see Section 5"],
-    ["Total", "282 of 3,375", ""],
-], [125, 70, 175], highlight_row=4))
-story.append(Paragraph(
-    "The coverage threshold is set at 50 rather than a stricter value because the longest "
-    "gap is the binding constraint. At 60 percent the worst gap rises to 69 days and at 90 "
-    "percent to 185 days, either of which would distort the estimation of the annual cycle. "
-    "At 50 percent the worst gap is 34 days. The exceedance rate is stable across every "
-    "candidate threshold, moving only from 30.0 to 27.0 percent, which confirms the filter "
-    "is not selectively removing the events of interest.", body))
-
-story.append(Paragraph("2.4 The resulting dataset", h2))
+    "Five candidate Delhi stations were compared on coverage rather than on nominal "
+    "length of record. Every CPCB station returns measurements only from 19 February "
+    "2025, about eighteen months, although the OpenAQ metadata advertises a first "
+    "observation in 2016. Four independent stations sharing an identical cutoff is a "
+    "systematic limit on what the endpoint serves. Only location 8118 returns the full "
+    "record, so it was selected. It is supplied through AirNow and is almost certainly "
+    "the United States diplomatic post monitor rather than part of the Indian official "
+    "network, which is a limitation to state plainly and is the subject of one of the "
+    "questions in Section 6.", body))
 story.extend(table([
     ["Property", "Value"],
     ["Source", "OpenAQ location 8118, sensor 23534, provider AirNow"],
     ["Period", "9 November 2016 to 27 August 2026, 9.8 years"],
     ["Usable daily means", "3,093, being 86.4 percent of the calendar"],
     ["Longest gap", "34 consecutive days"],
-    ["Mean, median, maximum", "102.7, 71.7, 896.0"],
     ["Days above 121", "920, being 29.7 percent"],
 ], [125, 245]))
-story.extend(figure("fig1_series.png", 2,
-    "The cleaned daily series. Shading marks the days exceeding the threshold. The "
-    "episodic structure is the feature the project exists to forecast: exceedances do not "
-    "arrive as isolated days but as multi day winter episodes, which is why persistence of "
-    "the event itself is carried as a predictor in the feature table."))
-story.append(Paragraph(
-    "The maximum of 896 falls on 8 November 2017, within the documented severe episode of "
-    "that month. A real event surviving the cleaning while the September and February "
-    "spikes do not is a useful check that the rules are discriminating rather than merely "
-    "truncating.", body))
 
-story.append(Paragraph("2.5 Feature table", h2))
+story.append(Paragraph("2.1 Two defects, one of which was silently corrupting the series", h2))
 story.append(Paragraph(
-    "3,355 rows, 39 feature columns and 6 target columns. A row indexed by date t is one "
-    "forecast origin, and every feature in it is a function of observations up to and "
-    "including day t. Features comprise lags at 0, 1, 2, 3 and 7 days, first differences, "
-    "rolling mean, standard deviation and maximum over 3, 7, 14 and 30 days, an anomaly "
-    "and standardised anomaly against the 30 day norm, exceedance frequency over the last "
-    "7 and 30 days, days since the last exceedance, calendar terms, four pairs of annual "
-    "Fourier terms and three missingness indicators.", body))
+    "<b>Physically impossible values.</b> Five negative concentrations, and a maximum "
+    "of 1990 which appeared three times identically on unrelated dates, the signature "
+    "of a clipped instrument ceiling. One fell on 2 September, in the monsoon, between "
+    "neighbouring days of 42 and 178.", body))
 story.append(Paragraph(
-    "Targets are the concentration at one, two and three days ahead and the matching "
-    "binary exceedance indicators, so both arms of Research Question 2 are answered from a "
-    "single table. Class balance is 29.7 percent at all three horizons.", body))
+    "<b>A wrong coverage denominator.</b> OpenAQ reports completeness against an "
+    "expected count of 24, assuming hourly reporting. This sensor reported half hourly "
+    "from 2016 to 2024 and hourly from 2025. The visible symptom is a completeness "
+    "above 100 percent, which is impossible. The damaging one is invisible: a day "
+    "holding 24 of a real 48 readings scores as complete, so a mean built from half a "
+    "day of a polluted afternoon enters the series as a daily mean. Days at 50 to 75 "
+    "percent true coverage produced impossible values about seven times as often as "
+    "days above 90 percent. Cadence is now taken from the data itself, using the "
+    "ninetieth percentile of observation counts within each year.", body))
+story.extend(figure("fig2_coverage.png", 1,
+    "The coverage defect. Panel (a): readings per daily mean, with the cadence "
+    "estimated from the data each year as the solid line and the fixed denominator of "
+    "24 as the dashed line. Panel (b): implausible values by true coverage."))
 story.append(Paragraph(
-    "An automated leakage test accompanies the construction. It rebuilds the table from a "
-    "series corrupted from a chosen cut date onward and asserts that every feature row "
-    "before that cut is unchanged, then verifies target alignment and the right edge "
-    "alignment of the rolling windows. It runs before every build and currently passes.", body))
+    "Cleaning removed 282 days of 3,375: five negatives, 270 below 50 percent true "
+    "coverage, and seven above 1000. The exceedance rate moved only from 30.0 to 27.0 "
+    "percent across every candidate rule, so the filter is not selectively removing "
+    "the events of interest.", body))
 
 # ---------------------------------------------------------------- 3
-story.append(Paragraph("3. A finding that changes the model specification", h1))
+story.append(Paragraph("3. A tested assumption that turned out to be false", h1))
 story.append(Paragraph(
-    "The approved proposal states that daily pollution series carry a weekly cycle driven "
-    "by traffic and industrial activity, and the accompanying plan treats the coexistence "
-    "of a weekly and an annual period as the central modelling difficulty, since a seasonal "
-    "ARIMA accommodates only one seasonal period. That difficulty was to be the main "
-    "question for this meeting.", body))
+    "The approved proposal states that daily pollution series carry a weekly cycle "
+    "driven by traffic, and the plan treated reconciling a weekly and an annual period "
+    "as the central modelling difficulty. Tested three ways on the cleaned series, the "
+    "weekly cycle is not present at this station. The periodogram shows the annual "
+    "cycle and its harmonics and nothing near seven days. On the deseasonalised "
+    "logarithm, lag 7 autocorrelation is 0.173 while lag 6 is 0.179 and lag 8 is 0.153, "
+    "so lag 7 lies on the decay curve rather than above it. The day of week effect "
+    "spans 6.5 percent with ANOVA p = 0.34.", body))
+story.extend(figure("fig3_weekly.png", 2,
+    "No weekly cycle. Lags 7, 14 and 21 are circled and sit on the decay curve. Every "
+    "day of week interval contains zero."))
 story.append(Paragraph(
-    "Tested on the cleaned series, the weekly cycle is not present at this station. Three "
-    "independent tests agree.", body))
-story.extend(table([
-    ["Test", "Result"],
-    ["Periodogram, dominant periods",
-     "357.9, 178.9, 188.4, 397.7, 325.4, 60.7 days. The annual cycle and its harmonics. Nothing near 7."],
-    ["Autocorrelation of the deseasonalised log series",
-     "Lag 6 is 0.179, lag 7 is 0.173, lag 8 is 0.153. Lag 7 lies on the decay curve rather than above it. The same holds at lags 14 and 21."],
-    ["Day of week effect on the same residuals",
-     "Spread of 6.5 percent between the highest and lowest day. ANOVA F = 1.13, p = 0.34. Kruskal-Wallis p = 0.77."],
-], [150, 220]))
-story.extend(figure("fig3_weekly.png", 3,
-    "No weekly cycle. Panel (a) is the autocorrelation of the deseasonalised logarithm of "
-    "concentration; lags 7, 14 and 21 are circled and lie on the decay curve rather than "
-    "above it, which is persistence rather than periodicity. The shaded band is the 95 "
-    "percent interval for zero. Panel (b) gives the effect of each day of the week on the "
-    "same residuals with 95 percent intervals; every interval contains zero."))
-story.append(Paragraph(
-    "There is a coherent physical reading rather than a null result. A weekly rhythm in "
-    "urban particulate concentration is a traffic signature, and station 8118 sits in the "
-    "diplomatic enclave rather than at a roadside site such as ITO or Anand Vihar. Its "
-    "absence at a site that is not traffic dominated is what one would expect.", body))
-story.extend(figure("fig4_annual.png", 4,
-    "The annual cycle, by contrast, is unmistakable. Monthly median with the interquartile "
-    "range shaded. The median exceeds the hazard threshold in November, December and "
-    "January and falls to roughly a sixth of that in the monsoon. This is the structure "
-    "the Fourier terms are there to capture, and its strength is the reason the absence in "
-    "Figure 3 is credible rather than an artefact of a weak test.", width_frac=0.66))
-story.append(Paragraph(
-    "<b>Consequence.</b> The classical benchmark becomes ARIMA with annual Fourier terms "
-    "as exogenous regressors, with no weekly seasonal order. The specification is simpler, "
-    "better identified, and now justified empirically rather than assumed. Two further "
-    "points follow. Annual Fourier terms explain 69 percent of the variance of the "
-    "logarithm of concentration against considerably less on the raw scale, so the "
-    "classical modelling will be done in logs. Four Fourier pairs are used; the Bayesian "
-    "information criterion continues to improve to six, but it assumes independent errors "
-    "and these residuals are strongly autocorrelated, so it will over-select, and the "
-    "order will be treated as a tuning parameter under the rolling origin evaluation "
-    "instead.", body))
+    "A weekly rhythm in urban particulate concentration is a traffic signature and "
+    "station 8118 sits in the diplomatic enclave rather than at a roadside site, so its "
+    "absence is coherent rather than missing. The consequence is that the classical "
+    "benchmark is ARIMA with annual Fourier terms as exogenous regressors and no weekly "
+    "seasonal order. The specification is simpler and now empirically justified. The "
+    "benchmark that does assume a weekly cycle is the worst of the seven tried, which "
+    "is the quantitative form of the same finding.", body))
 
-# ---------------------------------------------------------------- evaluation
-story.append(Paragraph("4. Evaluation design", h1))
+# ---------------------------------------------------------------- 4
+story.append(Paragraph("4. Why the results can be believed", h1))
 story.append(Paragraph(
-    "The models are the straightforward part of what remains. The evaluation is where the "
-    "project can quietly fail, so it is worth setting out now rather than at the end.", body))
+    "Every model is scored by one shared module on identical days, and every forecast "
+    "is produced by one shared loop. A model cannot leak on its own; it can only leak "
+    "if the loop permits it, so the loop is what is tested.", body))
 story.append(Paragraph(
-    "<b>Rolling origin rather than a single split.</b> A model will be fitted on an "
-    "expanding window, used to forecast one, two and three days ahead, then refitted with "
-    "the origin moved forward. Every forecast is therefore made using only information "
-    "that existed at the moment it was issued. This is the fiddliest code in the project "
-    "and the easiest place to leak future information into past forecasts, so it will be "
-    "built and tested on a short window before being run at length, and it will carry the "
-    "same corruption test already used on the feature table: a series is corrupted from a "
-    "chosen date onward, and any forecast issued before that date must be unchanged.", body))
+    "<b>Rolling origin rather than a single split.</b> 2,303 origins from 9 November "
+    "2019 to 24 August 2026, spanning 6.8 years, with a three year burn-in, parameters "
+    "re-estimated every ninety days and state advanced daily in between. This was not "
+    "cosmetic: on a single test block ARIMA scored 0.903 at one day ahead and under "
+    "rolling origin it scores 0.940. The single block happened to be calmer than the "
+    "training period and was flattering every model.", body))
 story.append(Paragraph(
-    "<b>Metrics reported separately at each horizon.</b> Mean absolute error, root mean "
-    "squared error, and mean absolute scaled error against the naive forecast. Skill decays "
-    "with horizon and averaging across horizons would conceal exactly that.", body))
+    "<b>An automated leakage test runs before any forecast is produced.</b> The series "
+    "is corrupted from a chosen date onward, every model is rerun through the same "
+    "loop, and any forecast issued before that date that changes is a failure. It "
+    "passes with the state carrying models included, which are the ones that could "
+    "plausibly leak.", body))
 story.append(Paragraph(
-    "<b>The warning system, which is the point.</b> A model with good average error can "
-    "still miss the extreme days, and those are the only days anyone acts on. For each "
-    "approach the decision threshold will be swept from one extreme to the other, and at "
-    "each point the hit rate, the false alarm rate, the precision, and the number of alarms "
-    "raised per year will be recorded. That last quantity is what an operator actually "
-    "lives with and it is rarely reported. The resulting curve of hit rate against false "
-    "alarm rate, with the benchmark operating points marked on it, is the figure the "
-    "report is built around.", body))
+    "<b>One trap specific to supervised learning.</b> At origin t the label on feature "
+    "row t prime is the value at t prime plus h, so the training set ends at t minus h, "
+    "not at t. A separate model per horizon is required by that arithmetic. The error "
+    "would have been three rows per refit and entirely invisible in the output.", body))
 story.append(Paragraph(
-    "<b>Class imbalance handled explicitly.</b> Exceedances are a minority at 29.7 percent "
-    "and would be a much smaller minority under the severe threshold. Class weighting and "
-    "precision-recall analysis will be used rather than accuracy, and the minority class "
-    "will not be resampled, since duplicating days breaks the temporal structure the whole "
-    "design depends on.", body))
+    "<b>Metrics.</b> Reported separately at each horizon, never averaged. The headline "
+    "measure is relative mean absolute error against the persistence forecast on "
+    "identical rows, where 1.000 is persistence and below one beats it. Mean absolute "
+    "scaled error is reported alongside but reads poorly when test volatility differs "
+    "from training volatility, which it does here.", body))
 
 # ---------------------------------------------------------------- 5
-story.append(Paragraph("5. Decisions required", h1))
-for i, (q, ctx) in enumerate([
-    ("The hazardous threshold.",
-     "The scripts currently use 121 microgrammes per cubic metre, the CPCB breakpoint at "
-     "which the category becomes very poor, which yields an event rate of 29.7 percent. "
-     "The severe breakpoint at 250 would yield a far smaller and more extreme event set "
-     "with correspondingly wider confidence intervals on every hit rate. The choice "
-     "determines what the warning system is for and it should be settled before modelling "
-     "begins."),
-    ("Acceptability of the station provenance.",
-     "Using a United States diplomatic post monitor rather than the Indian official "
-     "network is forced by the CPCB truncation described in Section 2.1. Whether this is "
-     "acceptable, and how prominently it should be caveated, is a judgement I would rather "
-     "take from you than make alone. A secondary route through the OpenAQ bulk archive "
-     "may hold the full CPCB record and is worth an hour of investigation in week 6 as a "
-     "robustness check."),
-    ("The upper cleaning threshold.",
-     "Removing values above 1000 is the weakest assumption in the pipeline. It rests on "
-     "seasonal implausibility rather than on a documented instrument limit. The intention "
-     "is to rerun the complete analysis without that rule in week 5 and report whether any "
-     "conclusion changes, which converts the assumption into a stated robustness check. "
-     "Please confirm that is sufficient."),
-    ("Scope of the classical comparison.",
-     "Given that the two seasonal period problem does not arise, the structural state "
-     "space model is no longer required to resolve it. Would you still like it fitted as a "
-     "decomposition comparison, or is the effort better spent on the machine learning suite "
-     "and the evaluation?"),
-], 1):
-    story.append(Paragraph(f"<b>{i}. {q}</b> {ctx}", bullet, bulletText="•"))
+story.append(Paragraph("5. Results", h1))
 
-# ---------------------------------------------------------------- 5
-story.append(Paragraph("6. Work remaining", h1))
-story.append(Paragraph(
-    "Submission is due 22 October 2026. The schedule below front loads the modelling so "
-    "that all results are frozen by 30 September, leaving two weeks for writing and one "
-    "week of contingency.", body))
+story.append(Paragraph("5.1 Research Question 1: forecast accuracy", h2))
 story.extend(table([
-    ["Week", "Dates", "Work", "Completion criterion"],
-    ["1", "20 to 26 Aug", "Data acquisition, cleaning, feature table",
-     "Complete, 20 August"],
-    ["2", "27 Aug to 2 Sep", "Naive, seasonal naive and climatology benchmarks; ARIMA with Fourier exogenous terms on log concentration",
-     "Error metrics at each horizon for every benchmark"],
-    ["3", "3 to 9 Sep", "Rolling origin evaluation harness",
-     "Benchmarks reproduced under the harness with a passing leakage test"],
-    ["4", "10 to 16 Sep", "Penalised regression, random forest, histogram gradient boosting",
-     "Research Question 1 answered"],
-    ["5", "17 to 23 Sep", "Direct exceedance classification and threshold sweep",
-     "Research Questions 2 and 3 answered; hit rate against false alarm rate produced"],
-    ["6", "24 to 30 Sep", "Recurrent network; robustness checks; results frozen",
-     "No further modelling after 30 September"],
-    ["7", "1 to 7 Oct", "First complete draft", "Draft to supervisor"],
-    ["8", "8 to 14 Oct", "Revision on supervisor feedback", "Second draft, figures final"],
-    ["9", "15 to 21 Oct", "Polish and contingency", "Submission, targeted for 19 October"],
-], [26, 62, 152, 130]))
+    ["Model", "h = 1", "h = 2", "h = 3"],
+    ["ARIMA with Fourier terms", "0.940", "0.883", "0.832"],
+    ["Random forest, change target", "0.962", "0.918", "0.898"],
+    ["Gradient boosting, change target", "0.978", "0.937", "0.881"],
+    ["Ridge regression", "0.997", "0.952", "0.897"],
+    ["Persistence", "1.000", "1.000", "1.000"],
+    ["Climatology", "1.415", "1.060", "0.947"],
+    ["Seasonal naive, lag 7", "1.759", "1.325", "1.168"],
+], [175, 65, 65, 65], highlight_row=1))
+story.append(Paragraph(
+    "The classical model beats every machine learning model at every horizon. On a "
+    "strongly persistent series the optimal forecast is close to a smooth function of "
+    "the recent past, which ARIMA represents exactly and a tree can only approximate in "
+    "steps, and three thousand daily observations is a small sample for a flexible "
+    "learner. Modelling the change rather than the level improves both tree models, "
+    "because trees cannot extrapolate beyond the targets they were trained on and this "
+    "series drifts downward across the decade.", body))
+story.append(Paragraph(
+    "<b>The first version of this result was wrong and is worth reporting as such.</b> "
+    "With fixed hyperparameters, gradient boosting scored 1.152 at one day ahead, worse "
+    "than persistence. A check on validation showed the configuration was overfitting: "
+    "400 boosting iterations over 31 leaf nodes gave 1.085, while four leaf nodes over "
+    "200 iterations gave 0.970. Capacity is now selected at every refit from a small "
+    "explicit grid, scored on the last fifth of the training window held out in time "
+    "order. Gradient boosting improved to 1.007 at h = 1 and 0.886 at h = 3, and the "
+    "conclusion survived. A negative result about a model class is worth nothing until "
+    "it has been shown not to be a negative result about one's own hyperparameters.", body))
+
+story.append(Paragraph("5.2 Research Question 3: the decision threshold", h2))
+story.append(Paragraph(
+    "Holding the event fixed at the health threshold and sweeping the decision "
+    "threshold gives, at one day ahead, the best hit rate available within a given "
+    "budget of alarms per year:", body))
+story.extend(table([
+    ["Alarms per year", "40", "60", "80", "100"],
+    ["Best hit rate available", "0.377", "0.567", "0.727", "0.873"],
+], [130, 60, 60, 60]))
+story.append(Paragraph(
+    "Against that, the hit rate at a fixed budget of sixty alarms per year, by model:", body))
+story.extend(table([
+    ["Model", "h = 1", "h = 3"],
+    ["Gradient boosting", "0.573", "0.535"],
+    ["Logistic classifier", "0.571", "0.493"],
+    ["ARIMA with Fourier terms", "0.567", "0.533"],
+    ["Persistence", "0.558", "0.524"],
+    ["Climatology", "0.521", "0.537"],
+], [175, 80, 80]))
+story.append(Paragraph(
+    "<b>The spread across alarm budgets is about fifty points of hit rate. The spread "
+    "across models is about five.</b> At three days ahead climatology, which uses no "
+    "recent information at all, matches the best model. The operational question of "
+    "what alarm burden can be justified dominates the modelling question by an order of "
+    "magnitude.", body))
+story.extend(figure("fig5_warning.png", 3,
+    "The trade-off, by horizon. The top row is hit rate against false alarm rate; the "
+    "bottom row replaces the false alarm rate with alarms raised per year, which is the "
+    "unit an operator budgets in. The curves very nearly coincide, which is the "
+    "finding. They have deliberately not been separated for legibility."))
+
+story.append(Paragraph("5.3 Research Question 2: the two arms", h2))
+story.append(Paragraph(
+    "Neither arm dominates. Forecasting the concentration and then applying a threshold "
+    "wins at some combinations of horizon and alarm budget, direct classification at "
+    "others, and no pattern in the winners survives inspection. Given a tie on accuracy, "
+    "the recommendation is to prefer the forecast then threshold arm on other grounds: "
+    "it produces a concentration, which can be rethresholded for any future health "
+    "policy without refitting, whereas a classifier is welded to the threshold it was "
+    "trained on. That argument should be stated explicitly rather than presenting a coin "
+    "flip as a result.", body))
 
 # ---------------------------------------------------------------- 6
-story.append(Paragraph("7. Reproducibility", h1))
+story.append(Paragraph("6. Decisions required", h1))
+for i, (q, ctx) in enumerate([
+    ("The hazardous threshold.",
+     "The analysis uses 121 microgrammes per cubic metre, the CPCB breakpoint at which "
+     "the category becomes very poor, giving an event rate of 29.7 percent. The severe "
+     "breakpoint at 250 would give a far smaller and more extreme event set with "
+     "correspondingly wider confidence intervals on every hit rate. Rerunning at 250 is "
+     "an afternoon's work if you would prefer it, or a sensitivity analysis if you would "
+     "prefer both."),
+    ("Acceptability of the station provenance.",
+     "Using a United States diplomatic post monitor rather than the Indian official "
+     "network is forced by the CPCB truncation in Section 2. Whether that is acceptable, "
+     "and how prominently it should be caveated, is a judgement I would rather take from "
+     "you. The OpenAQ bulk archive may hold the full CPCB record and is worth an hour of "
+     "investigation as a robustness check."),
+    ("Which back-transform to report.",
+     "The model is fitted on the logarithm. Exponentiating the fitted mean gives the "
+     "median of the concentration and under-forecasts by 6.4 at one day and 9.5 at three; "
+     "the bias corrected form is unbiased at +1.3. They are indistinguishable on mean "
+     "absolute error, the corrected form is better on root mean squared error, and as a "
+     "warning system it catches more, 0.932 against 0.900, at 116 alarms per year against "
+     "107. A systematic tendency to under-forecast seems the wrong failure mode for a "
+     "hazard warning, but the choice should be argued rather than assumed."),
+    ("Whether the remaining modelling is worth the time.",
+     "The plan allows a recurrent network as the final model. Given that the spread "
+     "across all seven existing models at a fixed alarm budget is five points of hit "
+     "rate, my expectation is that it changes nothing material and that the time is "
+     "better spent on the writing and on the sensitivity analyses. I would rather have "
+     "your view than make that call alone."),
+], 1):
+    story.append(Paragraph(f"<b>{i}. {q}</b> {ctx}", bullet, bulletText="\u2022"))
+
+# ---------------------------------------------------------------- 7
+story.append(Paragraph("7. What remains", h1))
 story.append(Paragraph(
-    "Four command line scripts carry the pipeline from an empty folder to the feature "
-    "table: acquisition from the OpenAQ interface, a viability and structure check, the "
-    "cleaning step, and feature construction. Each accepts a synthetic demonstration mode "
-    "and each carries an automated correctness test. The cleaning script alters nothing "
-    "unless explicitly instructed, and reports what each rule would remove before it is "
-    "applied, so every threshold in Section 2.3 is a recorded decision rather than a "
-    "default. Raw and cleaned data are retained under version control so that the analysis "
-    "does not depend on the data provider serving identical values at a later date, which "
-    "the CPCB finding suggests is not a safe assumption.", body))
+    "Modelling freezes at the end of September. Remaining: the sensitivity analysis "
+    "rerunning the pipeline without the upper cleaning threshold, the optional recurrent "
+    "network subject to the question above, and the report itself, with a full draft "
+    "intended for you in the first week of October. The pipeline runs end to end from an "
+    "empty folder in eight scripts, each with an automated correctness test, so any "
+    "change you ask for can be propagated through every result in an afternoon.", body))
 
 doc = SimpleDocTemplate(OUT, pagesize=A4,
                         leftMargin=25*mm, rightMargin=25*mm,

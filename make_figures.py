@@ -247,8 +247,7 @@ def fig_warning(sweep_path="threshold_sweep.csv"):
     present = [x for x in show if x[0] in set(sw["model"])]
 
     fig, axes = plt.subplots(2, 3, figsize=(W, 4.4), sharey=True,
-                             gridspec_kw={"hspace": 0.45, "wspace": 0.12,
-                                          "right": 0.88})
+                             gridspec_kw={"hspace": 0.45, "wspace": 0.12})
 
     for col, h in enumerate([1, 2, 3]):
         for row, xcol in enumerate(["false_alarm_rate", "alarms_per_year"]):
@@ -258,18 +257,11 @@ def fig_warning(sweep_path="threshold_sweep.csv"):
                 g = g.dropna(subset=[xcol, "hit_rate"])
                 if not len(g):
                     continue
-                ax.plot(g[xcol], g["hit_rate"], ls=ls, color=colr, lw=lw, zorder=3)
-                if col == 2 and row == 0:
-                    # Direct label on the curve at the right hand edge of the
-                    # visible range, found by interpolation rather than by taking
-                    # the last point, which lies outside the axis limits.
-                    xs = g[xcol].values
-                    ys = g["hit_rate"].values
-                    order = np.argsort(xs)
-                    yv = float(np.interp(0.135, xs[order], ys[order]))
-                    ax.annotate(label, xy=(0.135, yv), xytext=(4, 0),
-                                textcoords="offset points", fontsize=6.8,
-                                va="center", color=colr)
+                ax.plot(g[xcol], g["hit_rate"], ls=ls, color=colr, lw=lw, zorder=3,
+                        label=label if (row == 0 and col == 0) else None)
+                # Direct labels were tried and abandoned: the curves converge at
+                # the right hand edge, which is the finding, so labels placed
+                # there collide. A legend in the first panel is the honest fix.
             if row == 0:
                 ax.set_xlim(0, 0.15)
                 ax.set_xlabel("false alarm rate")
@@ -285,6 +277,9 @@ def fig_warning(sweep_path="threshold_sweep.csv"):
             ax.set_ylim(0, 1.02)
             if col == 0:
                 ax.set_ylabel("hit rate")
+            if row == 0 and col == 0:
+                ax.legend(loc="lower right", fontsize=6.6, handlelength=2.4,
+                          borderpad=0.2, labelspacing=0.25)
             strip(ax)
 
     fig.savefig("fig5_warning.png")
