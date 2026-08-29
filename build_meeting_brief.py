@@ -213,6 +213,7 @@ story.append(Paragraph("5. Results", h1))
 story.append(Paragraph("5.1 Research Question 1: forecast accuracy", h2))
 story.extend(table([
     ["Model", "h = 1", "h = 2", "h = 3"],
+    ["GRU (range over three seeds)", "0.918 to 0.935", "0.885 to 0.898", "0.840 to 0.879"],
     ["ARIMA with Fourier terms", "0.940", "0.883", "0.832"],
     ["Random forest, change target", "0.962", "0.918", "0.898"],
     ["Gradient boosting, change target", "0.978", "0.937", "0.881"],
@@ -220,15 +221,23 @@ story.extend(table([
     ["Persistence", "1.000", "1.000", "1.000"],
     ["Climatology", "1.415", "1.060", "0.947"],
     ["Seasonal naive, lag 7", "1.759", "1.325", "1.168"],
-], [175, 65, 65, 65], highlight_row=1))
+], [175, 82, 82, 82]))
 story.append(Paragraph(
-    "The classical model beats every machine learning model at every horizon. On a "
-    "strongly persistent series the optimal forecast is close to a smooth function of "
-    "the recent past, which ARIMA represents exactly and a tree can only approximate in "
-    "steps, and three thousand daily observations is a small sample for a flexible "
-    "learner. Modelling the change rather than the level improves both tree models, "
-    "because trees cannot extrapolate beyond the targets they were trained on and this "
-    "series drifts downward across the decade.", body))
+    "The recurrent network is the best model at one day ahead, beating ARIMA under "
+    "every initialisation seed tried. ARIMA is the best at two and three days, also "
+    "under every seed. So the machine learning wins at the shortest horizon and the "
+    "classical model wins as the horizon lengthens. That is consistent with the "
+    "mechanism: the network exploits short range nonlinear structure, while at longer "
+    "horizons the seasonal component dominates and the Fourier terms carry it more "
+    "cleanly. The tree models beat persistence but not ARIMA at any horizon, and "
+    "modelling the change rather than the level improves them, because trees cannot "
+    "extrapolate beyond the targets they were trained on and this series drifts "
+    "downward across the decade.", body))
+story.append(Paragraph(
+    "The network is reported as a range because the spread across seeds is 0.017 at one "
+    "day, 0.013 at two and 0.039 at three. At three days that spread exceeds the gap "
+    "between the network and five of the other models. A single seed neural network "
+    "number is not a result.", body))
 story.append(Paragraph(
     "<b>The first version of this result was wrong and is worth reporting as such.</b> "
     "With fixed hyperparameters, gradient boosting scored 1.152 at one day ahead, worse "
@@ -306,12 +315,13 @@ for i, (q, ctx) in enumerate([
      "warning system it catches more, 0.932 against 0.900, at 116 alarms per year against "
      "107. A systematic tendency to under-forecast seems the wrong failure mode for a "
      "hazard warning, but the choice should be argued rather than assumed."),
-    ("Whether the remaining modelling is worth the time.",
-     "The plan allows a recurrent network as the final model. Given that the spread "
-     "across all seven existing models at a fixed alarm budget is five points of hit "
-     "rate, my expectation is that it changes nothing material and that the time is "
-     "better spent on the writing and on the sensitivity analyses. I would rather have "
-     "your view than make that call alone."),
+    ("How many seeds to report for the network.",
+     "The recurrent network was nearly dropped on the grounds that it was unlikely to "
+     "matter, and it turned out to be the best model at one day ahead. Its results vary "
+     "with initialisation by up to 0.039 of relative error, so the intention is to run "
+     "five seeds and report the range rather than a point. Please confirm that is the "
+     "standard you want, since it makes the table harder to read but the claim harder "
+     "to dispute."),
 ], 1):
     story.append(Paragraph(f"<b>{i}. {q}</b> {ctx}", bullet, bulletText="\u2022"))
 

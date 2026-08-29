@@ -43,6 +43,8 @@ The idea: daily pollution data for one Indian city, most likely Delhi. Predict c
 | `software_setup_guide_aqi_forecast.md` | Data sources, packages, working order for this project |
 | `data/delhi_clean.csv` | THE dataset. 3,093 usable days, 2016-11-09 to 2026-08-27. Built from `data/delhi.csv` by step 1b. |
 | `data/delhi.csv` | Raw download, kept so the cleaning can be rerun with different thresholds. |
+| `step08_gru.py` | Gated recurrent network in the same harness. Takes `--seed`; report a range, not a point. |
+| `forecasts_with_gru.csv` | All ten models by three horizons. The final RQ1 table. |
 | `step07_warning.py` | Direct classification arm plus the decision threshold sweep. RQ2 and RQ3. |
 | `threshold_sweep.csv` | Every model at every decision threshold. The source of the main figure. |
 | `step06_ml.py` | Ridge, random forest and histogram gradient boosting as Forecaster subclasses, level and change targets. |
@@ -437,9 +439,52 @@ little is not rhetoric.
 The final reported numbers should come from a rerun under the fixed code at the
 freeze point, not from the current CSVs.
 
+### Week 6, complete. The recurrent network changed the answer to RQ1.
+
+**It should not have been skipped, and I advised skipping it.** On the strength of
+the threshold result I recommended dropping it as unlikely to matter. That was
+wrong and the record should say so: it is the best model at one day ahead.
+
+rMAE, and for the network the range across three initialisation seeds:
+
+| Model | h=1 | h=2 | h=3 |
+|---|---|---|---|
+| GRU, 30 day sequence | **0.918 to 0.935** | 0.885 to 0.898 | 0.840 to 0.879 |
+| ARIMA + Fourier | 0.940 | **0.883** | **0.832** |
+| random forest, change target | 0.962 | 0.918 | 0.898 |
+| gradient boosting, change target | 0.978 | 0.937 | 0.881 |
+| ridge | 0.997 | 0.952 | 0.897 |
+| persistence | 1.000 | 1.000 | 1.000 |
+
+**The corrected answer to RQ1.** At one day ahead the recurrent network beats
+ARIMA under every seed tried. At two and three days ARIMA beats it under every
+seed. So machine learning wins at the shortest horizon and the classical model
+wins as the horizon lengthens, which is a more interesting result than either
+clean sweep and is consistent with the mechanism: the network exploits short range
+nonlinear structure, while at longer horizons the seasonal component dominates and
+the Fourier terms carry it more cleanly.
+
+**Report the network as a range, never as a point.** The spread across seeds is
+0.017 at h=1, 0.013 at h=2 and 0.039 at h=3. At three days that spread exceeds the
+gap between the network and five of the other models. A single seed neural network
+number is not a result, and stating one would be the same error as the gradient
+boosting hyperparameters in week 4. Run five seeds for the final table.
+
+**A methodological cost worth a paragraph.** Every other model in the suite handles
+missing days honestly: the state space models skip the measurement update at a gap,
+gradient boosting takes NaN natively. A recurrent network can do neither, since it
+must be handed a value at every timestep. Gaps are therefore carried forward with a
+separate missingness channel. The one architecture the supervisor asked for is the
+one architecture in the suite that cannot represent "I do not know".
+
+**None of this disturbs the week 5 finding.** The spread across all ten models at a
+fixed alarm budget remains far smaller than the spread across budgets.
+
 ### Immediate next steps
 
-Week 6: the recurrent network, then freeze. Given the finding above, the honest
+Modelling is now complete. Remaining before the freeze: five seed runs of the
+network for the final table, and the sensitivity analysis rerunning the pipeline
+without `--max-value 1000`. Then writing, methodology section first. Given the finding above, the honest
 expectation is that it changes nothing material, and the report should say so.
 Do not let it eat more than three days. Then the sensitivity run without
 `--max-value 1000`, and modelling stops on 30 September.
