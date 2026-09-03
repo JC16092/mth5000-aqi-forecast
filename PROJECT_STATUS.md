@@ -445,16 +445,30 @@ freeze point, not from the current CSVs.
 the threshold result I recommended dropping it as unlikely to matter. That was
 wrong and the record should say so: it is the best model at one day ahead.
 
-rMAE, and for the network the range across three initialisation seeds:
+rMAE. **Final, from five seeds run on 29 August.**
 
 | Model | h=1 | h=2 | h=3 |
 |---|---|---|---|
-| GRU, 30 day sequence | **0.918 to 0.935** | 0.885 to 0.898 | 0.840 to 0.879 |
-| ARIMA + Fourier | 0.940 | **0.883** | **0.832** |
+| GRU, range over 5 seeds | **0.915 to 0.935** | 0.885 to 0.898 | 0.832 to 0.879 |
+| ARIMA + Fourier | 0.940 | **0.883** | **0.8318** |
 | random forest, change target | 0.962 | 0.918 | 0.898 |
 | gradient boosting, change target | 0.978 | 0.937 | 0.881 |
 | ridge | 0.997 | 0.952 | 0.897 |
 | persistence | 1.000 | 1.000 | 1.000 |
+
+Seed by seed, so the claim is exact:
+
+| | seed 0 | seed 1 | seed 2 | seed 3 | seed 4 | ARIMA |
+|---|---|---|---|---|---|---|
+| h=1 | 0.9177 | 0.9241 | 0.9347 | 0.9154 | 0.9212 | 0.9401 |
+| h=2 | 0.8924 | 0.8981 | 0.8853 | 0.8855 | 0.8926 | 0.8827 |
+| h=3 | 0.8792 | 0.8568 | 0.8401 | 0.8592 | 0.8321 | 0.8318 |
+
+**h=1: the network beats ARIMA in 5 of 5 seeds.** Robust, report it as a win.
+**h=2: ARIMA beats the network in 5 of 5**, by 0.003 against the best seed.
+**h=3: ARIMA beats the network in 5 of 5, but by 0.0003 against seed 4.** That is
+a tie. Do not claim a win for either at three days; say they are indistinguishable
+and give both numbers.
 
 **The corrected answer to RQ1.** At one day ahead the recurrent network beats
 ARIMA under every seed tried. At two and three days ARIMA beats it under every

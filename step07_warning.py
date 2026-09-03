@@ -316,6 +316,9 @@ def main():
     ap.add_argument("--fourier", type=int, default=4)
     ap.add_argument("--refit-every", type=int, default=90)
     ap.add_argument("--burn-in", type=int, default=1095)
+    ap.add_argument("--reuse-classification",
+                    help="path to an existing classifier run, to redo only the "
+                         "sweep after new regression models are added")
     ap.add_argument("--out-clf", default="forecasts_classification.csv")
     ap.add_argument("--out-sweep", default="threshold_sweep.csv")
     ap.add_argument("--test", action="store_true")
@@ -334,20 +337,29 @@ def main():
                                             periods=max(HORIZONS), freq="D"))
     exog = fourier_terms(extended, K=args.fourier)
 
-    models = [
-        ClassifierForecaster("logistic", make_logistic, feats, cols),
-        ClassifierForecaster("forest_clf", make_forest_clf, feats, cols),
-        ClassifierForecaster("hgb_clf", make_hgb_clf, feats, cols, handles_nan=True),
-    ]
-    first, last = s.index[args.burn_in], s.index[-max(HORIZONS) - 1]
+    if args.reuse_classification:
+        # The classifiers are the slow part and do not change when a new
+        # regression model is added, so the sweep can be redone without refitting
+        # them. Only valid if the feature table and origins are unchanged.
+        clf = pd.read_csv(args.reuse_classification, parse_dates=["origin"])
+        print(f"\n  Reusing {args.reuse_classification} "
+              f"({len(clf)} rows, {clf['model'].nunique()} classifiers). Not refitting.")
+    else:
+        models = [
+            ClassifierForecaster("logistic", make_logistic, feats, cols),
+            ClassifierForecaster("forest_clf", make_forest_clf, feats, cols),
+            ClassifierForecaster("hgb_clf", make_hgb_clf, feats, cols, handles_nan=True),
+        ]
+        first, last = s.index[args.burn_in], s.index[-max(HORIZONS) - 1]
 
-    print("\n" + "=" * 72)
-    print("ARM B: DIRECT CLASSIFICATION, ROLLING ORIGIN")
-    print("=" * 72)
-    print(f"  origins {first.date()} to {last.date()}, refit every {args.refit_every} days")
-    clf = rolling_origin(s, exog, models, first, last, refit_every=args.refit_every)
-    clf.to_csv(args.out_clf, index=False)
-    print(f"  Wrote {args.out_clf} ({len(clf)} rows).")
+        print("\n" + "=" * 72)
+        print("ARM B: DIRECT CLASSIFICATION, ROLLING ORIGIN")
+        print("=" * 72)
+        print(f"  origins {first.date()} to {last.date()}, "
+              f"refit every {args.refit_every} days")
+        clf = rolling_origin(s, exog, models, first, last, refit_every=args.refit_every)
+        clf.to_csv(args.out_clf, index=False)
+        print(f"  Wrote {args.out_clf} ({len(clf)} rows).")
 
     reg = pd.read_csv(args.regression, parse_dates=["origin"])
 

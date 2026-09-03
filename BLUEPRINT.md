@@ -4,15 +4,60 @@ Jaykumar Vinodbhai Chauhan, 34710280. Master of Mathematics, Monash University.
 Supervisor: Dr Tianhai Tian, School of Mathematics.
 Project: Machine Learning for Forecasting Hazardous Air Quality Days in Indian Cities.
 
-Written 20 August 2026. Nine weeks counted from today.
+**RE-ANCHORED 29 August 2026. The deadline is the first week of October, not 22
+October.** Everything below the horizontal rule is the original nine week plan and
+is kept only as a record of how the modelling was sequenced. It is superseded.
 
-**Submission: Thursday 22 October 2026.** Confirm this against the unit guide in
-week 1 and correct this file if it is wrong. Every date below moves with it.
+## The real schedule
 
-The plan front-loads deliberately. The core project is finished at the end of
-week 6, which leaves three weeks of slack. That is not padding. Two of those
-weeks are writing and one is the buffer that absorbs whatever goes wrong,
-because something will.
+Working date: **Friday 2 October 2026**, the conservative reading of "first week
+of October". Confirm the exact date and tell me; if it is later, the extra time
+goes to the writing.
+
+**Modelling is finished.** Ten models, three horizons, 2,303 origins, all tested.
+Nothing below requires fitting another model. What remains is writing, two short
+robustness runs, and revision.
+
+| Phase | Dates | Work |
+|---|---|---|
+| A | Sat 29 Aug to Sun 6 Sep | Methodology and Results sections. Both describe work already done. Run the five network seeds and the sensitivity analysis in the background. |
+| B | Mon 7 Sep to Sun 13 Sep | Introduction, Literature, Data. Literature is the long pole: every citation verified against CrossRef. |
+| C | Mon 14 Sep to Fri 18 Sep | Discussion, Conclusion, Abstract. Assemble and proofread. **Full draft to Dr Tian on Friday 18 September.** |
+| D | Mon 21 Sep to Fri 25 Sep | His feedback arrives. Revise. |
+| E | Mon 28 Sep to Thu 1 Oct | Final figures at publication resolution, reference check, read on paper, submit. |
+
+Send the draft on 18 September and not later. A supervisor given four days
+reviews differently from one given a week, and week D has no slack in it.
+
+## The report
+
+`report/main.tex`, compiled with `latexmk -pdf main.tex`. Every table is generated
+from the result files by `report/make_tables.py`, so no number is transcribed by
+hand and nothing can drift out of step with the code.
+
+Sections marked `% TODO Jay` in the source are yours. Everything describing what
+the project did is drafted. The Literature section is deliberately empty: I will
+not invent a citation, and the four areas to cover with suggested searches are in
+the comments there.
+
+**If you do not have LaTeX installed, use Overleaf.** It runs in the browser, it
+is free, it is what most Monash students use, and it avoids a four gigabyte
+MacTeX install in the week you should be writing. Upload the `report` folder as a
+project and it compiles as is.
+
+## What still has to be run
+
+1. Five seeds of the recurrent network, `--seed 0` through `4`, and report the
+   range rather than a point.
+2. The sensitivity analysis: rerun the cleaning without `--max-value 1000` and
+   confirm no conclusion moves. This converts the weakest assumption in the
+   project into a stated robustness check.
+
+Both are background jobs. Neither blocks the writing.
+
+---
+
+## The original nine week plan, superseded, kept for the record
 
 | Week | Dates | Objective | Gate at the end |
 |---|---|---|---|

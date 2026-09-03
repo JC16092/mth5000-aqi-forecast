@@ -11,6 +11,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from matplotlib.ticker import MultipleLocator
 import statsmodels.api as sm
 from statsmodels.tsa.stattools import acf
@@ -90,19 +91,29 @@ def fig_coverage(raw):
     df["cadence"] = df["year"].map(cad)
     df["cov"] = 100 * df["n_obs"] / df["cadence"]
 
-    fig, axes = plt.subplots(1, 2, figsize=(W, 2.4),
-                             gridspec_kw={"width_ratios": [1.55, 1], "wspace": 0.42})
+    fig, axes = plt.subplots(1, 2, figsize=(W, 2.75),
+                             gridspec_kw={"width_ratios": [1.55, 1], "wspace": 0.45,
+                                          "top": 0.80})
 
     ax = axes[0]
     ax.plot(df.index, df["n_obs"], ".", ms=0.9, color="0.5", zorder=2)
     ax.plot(df.index, df["cadence"], color="black", lw=1.0, zorder=4)
     ax.axhline(24, color="black", ls=(0, (4, 3)), lw=0.8, zorder=3)
-    ax.text(df.index[40], 20.5, "denominator OpenAQ assumes (24)", fontsize=7.2, va="top")
-    ax.text(df.index[40], 51.0, "readings in a full day, taken from the data",
+    # Both annotations sit in the empty band above the data rather than on top
+    # of the scatter, which was unreadable in print.
+    # Label each line at its right hand end, in clear space, rather than over
+    # the scatter, which was unreadable in print.
+    # Offset off the lines themselves, so neither label reads as a strikethrough.
+    ax.text(df.index[-1], 19, "  assumed 24", fontsize=7.2, va="center", ha="left")
+    ax.text(df.index[-1], 53, "  actual", fontsize=7.2, va="center", ha="left")
+    ax.text(df.index[40], 55, "readings contributing to each daily mean",
             fontsize=7.2, va="bottom")
     ax.set_ylabel("readings per day")
-    ax.set_ylim(0, 56)
-    ax.set_title("(a) The cadence changed; the assumption did not", loc="left")
+    ax.set_ylim(0, 62)
+    ax.set_xlim(df.index[0], df.index[-1] + pd.Timedelta(days=650))
+    ax.xaxis.set_major_locator(mdates.YearLocator(2))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    ax.set_title("(a) The cadence changed; the assumption did not", loc="left", pad=8)
     strip(ax)
 
     ax = axes[1]
@@ -117,13 +128,12 @@ def fig_coverage(raw):
     ax.barh(y, rate, height=0.55, color="0.45", edgecolor="none")
     for yi, r, ni in zip(y, rate, n):
         ax.text(r + 0.5, yi, f"{r:.1f}   (n = {ni})", va="center", fontsize=7.2)
-    ax.set_yticks(y); ax.set_yticklabels(labels)
+    ax.set_yticks(y); ax.set_yticklabels([f"{l}%" for l in labels])
     ax.set_xlabel("days above 500, per 1000 observed")
     ax.set_xlim(0, max(rate) * 1.55)
     ax.set_xticks([])
-    ax.set_title("(b) Impossible values cluster where\n      true coverage is poor", loc="left")
-    ax.text(-0.02, 1.0, "true coverage (%)", transform=ax.transAxes, fontsize=7.6,
-            ha="right", va="bottom", color="0.3")
+    ax.set_title("(b) Implausible values by true coverage\n      of the day",
+                 loc="left", pad=8)
     strip(ax, left=False)
     ax.spines["bottom"].set_visible(False)
     fig.savefig("fig2_coverage.png")
@@ -209,7 +219,8 @@ def fig_annual(clean):
     ax.plot(months, med, color="black", lw=1.2, zorder=4)
     ax.plot(months, med, "o", ms=3, color="black", zorder=5)
     ax.axhline(THRESHOLD, color="black", ls=(0, (4, 3)), lw=0.8, zorder=3)
-    ax.text(1.1, THRESHOLD + 8, "hazard threshold", fontsize=7.2)
+    # Placed in the summer trough, where the line has nothing under it.
+    ax.text(6.5, THRESHOLD + 10, "hazard threshold", fontsize=7.2, ha="center")
     ax.set_xticks(months); ax.set_xticklabels(names)
     ax.set_ylabel("PM2.5 (µg per cubic metre)")
     ax.set_xlabel("month")
