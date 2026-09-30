@@ -568,6 +568,24 @@ verified via CrossRef that they exist and match their titles. Read them
 yourself before treating the Literature section as final; this project holds
 everything else to a higher verification bar than that.
 
+**A second gap found and fixed after first calling this "done": Table 4's
+GRU row was silently seed-0-only.** `forecasts_with_gru.csv` turned out to be
+seed 0 exclusively (checked by comparing `y_pred` against each
+`gru_seed{0..4}.csv` directly), so the earlier fix that put GRU into Table 4
+had quietly broken this project's own rule of never reporting the network as
+a single-seed point, the same rule Table 3 follows correctly. Fixed by
+rerunning `step07_warning.py` once per seed
+(`threshold_sweep_gru_seed{0..4}.csv`) and extending `table_budget()` in
+`make_tables.py` to report GRU as a min-max range there too, mirroring
+`table_accuracy()`. Spread across seeds is small, 0.006 to 0.014 in hit rate,
+so this reinforces the central finding rather than complicating it. The top
+"Best hit rate" summary rows in Table 4 still derive from seed 0 alone, a
+roughly 0.002 difference from the true 5-seed best, which is below this
+project's own established noise floor and was left as is, flagged rather
+than silently decided. **Lesson for next time: "done" needs an actual audit,
+not just a compile-and-look check** — this was found only because it was
+directly challenged.
+
 **What is actually left:**
 
 1. Read the four new Literature citations and confirm the characterisation

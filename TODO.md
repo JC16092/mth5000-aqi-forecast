@@ -10,6 +10,18 @@ week of November 2026.**
 
 ---
 
+## Found and fixed after first calling the report "done" (30 Sep, later same day)
+
+- [x] Table 4's GRU row was silently seed-0-only (`forecasts_with_gru.csv` is
+      exactly seed 0). Reran the threshold sweep across all 5 seeds and Table 4
+      now reports GRU as a range, matching Table 3's own rule. Spread is small
+      (0.006–0.014), reinforcing rather than complicating the main finding.
+- [ ] **Not fixed, flagged instead:** Table 4's top "Best hit rate" summary
+      rows still use seed 0's curve, about 0.002 off the true 5-seed best.
+      Below this project's own noise floor; a judgement call, not an oversight.
+
+---
+
 ## Week 1 — sensitivity check and Discussion 6.1
 
 - [x] Re-read PROJECT_STATUS.md and BLUEPRINT.md, confirm the venv still works
