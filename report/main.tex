@@ -42,10 +42,25 @@ School of Mathematics, Monash University}
 
 \begin{abstract}
 \noindent
-% TODO write last, once the discussion is settled. Roughly 200 words.
-% It must state the threshold finding first, not the model comparison.
-[Abstract to be written last. Lead with the decision threshold result, not with
-which model won.]
+Air pollution in Indian cities regularly reaches hazardous concentrations,
+and a forecast is useful only if it arrives before the hazardous day does.
+This project forecasts daily PM2.5 one to three days ahead at a Delhi monitor
+and evaluates the forecasts as a warning system rather than by average error
+alone. The central finding is that the alarm budget a decision maker accepts
+dominates the choice of model. Across ten specifications, from simple
+benchmarks and a classical ARIMA model with annual Fourier terms to four
+machine learning regressors and a recurrent network, the spread in hit rate
+at a fixed alarm budget is about five percentage points, while moving the
+budget from forty to one hundred alarms a year moves the hit rate by fifty.
+Machine learning earns its place only partially. The classical model beats
+every machine learning regressor at every horizon, a result strengthened
+rather than weakened by a sensitivity analysis on the cleaning threshold, and
+the one model that does win, a recurrent network, wins only at one day ahead,
+reported as a range across seeds rather than a single favourable one. Two
+real defects in the source monitor, a clipped instrument ceiling and a
+miscalculated coverage statistic, were diagnosed and corrected before
+modelling began. The recommendation is to design a warning system around its
+alarm budget, treating the forecasting model as a secondary refinement.
 \end{abstract}
 
 % ============================================================================
