@@ -469,8 +469,28 @@ without stating the run to run variation, is not supported by the evidence.
 % TODO expand each of these into a short paragraph.
 % 1. One station, and a diplomatic post monitor rather than the official network.
 % 2. One city. Nothing here establishes that any of it transfers.
-% 3. The upper cleaning threshold of 1000 is a judgement; see the sensitivity
-%    analysis and report whether conclusions moved.
+
+The upper cleaning threshold of 1000\,\textmu g\,m$^{-3}$ is a judgement rather
+than a fact, and its effect on the reported conclusions was checked directly
+rather than assumed. Restoring the seven days it removes, including the three
+identical readings at 1990 diagnosed in Section~\ref{sec:defects} as a clipped
+instrument ceiling, gives 3{,}100 usable days and 927 exceedance days rather
+than 3{,}093 and 920, a small shift. Refitting the full rolling-origin harness
+on this uncapped series leaves the ARIMA specification essentially unchanged,
+0.935 against 0.940 at one day ahead and 0.829 against 0.832 at three days,
+because working in logarithms and differencing the series absorbs the
+contamination. The machine learning models are not so protected. Ridge moves
+from a near tie with persistence to a clear loss at one day ahead, 0.997 to
+1.118, and gradient boosting on the level target moves from a narrow win over
+persistence to a loss at three days, 0.883 to 1.006. The central finding of
+Research Question 1, that the classical benchmark beats every machine learning
+model at every horizon, therefore does not merely survive removing the
+threshold; it strengthens, because the models it beat most narrowly are
+precisely the ones most exposed to the uncleaned tail. The threshold matters,
+but it matters more to the machine learning suite than to the model this
+project ultimately recommends.
+
+% TODO expand each of these into a short paragraph.
 % 4. Hyperparameters were selected from small explicit grids, not exhaustively.
 % 5. No meteorological covariates. Wind speed in particular is a known driver.
 
