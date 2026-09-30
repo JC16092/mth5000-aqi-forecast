@@ -19,6 +19,16 @@ week of November 2026.**
 - [ ] **Not fixed, flagged instead:** Table 4's top "Best hit rate" summary
       rows still use seed 0's curve, about 0.002 off the true 5-seed best.
       Below this project's own noise floor; a judgement call, not an oversight.
+- [x] Full audit of every hand-typed number in `main.tex` against its
+      source. Found and fixed two real errors: the coverage-defect sentence
+      in Data (wrong denominator, 1,085 was over 3,467 rows not 3,199), and
+      the Fourier-ablation claim in Results (traced to a stale week-2 run;
+      correct current figure is 3.3/5.8 points, not 4.5/10). Confirmed
+      correct on recomputation: Tables 1–2, the periodogram, ACF lags 6/7/8,
+      the day-of-week ANOVA/Kruskal-Wallis tests, the Fourier R² of 0.69,
+      and the GRU seed-spread numbers. Also fixed a long-standing overfull
+      hbox (Table 3 needed footnotesize). Report now compiles with zero
+      warnings.
 
 ---
 

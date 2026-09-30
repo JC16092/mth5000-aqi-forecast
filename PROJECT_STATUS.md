@@ -586,6 +586,31 @@ than silently decided. **Lesson for next time: "done" needs an actual audit,
 not just a compile-and-look check** — this was found only because it was
 directly challenged.
 
+**A full audit pass followed, checking every hand-typed number in main.tex
+against its source rather than trusting a clean compile.** Two more real
+errors found and fixed:
+
+- The coverage-defect sentence in Data was internally inconsistent: "1,085
+  of 3,199 observed days" mixed a numerator computed over all 3,467 raw
+  rows (including the 268 with no value at all) with a denominator that
+  excluded those 268. Fixed to state the correct population (3,467) and
+  what 268 actually is.
+- The Fourier-ablation claim in Results ("4.5 points at h=1, 10 at h=3")
+  traced to a stale week 2 single-split run. `forecasts_all.csv` doesn't
+  even carry a no-Fourier ARIMA variant any more. Reran `step05_rolling.py`
+  fresh: the real current figure is 3.3 points at h=1, 5.8 at h=3, same
+  story, about half the claimed size.
+
+Confirmed correct on direct recomputation, no changes needed: Table 1 and
+Table 2 (byte-identical dataset on a fresh rerun); the periodogram's six
+dominant periods; ACF at lags 6/7/8; the day-of-week ANOVA (F=1.13, p=0.34,
+a hardcoded plot label that happened to still be right) and Kruskal-Wallis
+(p=0.77); the Fourier R-squared of 0.69; and the GRU seed-spread figures.
+
+Also fixed a long-standing overfull hbox present since the very first
+compile (Table 3 needed `footnotesize`, same as Table 4). The report now
+compiles with zero warnings for the first time.
+
 **What is actually left:**
 
 1. Read the four new Literature citations and confirm the characterisation
