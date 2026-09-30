@@ -222,9 +222,11 @@ which identifies incomplete days as the mechanism rather than a coincidence.
 
 The correction takes the reporting cadence from the data, using the ninetieth
 percentile of observation counts within each year, which follows the 2025 change
-in reporting interval automatically. Recomputed on that basis, 1{,}085 of 3{,}199
-observed days fall below 75 per cent coverage rather than the 268 that the
-published completeness figure implies.
+in reporting interval automatically. Recomputed on that basis, 1{,}085 of the
+3{,}467 raw calendar-linked days fall below 75 per cent true coverage, far more
+than the 268 days that have no recorded value at all and would be the only ones
+flagged by a check for whether a value exists rather than how reliably it was
+measured.
 
 \begin{table}[htbp]
 \centering
@@ -426,6 +428,7 @@ evaluation over 2{,}303 origins. Lower is better and 1.000 is persistence. The
 recurrent network is given as the range over five initialisation seeds; it is the
 only model whose result depends on one.}
 \label{tab:accuracy}
+\footnotesize
 \input{tables/accuracy}
 \end{table}
 
@@ -453,9 +456,10 @@ five of the other models in the table, so a single seed could have been reported
 as beating them or losing to them at the analyst's convenience.
 
 Two subsidiary results support the specification choices. Removing the Fourier
-terms from the ARIMA degrades it by 4.5 points of relative error at one day and
-by 10 points at three, so the seasonal terms earn their place and increasingly so
-with horizon. Modelling the change from the origin rather than the level improves
+terms from the ARIMA degrades it by 3.3 points of relative error at one day and
+by 5.8 points at three, under the same rolling-origin harness, so the seasonal
+terms earn their place and increasingly so with horizon. Modelling the change
+from the origin rather than the level improves
 both tree models, because a tree cannot extrapolate beyond the targets it was
 trained on and this series drifts downward across the decade.
 
