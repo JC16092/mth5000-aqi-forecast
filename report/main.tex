@@ -81,24 +81,75 @@ report is organised accordingly.
 
 % ============================================================================
 \section{Literature}
-% TODO Jay. This is the one section I cannot write for you, because every
-% citation must be verified against CrossRef before it goes in and I will not
-% invent one. Four things to cover, with a suggested search for each:
-%
-%   1. Air quality forecasting in Delhi and northern India. Search: "PM2.5
-%      forecasting Delhi machine learning", "stubble burning air quality Delhi".
-%   2. Machine learning versus classical methods on time series. The M4 and M5
-%      forecasting competition papers are the standard references for the claim
-%      that simple methods are hard to beat on limited data.
-%   3. Warning system verification. Search: "probability of detection false
-%      alarm rate forecast verification", "critical success index meteorology".
-%      Jolliffe and Stephenson is the standard text.
-%   4. Negative and invalid readings in reference monitors. There is a 2023
-%      paper, "On thresholds for controlling negative particle (PM2.5) readings
-%      in air quality reporting", directly on point. Verify it.
 
-[To be written. See the notes in the source file for the four areas to cover and
-the searches to run. Verify every citation against CrossRef before use.]
+Machine learning applied specifically to Delhi PM2.5 is not a new proposal.
+\citet{masood2020delhi} fit several regression models directly to Delhi's
+particulate record to predict concentrations, establishing that a standard
+machine learning toolkit is applicable to this series at all.
+\citet{singh2025stubble} narrow the same problem to the stubble burning
+season, September to December, when biomass burning in neighbouring states
+drives the city's most severe episodes, and frame their evaluation around
+health risk rather than average error alone. Neither paper evaluates its
+forecasts as a warning system in the sense used here, with an explicit alarm
+budget and a false alarm rate reported alongside the hit rate; both report
+accuracy on held-out data without decomposing it by the operating point at
+which an alarm would actually be raised. That gap, between forecast accuracy
+and warning system performance, is the space this project's third research
+question occupies.
+
+The finding that a classical benchmark beats every machine learning model in
+this project's own results (Section~\ref{sec:results}) is not an anomaly
+against the wider forecasting literature. \citet{makridakis2020m4} report
+that, across 100{,}000 series in the M4 forecasting competition,
+sophisticated and hybrid methods did not uniformly outperform simple
+statistical benchmarks, and that the methods which did best combined rather
+than replaced classical structure. The mechanism proposed there, that a few
+thousand observations is a small sample for a flexible learner relative to
+the number of parameters a modern architecture can fit, applies directly to
+a project with roughly three thousand daily observations. The negative
+result for machine learning at two and three days ahead in
+Section~\ref{sec:results} is therefore the expected outcome under that
+literature rather than a surprise specific to this dataset.
+
+The distinction this project draws between forecast accuracy and warning
+system performance, hit rate, false alarm rate, and the trade-off between
+them as the decision threshold moves, follows the verification framework
+standard in operational meteorology \citep{jolliffe2012forecast}. That
+literature developed around exactly the situation faced here: a forecast of
+a rare, high-impact event, where the average error of a model is a poor
+guide to its value as a warning, and where a contingency table decomposed by
+decision threshold is more informative than any single accuracy score. Its
+central methodological point, that verification measures should be chosen to
+match the decision a forecast supports rather than borrowed by default from
+a different problem, motivated reporting hit rate and false alarm rate as a
+pair in Section~\ref{sec:method} rather than a single skill score.
+
+The data quality problems documented in Section~\ref{sec:defects} are not
+unique to this station. \citet{jiang2023negative} address the companion
+problem to the one found here: reference monitors occasionally report
+physically impossible negative PM2.5 concentrations, arising from instrument
+noise near zero rather than a true measurement, and propose a defensible
+statistical threshold below which a reading should be treated as invalid
+rather than retained or naively clipped to zero. Their approach and the one
+used in Section~\ref{sec:defects} for the clipped ceiling at 1990 share a
+method rather than a target: both treat an implausible value as a data
+quality question to be settled by evidence, specifically its relationship to
+the plausible range and its recurrence pattern, rather than by a rule of
+thumb applied uniformly. Considered together, artefacts at both ends of the
+distribution suggest that reference-grade air quality monitors carry
+systematic measurement pathologies that a forecasting study must
+characterise explicitly rather than assume away.
+
+Taken together, this literature places the project's contribution precisely.
+Applying an established model suite to Delhi's air quality problem is not
+new, and neither is the finding that classical methods hold their ground
+against machine learning on a modest sample. What the Delhi-specific studies
+above do not do is evaluate that comparison as a warning system with an
+explicit, varying alarm budget, using verification methodology from a
+literature that reaches air quality forecasting only indirectly.
+Section~\ref{sec:results} shows why that omission matters: the ranking of
+models looks different once accuracy is separated from operational
+usefulness, a finding neither literature taken alone would have anticipated.
 
 % ============================================================================
 \section{Data}
@@ -266,9 +317,10 @@ window was selected on a validation block. The classical model is ARIMA with
 annual Fourier terms as exogenous regressors, fitted on the logarithm of
 concentration, with the order selected from an explicit grid by the Akaike
 information criterion on the training block. Four are machine learning models
-fitted to the feature table: penalised linear regression, and random forest and
-histogram gradient boosting each fitted both to the level and to the change from
-the origin. The last is a gated recurrent network.
+fitted to the feature table: penalised linear regression, and random forest
+\citep{breiman2001random} and histogram gradient boosting each fitted both to
+the level and to the change from the origin. The last is a gated recurrent
+network.
 
 Working in logarithms is not cosmetic. Annual Fourier terms explain 69 per cent
 of the variance of the logarithm against considerably less on the raw scale, and
@@ -286,11 +338,14 @@ Every model was evaluated over 2{,}303 origins from 9 November 2019 to 24 August
 2026, spanning 6.8 years, with a three year burn-in, parameters re-estimated
 every 90 days and model state advanced daily in between.
 
-This is not a refinement of a single train-test split; it replaces one. On a
-single test block the ARIMA scored 0.940 in relative terms at one day ahead
-against 0.903 on the single block, because that block happened to be calmer than
-the training period and was flattering every model. A single split is one draw
-from a process, and a conclusion drawn from it is a conclusion about that period.
+This is not a refinement of a single train-test split; it replaces one, for the
+reason standard cross-validation is inappropriate for dependent data in the
+first place: shuffling origins lets a model trained on the future score itself
+against the past \citep{bergmeir2012crossvalidation}. On a single test block the
+ARIMA scored 0.940 in relative terms at one day ahead against 0.903 on the
+single block, because that block happened to be calmer than the training
+period and was flattering every model. A single split is one draw from a
+process, and a conclusion drawn from it is a conclusion about that period.
 
 The governing invariant is that at origin $t$ a model may use observations up to
 and including day $t$ and nothing else: not the value at $t+1$, not a parameter
@@ -604,7 +659,7 @@ on the data provider serving identical values at a later date, which the finding
 in Section~\ref{sec:data} suggests is not a safe assumption.
 
 % ============================================================================
-% \bibliographystyle{plainnat}
-% \bibliography{refs}
+\bibliographystyle{plainnat}
+\bibliography{refs}
 
 \end{document}
