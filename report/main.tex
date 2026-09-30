@@ -442,15 +442,37 @@ question nobody asked.
 
 % ============================================================================
 \section{Discussion}
-% TODO Jay. The argument is already made above; this section should say what it
-% means. Four things worth covering, in roughly this order.
+\label{sec:discussion}
 
 \subsection{The operational question dominates the modelling question}
 
-% TODO expand. The point: a decision maker choosing how many alarms per year to
-% tolerate has far more influence on how many hazardous days are caught than a
-% modeller choosing between ARIMA and a neural network. That is not an argument
-% against modelling; it is an argument for reporting the operating point.
+Table~\ref{tab:budget} and Figure~\ref{fig:warning} together make a single
+point, and this section states what follows from it rather than repeating the
+numbers. A decision maker who fixes how many alarms per year an operator or
+the public will tolerate has more influence over how many hazardous days are
+caught than a modeller choosing among the ten specifications fitted in this
+project. Moving the budget from 40 to 100 alarms a year moves the achievable
+hit rate at one day ahead from 0.377 to 0.873, a range of fifty points.
+Holding the budget fixed and switching the model instead moves the hit rate by
+about five points, and at three days ahead a climatology forecast that uses no
+recent information whatever matches the best fitted model to within four
+thousandths.
+
+This is not an argument against modelling. ARIMA and the recurrent network
+both earn real, if modest, gains over persistence in Table~\ref{tab:accuracy},
+and a better point forecast still narrows the range of thresholds worth
+considering. It is an argument about where the leverage in this problem
+actually sits. A hazardous air quality warning system is not a machine
+learning benchmark with a threshold attached to it afterwards; the threshold
+is the policy instrument, and the forecasting model only supplies its input.
+A comparison of models that does not first fix the alarm budget it was
+evaluated at has answered a question nobody who has to operate the system
+actually asked. The practical recommendation that follows is to treat the
+alarm budget as the primary subject of discussion with the health authority
+commissioning such a system, and the choice of forecasting model as a
+secondary refinement of a curve whose shape is already mostly fixed by what
+every model in this study shares: the persistence of concentration from one
+day to the next, and the annual cycle.
 
 \subsection{How large is a difference between models?}
 
@@ -466,9 +488,28 @@ without stating the run to run variation, is not supported by the evidence.
 
 \subsection{Limitations}
 
-% TODO expand each of these into a short paragraph.
-% 1. One station, and a diplomatic post monitor rather than the official network.
-% 2. One city. Nothing here establishes that any of it transfers.
+The analysis rests on a single monitor, OpenAQ location 8118, which
+Section~\ref{sec:data} shows is supplied through AirNow and is almost
+certainly a United States diplomatic post instrument rather than a station in
+the Central Pollution Control Board network. It was chosen because it is the
+only nearby monitor with a complete decade of record, against the eighteen
+months every CPCB station returns; the choice buys history at the cost of
+representativeness. The absence of a weekly cycle documented in
+Section~\ref{sec:weekly} is consistent with a diplomatic enclave rather than a
+roadside site, which supports this reading of the limitation rather than
+leaving it an unrelated coincidence, but it does not change the fact that
+every number in this report describes one point in the city rather than Delhi
+as a whole.
+
+The project forecasts one city. Delhi was chosen because its air quality
+problem is severe and well documented, not because it is representative of
+Indian cities generally. Pollution sources, meteorology, and the strength of
+the seasonal cycle that drives the Fourier terms in Section~\ref{sec:weekly}
+all vary by region, and a coastal city or one without a dominant biomass
+burning season could show a different balance between the classical and
+machine learning models, or a genuine weekly cycle where this station shows
+none. Nothing in this report should be read as a claim about any station or
+city other than the one it was fitted to.
 
 The upper cleaning threshold of 1000\,\textmu g\,m$^{-3}$ is a judgement rather
 than a fact, and its effect on the reported conclusions was checked directly
@@ -490,16 +531,63 @@ precisely the ones most exposed to the uncleaned tail. The threshold matters,
 but it matters more to the machine learning suite than to the model this
 project ultimately recommends.
 
-% TODO expand each of these into a short paragraph.
-% 4. Hyperparameters were selected from small explicit grids, not exhaustively.
-% 5. No meteorological covariates. Wind speed in particular is a known driver.
+Hyperparameters for the tree-based models were chosen at every refit from a
+small explicit grid, scored on a held-out slice of the training window taken
+in time order, rather than from an exhaustive or Bayesian search. This
+followed a real failure during development, in which fixed hyperparameters let
+gradient boosting overfit badly enough to score worse than persistence; the
+grid search fixed that specific problem, but a small grid can still miss a
+configuration that a wider search would find. The machine learning results in
+Table~\ref{tab:accuracy} should therefore be read as a lower bound on what
+those model classes could achieve with more computation, not as their ceiling.
+
+No meteorological covariate enters any model. Wind speed in particular is a
+well established driver of particulate dispersion and is a plausible source
+of the short-range structure that lets the recurrent network beat ARIMA at one
+day ahead. A version of this project with wind, temperature, and boundary
+layer height added to the feature table is the most direct extension; the
+\texttt{meteostat} package, which wraps NOAA and GHCN station data, would
+supply it without a new data acquisition problem. Its absence here is a scope
+decision made to fit the project inside nine weeks, not a claim that
+meteorology is unimportant.
 
 % ============================================================================
 \section{Conclusion}
-% TODO Jay, write last, and make it short. It should state the threshold finding,
-% note where machine learning did and did not earn its place, and say what you
-% would do next with more time, which is meteorological covariates and a second
-% station for external validation.
+
+This project set out to forecast hazardous air quality days in an Indian city
+and to evaluate the forecasts as a warning system rather than as a
+curve-fitting exercise, and the answer to the third research question turned
+out to dominate the other two. Across ten models spanning simple benchmarks, a
+classical time series model, four machine learning regressors, and a recurrent
+network, the spread in achievable hit rate at a fixed alarm budget is about
+five percentage points; the spread across alarm budgets, holding the model
+fixed, is about fifty. The choice a decision maker makes about how many alarms
+per year can be justified therefore has far more influence on how many
+hazardous days are caught than the choice a modeller makes among the
+specifications fitted here.
+
+Machine learning earned its place only partially. ARIMA with annual Fourier
+terms beats every machine learning regressor at every horizon, a result that
+strengthens rather than weakens under the sensitivity analysis in
+Section~\ref{sec:discussion}. The one machine learning method that does win,
+the recurrent network, does so only at one day ahead, and only when reported
+honestly as a range across five random initialisations rather than as a single
+favourable seed. The supervisor's instruction to try several methods rather
+than defaulting to ARIMA was the right one: it is what makes the negative
+result at two and three days credible, and what surfaces the one day ahead
+result that a project restricted to classical methods would never have found.
+
+Two extensions follow directly from the limitations above. Adding
+meteorological covariates, wind speed in particular, is the most direct route
+to improving the short horizon forecasts that the recurrent network already
+shows have room to improve. Repeating the analysis at a second, independent
+station, ideally one inside the Central Pollution Control Board network once
+its record lengthens, would test whether the findings here are a property of
+Delhi air quality or an artefact of the one diplomatic enclave monitor this
+project was restricted to. Until then, the central recommendation stands on
+its own: a hazardous air quality warning system should be designed around the
+alarm budget its operator can justify, with the forecasting model treated as a
+secondary refinement rather than the primary design choice.
 
 % ============================================================================
 \section*{Reproducibility}
