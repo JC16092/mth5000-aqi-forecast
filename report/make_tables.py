@@ -149,22 +149,50 @@ def table_warning(forecast_path, threshold=121.0):
 
 
 def table_budget(sweep_path):
+    import glob
     sw = pd.read_csv(sweep_path)
+    budgets = (40, 60, 80, 100)
+
+    # Every per-seed sweep that exists, for the network only. Mirrors the
+    # treatment in table_accuracy: a network result depends on its random
+    # initialisation, so it is reported as a range, never a single seed.
+    seed_sweeps = sorted(glob.glob(os.path.join(ROOT, "threshold_sweep_gru_seed*.csv")))
+    gru_range = None
+    if seed_sweeps:
+        per_seed = []
+        for f in seed_sweeps:
+            ssw = pd.read_csv(f)
+            cells = []
+            for b in budgets:
+                g = ssw[(ssw.model == "gru") & (ssw.horizon == 1) &
+                        (ssw.alarms_per_year <= b)]
+                cells.append(g["hit_rate"].max() if len(g) else float("nan"))
+            per_seed.append(cells)
+        arr = pd.DataFrame(per_seed, columns=budgets)
+        gru_range = (arr.min(), arr.max())
+        print(f"  GRU budget row reported over {len(seed_sweeps)} seeds")
+
     body = ["\\begin{tabular}{lrrrr}", "\\toprule",
             "Alarms per year & 40 & 60 & 80 & 100 \\\\", "\\midrule"]
     for h in (1, 2, 3):
         cells = []
-        for b in (40, 60, 80, 100):
+        for b in budgets:
             g = sw[(sw.horizon == h) & (sw.alarms_per_year <= b)]
             cells.append(f"{g['hit_rate'].max():.3f}" if len(g) else "--")
         body.append(f"Best hit rate, $h={h}$ & " + " & ".join(cells) + " \\\\")
     body.append("\\midrule")
     for name in ["gru", "arima_fourier", "hist_gbm_delta", "naive_carry", "climatology"]:
+        if name == "gru" and gru_range is not None:
+            lo, hi = gru_range
+            cells = [f"{lo[b]:.3f}--{hi[b]:.3f}" for b in budgets]
+            body.append(f"\\quad {esc(PRETTY['gru'])}, range over "
+                        f"{len(seed_sweeps)} seeds, $h=1$ & "
+                        + " & ".join(cells) + " \\\\")
+            continue
         cells = []
-        for b in (40, 60, 80, 100):
+        for b in budgets:
             g = sw[(sw.model == name) & (sw.horizon == 1) & (sw.alarms_per_year <= b)]
             cells.append(f"{g['hit_rate'].max():.3f}" if len(g) else "--")
-        # Single run, so no range is claimed here.
         body.append(f"\\quad {esc(PRETTY.get(name, name))}, $h=1$ & "
                     + " & ".join(cells) + " \\\\")
     body += ["\\bottomrule", "\\end{tabular}"]
