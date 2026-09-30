@@ -1,8 +1,14 @@
 # PROJECT STATUS: read this first
 
 Handover note so a new conversation can pick up without re-reading everything.
-For the schedule and the step by step plan, see `BLUEPRINT.md`.
-Last updated: 20 August 2026. Weeks 1 and 2 both complete on day one.
+For the schedule and the step by step plan, see `BLUEPRINT.md`, but note its
+dates are now stale (see below).
+Last updated: 30 September 2026. The report draft is complete except the
+Literature citations still need a personal read-through; see the new section
+near the end, "Week 7, after a stall".
+
+**Deadline: no longer fixed to BLUEPRINT.md's 19 to 22 October.** As of 30
+September there is runway to roughly the first week of November 2026.
 
 ---
 
@@ -40,6 +46,11 @@ The idea: daily pollution data for one Indian city, most likely Delhi. Predict c
 | File | What it is |
 |---|---|
 | `project_proposal_aqi_forecast.pdf` | THE approved proposal. ML version. Use this one. |
+| `PROJECT_LOGBOOK.pdf` | The full teaching record. Every concept, every step, every mistake, written for someone starting from zero. Built by `build_logbook.py`. Read Part V. |
+| `supervisor_meeting_3_prep.pdf` | The six page document to hand Tian: provenance, methods, results, code walkthrough. Built by `build_meeting_brief.py`. |
+| `supervisor_meeting_3_agenda.pdf` | The eighteen questions to ask Tian, with answer lines. Built by `build_meeting_agenda.py`. |
+| `report/main.tex` | The report. Compiles to 14 pages. **Every section is now written**, including Abstract, Introduction, Literature, Discussion, Limitations and Conclusion. Only optional polish remains (see "Week 7" below). |
+| `report/refs.bib` | Bibliography, 7 CrossRef-verified entries. `tectonic main.tex` runs bibtex automatically; no separate step needed. |
 | `software_setup_guide_aqi_forecast.md` | Data sources, packages, working order for this project |
 | `data/delhi_clean.csv` | THE dataset. 3,093 usable days, 2016-11-09 to 2026-08-27. Built from `data/delhi.csv` by step 1b. |
 | `data/delhi.csv` | Raw download, kept so the cleaning can be rerun with different thresholds. |
@@ -479,7 +490,7 @@ nonlinear structure, while at longer horizons the seasonal component dominates a
 the Fourier terms carry it more cleanly.
 
 **Report the network as a range, never as a point.** The spread across seeds is
-0.017 at h=1, 0.013 at h=2 and 0.039 at h=3. At three days that spread exceeds the
+0.019 at h=1, 0.013 at h=2 and 0.047 at h=3. At three days that spread exceeds the
 gap between the network and five of the other models. A single seed neural network
 number is not a result, and stating one would be the same error as the gradient
 boosting hyperparameters in week 4. Run five seeds for the final table.
@@ -494,14 +505,85 @@ one architecture in the suite that cannot represent "I do not know".
 **None of this disturbs the week 5 finding.** The spread across all ten models at a
 fixed alarm budget remains far smaller than the spread across budgets.
 
-### Immediate next steps
+### Week 7, after a stall. Resumed 30 September, report drafted to completion.
 
-Modelling is now complete. Remaining before the freeze: five seed runs of the
-network for the final table, and the sensitivity analysis rerunning the pipeline
-without `--max-value 1000`. Then writing, methodology section first. Given the finding above, the honest
-expectation is that it changes nothing material, and the report should say so.
-Do not let it eat more than three days. Then the sensitivity run without
-`--max-value 1000`, and modelling stops on 30 September.
+Work stopped for about three and a half weeks after week 6 (last activity
+around 4 September). Resumed 30 September. Two gaps were found and fixed
+before writing continued, then the whole remaining report was drafted in one
+session.
+
+**Gap found: the GRU was missing from Table 4 and the decision-threshold
+figure's source data.** `step07_warning.py` was still reading
+`forecasts_all.csv`, which predates the GRU, even though `make_tables.py`'s
+`table_budget()` already had `"gru"` first in its row list. Rerun as:
+
+```bash
+python step07_warning.py --regression forecasts_with_gru.csv \
+       --reuse-classification forecasts_classification.csv \
+       --out-sweep threshold_sweep.csv
+```
+
+The GRU lands at 0.371 / 0.554 / 0.721 / 0.873 hit rate across the 40 to 100
+alarm budgets at h=1, inside the same narrow band as every other model. This
+strengthens the week 5 finding rather than complicating it. Figure 5 was left
+alone; it deliberately caps itself at four curves for legibility, by its own
+comment, so the GRU's absence there is not a bug.
+
+**The `--max-value 1000` sensitivity run was done.** Rebuilt the cleaning
+without the cap (`data/delhi_clean_nocap.csv`, 3,100 days and 927 exceedances
+against 3,093 and 920 with the cap) and reran the full ML suite on it
+(`forecasts_all_nocap.csv`). ARIMA is essentially untouched: 0.935 against
+0.940 at h=1, 0.829 against 0.832 at h=3, because working in logs and
+differencing absorbs the clipped-ceiling contamination. The machine learning
+models are not protected the same way: ridge moves from a near tie with
+persistence to a clear loss at h=1 (0.997 to 1.118), and gradient boosting on
+the level target moves from a narrow win to a loss at h=3 (0.883 to 1.006).
+**RQ1's finding that ARIMA beats every ML model at every horizon strengthens
+rather than merely survives**, because the models it beat most narrowly are
+exactly the ones most exposed to the uncleaned tail. This is now written up
+in the Limitations section, with these exact numbers.
+
+**Everything else in the report was then written and compiled:**
+
+- Discussion §6.1 (the operational-question argument) and the remaining four
+  Limitations paragraphs (single station, single city, small hyperparameter
+  grids, no meteorological covariates).
+- The Conclusion.
+- The personal motivation paragraph, pulled from the approved proposal into
+  the Introduction, in the same position it held there.
+- The Literature review, all four areas from the old TODO, each anchored to
+  a CrossRef-verified citation: Masood & Ahmad (2020) and Singh & Srivastava
+  (2025) for Delhi/India ML forecasting; Makridakis et al. (2020, the M4
+  competition) for ML-vs-classical on limited data; Jolliffe & Stephenson
+  (2012) for warning-system verification; Jiang et al. (2023) for
+  negative/invalid monitor readings, the direct counterpart to this
+  project's own clipped-ceiling finding. Breiman (2001) and Bergmeir &
+  Benítez (2012) were also cited in Methodology, reused from the proposal's
+  own indicative references.
+- The Abstract, written last, leading with the alarm-budget finding rather
+  than which model won, ~230 words.
+
+**I have not read the four new Literature citations full-text**, only
+verified via CrossRef that they exist and match their titles. Read them
+yourself before treating the Literature section as final; this project holds
+everything else to a higher verification bar than that.
+
+**What is actually left:**
+
+1. Read the four new Literature citations and confirm the characterisation
+   of each is fair.
+2. A full read-through of `report/main.tex` end to end, since it was written
+   across sessions spanning weeks; check the voice is consistent.
+3. Optional: expand Results §5.2 ("Two arms of the same question") with more
+   classifier detail, from `threshold_sweep.csv`. Not a gap, just thinner
+   than the rest of Results.
+4. Decide when to send the complete draft to Dr Tian. Given the runway to
+   early November, sending it now rather than polishing alone longer is
+   probably worth more.
+
+Everything above is committed to git. `PROJECT_STATUS.md` and
+`supervisor_meeting_3_prep.pdf` still carry an older uncommitted edit from
+before this session; not touched.
 
 ### Environment, settled
 
