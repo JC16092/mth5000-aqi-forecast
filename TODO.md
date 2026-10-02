@@ -91,6 +91,20 @@ most accurate model in the whole suite.
       References now 45 entries, still exactly 4 pages. Also: the user said
       page count isn't a constraint on this report (up to 70 pages fine) —
       saved to memory, stop treating page growth as a cost.
+- [x] **Read those 5 new citations full-text** (user asked for "the four
+      new citations" — ambiguous against at least 3 candidate sets, read
+      all 5 of the just-added ones on recency grounds rather than guess).
+      No open-access full text for Hornik 1989, Zhang 1998, or LeCun 1998
+      (paywalled, pre-2000, no legitimate mirror found) but all three are
+      canonical results used here only at textbook-level, cross-checked
+      against independent secondary sources instead. Got real abstracts
+      for Liu 2020 and Lim 2021 via Semantic Scholar. **Found and fixed a
+      real mischaracterisation:** the report called the Temporal Fusion
+      Transformer an example of recurrence being "replaced altogether" by
+      self-attention; its actual abstract says it keeps a recurrent layer
+      for local processing and only adds attention for long-range
+      dependence — a hybrid, not a replacement. Fixed in `main.tex`.
+      Liu 2020's characterisation checked out as accurate, no change.
 
 ---
 

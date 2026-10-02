@@ -338,18 +338,21 @@ every model directly as a small number of Fourier terms
 (Section~\ref{sec:features}), which removes much of the advantage a CNN's
 automatic pattern detection would otherwise offer here.
 
-Transformer architectures replace recurrence altogether with self-attention,
-letting every timestep attend directly to every other one rather than
-propagating information step by step, and have been adapted for
-multi-horizon time series forecasting, for instance by the Temporal Fusion
-Transformer \citep{lim2021tft}. The appeal is long-range dependence without
-the vanishing-gradient problem a recurrent network has at all, but at the
-cost of a substantially larger parameter count than a small GRU, tuned and
-validated on datasets several orders of magnitude larger than the roughly
-three thousand daily observations available here. The same sample-size
-argument Section~\ref{sec:lit-ml} makes against flexible machine learning
-methods on a series this size applies with more force to an architecture
-built for sequences of many thousands of tokens.
+Transformer architectures, outside the time series domain, replace
+recurrence altogether with self-attention, letting every timestep attend
+directly to every other one rather than propagating information step by
+step. Adaptations for multi-horizon time series forecasting do not always
+make that same substitution outright: the Temporal Fusion Transformer
+\citep{lim2021tft}, for instance, keeps a recurrent layer for local,
+short-range processing and adds self-attention on top of it specifically
+for long-range dependence and interpretability, a hybrid rather than a
+wholesale replacement of recurrence. Either form carries the same
+practical cost relative to a small GRU: a substantially larger parameter
+count, tuned and validated on datasets several orders of magnitude larger
+than the roughly three thousand daily observations available here. The
+same sample-size argument Section~\ref{sec:lit-ml} makes against flexible
+machine learning methods on a series this size applies with more force to
+an architecture built for sequences of many thousands of tokens.
 
 Weighed against all three, a recurrent network is the architecture whose
 assumptions best match this project's data: it reads the sequence directly,
