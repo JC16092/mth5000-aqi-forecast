@@ -1135,20 +1135,60 @@ seasonal time series with trends) is accurate, no change needed.
 
 Recompiled clean, 41 pages. Committed and pushed.
 
+### Same day, a seventh pass: Results and Analysis was genuinely thin, specifically §4.2
+
+The user asked why Results and Analysis looked short. Checked by page: Introduction 3,
+Literature Review 7, Methodology 11, **Results and Analysis 5**, Discussion 3,
+Conclusion 2. The real cause wasn't the chapter overall so much as one
+section inside it: RQ1 had grown to three tables across several sessions,
+RQ3 had a table and a figure, and RQ2 ("Two Arms of the Same Question") was
+one paragraph with no numbers at all — exactly the "thinner than the rest
+of Results but not incomplete" gap `TODO.md` flagged back in September and
+left as optional. Fixed properly rather than left optional again.
+
+**The comparison had to be matched by algorithm, not by best-of-arm.** The
+forecast-then-threshold arm has 7 fitted regressors (ridge, random forest
+×2, gradient boosting ×2, ARIMA, GRU) against the classification arm's 3
+(logistic, two tree classifiers); comparing single best models would just
+measure which arm has more lottery tickets. Matched three pairs on shared
+algorithm instead: ridge vs.\ logistic, the change-target random forest vs.\
+its classifier, the change-target gradient boosting vs.\ its classifier.
+
+**The real finding, computed directly from `threshold_sweep.csv` via a new
+`table_arms()` in `make_tables.py` (no number hand-typed, same rule as
+everywhere else):** across all 3 pairs × 3 horizons × 4 budgets, 36
+comparisons, forecast-then-threshold wins 23, direct classification 12,
+one tie. That's a real lean, not the 50/50 the old one-paragraph version
+implied — but the margin is almost always small (median 0.010, max 0.054
+in hit rate), concentrated at the tighter budgets (40-80/yr); at 100/yr the
+two arms are close to indistinguishable. The edge is uneven by horizon too:
+9-of-12 at h=1, an exact 6-6 split at h=2, 8-of-12 at h=3. A plausible
+mechanism is offered (a classifier's label-direct optimisation doesn't
+have enough signal to beat a regressor's richer continuous output on a
+series this size) without overclaiming it as proven.
+
+New Table 4.4 (bold marks the winning arm per cell — added after noticing
+the caption promised this and the first draft of the table didn't actually
+do it). Results Chapter Summary updated to give RQ2 the same one-sentence
+treatment RQ1 and RQ3 already get. Recompiled clean, 42 pages. Committed
+and pushed.
+
 **What is still genuinely open, in priority order:**
 
 1. Decide when to send the complete draft to Dr Tian — unchanged, still the
-   main open item. Every citation-reading pass run so far has found and
-   fixed something real, which argues for one more full pass before
-   sending rather than assuming the draft is clean, but also means the
-   draft keeps getting more defensible each time, not less.
-2. Consider whether Results, Discussion, and Conclusion chapters would
-   benefit from the same subsection granularity the reference report uses
-   (cosmetic, low priority, unchanged for several passes now).
-3. The 29 references from three passes ago, and the four citations named
+   main open item. Every citation-reading and depth pass run so far has
+   found and fixed something real, which argues for one more full pass
+   before sending rather than assuming the draft is clean, but also means
+   the draft keeps getting more defensible each time, not less.
+2. Discussion and Conclusion are still comparatively short (3 and 2 pages)
+   next to Methodology's 11 — worth asking the user directly whether that
+   reflects genuine thinness worth fixing the way Results just was, or is
+   simply what those chapters should be (a results-heavy report's
+   Discussion is often rightly shorter than its Methodology).
+3. The 29 references from four passes ago, and the four citations named
    in the stale Week 3 `TODO.md` item if that turns out to be a different
-   set than what was just read — worth clarifying with the user directly
-   rather than guessing again.
+   set than what was already read — worth clarifying with the user
+   directly rather than guessing again.
 
 Positron as the editor, Python 3.13.15 in a `.venv` inside the project folder.
 The system `python3` is a 3.14 alpha and must not be used. Activate with

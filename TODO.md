@@ -105,6 +105,23 @@ most accurate model in the whole suite.
       for local processing and only adds attention for long-range
       dependence — a hybrid, not a replacement. Fixed in `main.tex`.
       Liu 2020's characterisation checked out as accurate, no change.
+- [x] **Fix Results and Analysis being genuinely thin, specifically §4.2
+      "Two Arms of the Same Question."** User asked why Results looked
+      short. By page: Methodology 11, Results 5 — RQ1 had grown to three
+      tables, RQ3 had a table and a figure, RQ2 was one paragraph with no
+      numbers at all. This is the "thinner than the rest of Results but
+      not incomplete" item flagged in the Week 5 section below, done
+      properly now rather than left optional. Matched 3 pairs by shared
+      algorithm (ridge vs.\ logistic, random forest change-target vs.\ its
+      classifier, gradient boosting change-target vs.\ its classifier) so
+      the comparison isn't just "best of 7 regressors vs.\ best of 3
+      classifiers." New `table_arms()` in `make_tables.py`, new Table 4.4
+      (bold marks the winner per cell). **Finding:** forecast-then-
+      threshold wins 23 of 36 matched comparisons to 12 (1 tie) — a real
+      lean, not the coin flip the old paragraph implied — but margins stay
+      small (median 0.010, max 0.054 hit rate), concentrated at the
+      tighter alarm budgets. Results Chapter Summary updated to give RQ2
+      the same one-sentence treatment RQ1/RQ3 get. 42 pages now.
 
 ---
 

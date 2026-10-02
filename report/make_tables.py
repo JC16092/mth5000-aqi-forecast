@@ -309,6 +309,78 @@ def table_weather_budget(pattern, budgets=(40, 60, 80, 100)):
     print(f"  weather budget table averaged over {len(files)} GRU weather seeds")
 
 
+def table_arms(sweep_path, budgets=(40, 60, 80, 100)):
+    """Research Question 2: forecast-then-threshold against direct
+    classification, matched by base algorithm so neither arm benefits from
+    simply having more candidate models to choose from.
+
+    Three matched pairs, the same algorithm trained two ways: ridge against
+    penalised logistic, the random forest's change-target variant against
+    the random forest classifier, and gradient boosting's change-target
+    variant against the gradient boosting classifier. h=1 only, mirroring
+    the convention already used for the per-model budget breakdown in
+    table_budget.
+    """
+    sweep = pd.read_csv(sweep_path)
+    pairs = [("ridge", "logistic", "Ridge vs.\\ penalised logistic"),
+             ("random_forest_delta", "forest_clf",
+              "Random forest (change) vs.\\ its classifier"),
+             ("hist_gbm_delta", "hgb_clf",
+              "Gradient boosting (change) vs.\\ its classifier")]
+
+    body = ["\\begin{tabular}{lrrrr}", "\\toprule",
+            "Alarms per year, $h=1$ & 40 & 60 & 80 & 100 \\\\", "\\midrule"]
+    for reg, clf, label in pairs:
+        reg_cells, clf_cells = [], []
+        for b in budgets:
+            r = operating_point_at_alarms(sweep, reg, 1, b)
+            c = operating_point_at_alarms(sweep, clf, 1, b)
+            rv = r["hit_rate"] if r is not None else None
+            cv = c["hit_rate"] if c is not None else None
+            # Bold whichever arm wins that cell; leave both plain on a tie,
+            # since bolding one would claim a winner that does not exist.
+            if rv is not None and cv is not None and not np.isclose(rv, cv):
+                reg_cells.append(f"\\textbf{{{rv:.3f}}}" if rv > cv else f"{rv:.3f}")
+                clf_cells.append(f"\\textbf{{{cv:.3f}}}" if cv > rv else f"{cv:.3f}")
+            else:
+                reg_cells.append(f"{rv:.3f}" if rv is not None else "--")
+                clf_cells.append(f"{cv:.3f}" if cv is not None else "--")
+        body.append(f"{label} & \\multicolumn{{4}}{{c}}{{}} \\\\")
+        body.append(f"\\quad forecast then threshold & " + " & ".join(reg_cells) + " \\\\")
+        body.append(f"\\quad direct classification & " + " & ".join(clf_cells) + " \\\\")
+    body += ["\\bottomrule", "\\end{tabular}"]
+    write("arms.tex", "\n".join(body) + "\n")
+
+    # The tally behind the "neither arm dominates" claim: every matched pair,
+    # every horizon, every budget, counted once each.
+    reg_wins = clf_wins = ties = 0
+    diffs = []
+    pair_models = [("ridge", "logistic"), ("random_forest_delta", "forest_clf"),
+                   ("hist_gbm_delta", "hgb_clf")]
+    for h in (1, 2, 3):
+        for reg, clf in pair_models:
+            for b in budgets:
+                r = operating_point_at_alarms(sweep, reg, h, b)
+                c = operating_point_at_alarms(sweep, clf, h, b)
+                if r is None or c is None:
+                    continue
+                d = r["hit_rate"] - c["hit_rate"]
+                diffs.append(d)
+                if abs(d) < 1e-9:
+                    ties += 1
+                elif d > 0:
+                    reg_wins += 1
+                else:
+                    clf_wins += 1
+    diffs = np.array(diffs)
+    tally = {"reg_wins": reg_wins, "clf_wins": clf_wins, "ties": ties,
+            "total": reg_wins + clf_wins + ties,
+            "mean_diff": float(diffs.mean()), "max_abs_diff": float(np.abs(diffs).max()),
+            "median_abs_diff": float(np.median(np.abs(diffs)))}
+    print(f"  arms tally: {tally}")
+    return tally
+
+
 def table_cleaning():
     rows = [("Value below zero", "5", "Mass concentration cannot be negative"),
             ("Coverage below 50\\%", "270", "Against the cadence taken from the data"),
@@ -337,8 +409,9 @@ def main():
     table_cleaning()
     if os.path.exists(sweep):
         table_budget(sweep)
+        table_arms(sweep)
     else:
-        print("  threshold_sweep.csv not found; skipping budget.tex")
+        print("  threshold_sweep.csv not found; skipping budget.tex and arms.tex")
 
     weather_ml = os.path.join(ROOT, "forecasts_weather_ml.csv")
     if os.path.exists(weather_ml):
