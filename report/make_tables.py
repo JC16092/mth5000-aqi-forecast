@@ -202,7 +202,7 @@ def table_budget(sweep_path):
 def table_cleaning():
     rows = [("Value below zero", "5", "Mass concentration cannot be negative"),
             ("Coverage below 50\\%", "270", "Against the cadence taken from the data"),
-            ("Value above 1000", "7", "Judgement; sensitivity analysis in Section 6"),
+            ("Value above 1000", "7", "Judgement; sensitivity analysis in Section~\\ref{sec:limitations}"),
             ("\\textbf{Total}", "\\textbf{282 of 3{,}375}", "")]
     body = ["\\begin{tabular}{llp{6.2cm}}", "\\toprule",
             "Rule & Days removed & Basis \\\\", "\\midrule"]
