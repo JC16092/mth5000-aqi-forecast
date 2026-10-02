@@ -140,6 +140,33 @@ most accurate model in the whole suite.
       after it got a real answer — added a paragraph. No new tables
       needed, both fixes are prose-level arithmetic on numbers already in
       `tables/accuracy.tex` and `threshold_sweep.csv`. 42 pages, unchanged.
+- [x] **Ran the full pipeline from scratch (user asked "run the models"),
+      and found the GRU is not bit-reproducible even at a fixed seed.**
+      `step01`-`step08` rerun on the existing cleaned dataset (not `step00`
+      — refetching would shift the date range). ARIMA/ridge/benchmarks
+      reproduced exactly; random forest/gradient boosting drifted a few
+      thousandths (fine, within the documented noise floor); the
+      weather-GRU's h=2/h=3 story reversed outright under a fresh set of
+      5 seeds with the identical `--seed` values. Flagged to the user
+      rather than silently rewriting the headline weather finding; user
+      chose to fit 5 more seeds (10 total) before deciding anything.
+      **With 10 seeds the picture stabilised, and it's weaker than
+      reported:** at h=2 the weather-GRU beats ARIMA clearly in 3/10
+      seeds, ties in 6, loses in 1 (was reported as "4 of 5, one tie");
+      at h=3, beats in 3/10, ties in 2, loses in 5 — a majority loss, not
+      "4 of 5 beats ARIMA" as written. h=1 (clear win, every seed) is
+      unaffected. Re-audited and fixed every downstream number: seed
+      counts (5→10) everywhere, the RQ1/weather narratives at h=2/h=3,
+      the weather-budget gain (4.6 points → 1.2 actual max), RQ2's tally
+      (23/12/1 → 21/11/4, plus the full per-horizon/per-budget
+      breakdown, which also changed), Discussion §5.2's "same 0.004 gap
+      at h=1 and h=3" claim (h=3 is actually 0.001), the 0.377 budget
+      headline (→0.379), and the Abstract/Conclusion's "network moves
+      ahead at h=2 too" claim (now a tie). Added a new Limitations
+      paragraph stating the reproducibility finding directly and a
+      Discussion sentence adding it as a third noise floor. Recompiled
+      clean, 43 pages. See `PROJECT_STATUS.md`'s "ninth pass" section for
+      the full account.
 
 ---
 

@@ -1236,6 +1236,125 @@ The system `python3` is a 3.14 alpha and must not be used. Activate with
 `source .venv/bin/activate` from the project folder; the folder name contains a
 space, so quote any absolute path.
 
+### Same day, a ninth pass: ran the full pipeline from scratch. Found the GRU is not bit-reproducible, even at a fixed seed. Doubled to ten seeds and re-audited every affected number.
+
+User asked why no new figures had appeared since September, noticed the
+answer (all the weather/RQ2 work landed as tables, not plots — correct,
+nothing broken there), then asked to "run the models." Clarified scope:
+chose the full pipeline, `step01_data_check.py` through `step08_gru.py`, on
+the existing `data/delhi_clean.csv` — deliberately not `step00`, since
+re-fetching from OpenAQ now would pull data up to today and shift the
+dataset every number in the report is keyed to.
+
+**Ran it.** `step01` through `step06` (data check, features with and
+without weather, benchmarks, ARIMA, rolling harness, the ML suite),
+10 GRU fits in parallel (5 seeds, base and weather), the classification
+arm, every threshold sweep, `build_weather_regression.py`,
+`report/make_tables.py`, `make_figures.py`. All green, no leak-test
+failures.
+
+**Then diffed the fresh result files against git and found something
+real.** ARIMA, ridge, and the benchmarks reproduced exactly, bit for bit.
+Random forest and gradient boosting drifted by a few thousandths in rMAE —
+small, and roughly consistent with the project's own documented 0.004
+cross-machine noise floor, just landing on a different exact pair of
+models. The GRU did not behave like that at all: recomputing its rMAE from
+the fresh `gru_seed{0-4}.csv` files against the numbers already written in
+the report, the weather-augmented network's story at two and three days
+ahead had *changed direction* — what main.tex called "beats ARIMA clearly
+under four of five seeds" at both horizons was, under a fresh set of five
+seeds fitted with the identical command and the identical `--seed` values,
+mostly a tie at h=2 and a majority loss at h=3. Nothing about the data or
+the code had changed; the GRU's own training is not bit-reproducible on
+this machine even with the seed fixed, evidently because small
+floating-point differences from multi-threaded linear algebra compound
+over many training epochs in a way a single tree fit does not.
+
+**Flagged this to the user rather than silently rewriting the report's
+headline weather finding**, since it touches two of the report's selling
+points (Abstract and Conclusion both claim the h=2 result "flips" with
+weather). Offered three options: update to the fresh numbers, fit more
+seeds first, or fix only the unambiguous small errors and leave the
+weather narrative as is. User chose to fit five more seeds (10 total,
+base and weather) before deciding.
+
+**Fit seeds 5-9, base and weather, 10 more GRU runs.** With ten seeds the
+picture stabilised rather than flip again: at h=2 the weather-GRU beats
+ARIMA clearly in 3 of 10 seeds, ties in 6, loses in 1; at h=3 it beats
+clearly in 3, ties in 2, loses in 5 — a real reversal from what five seeds
+alone suggested, not noise that a slightly larger sample smoothed away.
+The h=1 result (clear win, every seed) held in both the 5- and 10-seed
+runs and is unaffected. The base (no-weather) GRU showed the same pattern
+at h=2/h=3, previously described as "ARIMA better under all five seeds" —
+with ten seeds one seed clearly beats ARIMA at h=2, so that claim doesn't
+survive either.
+
+**Re-audited every number in `main.tex` downstream of a tree model or the
+GRU** rather than just the two the user had asked about, the same
+discipline as the Results/Discussion fixes earlier today. Found and fixed,
+all against freshly recomputed values, never re-typed from memory:
+
+- Methodology and Table 3's caption: five seeds → ten, with a new sentence
+  explaining why.
+- RQ1 narrative (§4.1): rewritten with the floor-based win/tie/loss tallies
+  above instead of "under all five seeds"; the seed-spread figures
+  (0.019/0.013/0.047 → 0.029/0.028/0.048) and the "wider than the gap to
+  five of the other models" claim (now two, not five).
+- The weather-vs-no-weather section (§4.1.1): fully rewritten narrative at
+  h=2/h=3 per the tallies above; the GBM/RF weather deltas nudged
+  (8.5/1.9/2.6 → 8.2/2.0/2.9 points for gradient boosting; 5.0 → 5.3 for
+  the random forest at h=3).
+- The weather-budget table's prose (§4.1.1): max gain was 4.6 points,
+  "typically under 2" — fresh run gives a max of 1.2 points, one point or
+  under everywhere else it helps at all. Strengthens the "ceiling over
+  gain" point rather than weakening it.
+- RQ2 (§4.2 and both places it's summarised, Chapter Summary and
+  Conclusion): the tally drifted too, since it depends on random-forest
+  and gradient-boosting classifiers — 23 wins/12/1 tie → 21/11/4, plus the
+  full per-horizon and per-budget breakdown, which changed enough to be
+  worth restating in full (direct classification now *wins* outright at
+  the loosest budget, 100 alarms/yr, which it didn't before).
+- Discussion §5.2's noise-floor paragraph: the "same 0.004 gap at h=1 and
+  h=3" claim was wrong after the rerun (h=3 gap is now 0.001, not 0.004) —
+  fixed to state the real numbers rather than force a parallel that no
+  longer holds. Added a third noise-floor result (same-seed, same-machine
+  GRU drift) to the paragraph that introduces the other two.
+- Threshold section (Discussion and Results): 0.377 → 0.379 (budget-sweep
+  headline number, trivial drift); the "climatology within four
+  thousandths of the best model at three days" claim didn't match any
+  budget level in the fresh sweep — closest real value is six thousandths,
+  at the loosest budget, fixed to say that.
+- Abstract and Conclusion: softened "moving the network ahead of the
+  classical model at two days as well" to describe a tie, not a win.
+- New Limitations paragraph stating the GRU reproducibility finding
+  directly: what reproduced exactly, what didn't, why, and that this is
+  why the report now uses ten seeds rather than five, with the explicit
+  caveat that ten is a reduction in the problem, not a fix for it.
+
+Recompiled clean, zero LaTeX warnings, 43 pages (was 42). Did not touch
+`data/delhi_clean_nocap.csv` / `forecasts_all_nocap.csv` (the sensitivity
+analysis) — out of scope for this rerun, not flagged as stale by anything
+found.
+
+**Lesson, worth keeping:** "rerun the models to get fresh numbers" sounds
+like a reproducibility exercise with only cosmetic consequences. On this
+project it surfaced a genuine methodological limitation (the GRU is not
+bit-reproducible at a fixed seed on this hardware) that had been silently
+absorbed into the report's headline weather finding under-sampled at five
+seeds. The fix wasn't "trust the newest run blindly" either — it was
+doubling the sample until the picture stopped moving, then writing down
+what it actually showed, including the parts that are less flattering to
+the extension than the first run suggested.
+
+**What is still genuinely open, in priority order:**
+
+1. Decide when to send the complete draft to Dr Tian — unchanged, still the
+   main open item.
+2. The 29 references from several passes ago, and the four citations named
+   in the stale Week 3 `TODO.md` item if that's a different set than what
+   was already read — still worth clarifying directly rather than
+   guessing again.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required

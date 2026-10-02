@@ -63,12 +63,14 @@ Machine learning earns its place only partially. The classical model beats
 every machine learning regressor at every horizon, a result strengthened
 rather than weakened by a sensitivity analysis on the cleaning threshold, and
 the one model that does win, a recurrent network, wins only at one day ahead,
-reported as a range across seeds rather than a single favourable one. Adding
-observed wind speed and temperature narrows that gap further, moving the
-network ahead of the classical model at two days as well, but when that
-extra accuracy is carried through the decision threshold the achievable hit
-rate at a fixed alarm budget moves by at most a few points, reinforcing
-rather than overturning the central finding above. Two
+reported as a range across ten seeds rather than a single favourable one.
+Adding observed wind speed and temperature narrows that gap further at one
+day ahead, but across ten random initialisations it leaves the two- and
+three-day comparisons a statistical tie rather than a clear win for either
+model, and when that extra accuracy is carried through the decision
+threshold the achievable hit rate at a fixed alarm budget moves by at most
+a little over a point, reinforcing rather than overturning the central
+finding above. Two
 real defects in the source monitor, a clipped instrument ceiling and a
 miscalculated coverage statistic, were diagnosed and corrected before
 modelling began. The recommendation is to design a warning system around its
@@ -1028,11 +1030,17 @@ for both versions are given in Section~\ref{sec:results-rq1}.
 
 Because the network's weights are initialised randomly, its forecast depends
 on that initialisation, unlike every other model in this project. It is
-therefore fitted independently across five random seeds, and its result is
+therefore fitted independently across ten random seeds, and its result is
 reported throughout Chapter~\ref{chap:results} as the range across those
-five runs, never as a single seed's point estimate; the justification for
+ten runs, never as a single seed's point estimate; the justification for
 treating this as a reporting requirement rather than a presentational choice
-is given in Section~\ref{sec:results-rq1}.
+is given in Section~\ref{sec:results-rq1}. The sample was doubled from an
+initial five seeds to ten after rerunning the full pipeline on this same
+machine reproduced every classical and tree-based model's score exactly but
+moved the network's by nearly as much as the gap between two genuinely
+different seeds, evidence that its training is not bit-reproducible even
+with \texttt{--seed} fixed; Section~\ref{sec:limitations} returns to what
+that means for the results that follow.
 
 \section{Rolling-Origin Evaluation}
 \label{sec:rolling}
@@ -1144,7 +1152,7 @@ in Chapter~\ref{chap:results} is a fair one.
 \centering
 \caption{Relative mean absolute error against persistence, under rolling origin
 evaluation over 2{,}303 origins. Lower is better and 1.000 is persistence. The
-recurrent network is given as the range over five initialisation seeds; it is the
+recurrent network is given as the range over ten initialisation seeds; it is the
 only model whose result depends on one.}
 \label{tab:accuracy}
 \footnotesize
@@ -1154,12 +1162,19 @@ only model whose result depends on one.}
 Table~\ref{tab:accuracy} answers the first research question, and the answer is
 not uniform across horizons.
 
-At one day ahead the recurrent network is the best model, and this is robust: it
-beats the ARIMA specification under all five initialisation seeds, with a worst
-seed of 0.935 against 0.940. At two days the ARIMA is better under all five
-seeds, though by 0.003 against the best of them. At three days the ARIMA is
-nominally better under all five seeds, but its margin against the best seed is
-0.0003, which is a tie in any language that would survive examination.
+At one day ahead the recurrent network is the best model, and this is robust:
+across ten initialisation seeds it is numerically ahead of the ARIMA
+specification in every one, and clearly so, beyond this report's own 0.004
+noise floor (Section~\ref{sec:noise-floor}), in eight of the ten; the two
+weakest, 0.936 and 0.939 against ARIMA's 0.940, are close enough to call
+ties rather than clear wins. At two days the picture is closer: ARIMA is
+numerically ahead in nine of the ten seeds, but only five of those nine
+clear the noise floor, one seed (0.878) beats ARIMA outright, and the
+remaining four are indistinguishable from it. At three days neither model
+has a seed that clears the floor against the other: the best network seed,
+0.831, and ARIMA's 0.832 are separated by a few parts in ten thousand, a tie
+in any language that would survive examination, while the worst network
+seed, 0.879, is clearly the weaker of the two.
 
 The mechanism is coherent. At one day ahead the forecast is dominated by
 short-range structure, where a nonlinear model has something to exploit. As the
@@ -1169,9 +1184,9 @@ thousand observations.
 
 The network is reported as a range rather than a point because it is the only
 model whose result depends on a random initialisation, and the dependence is not
-small. Across seeds the spread is 0.019 at one day, 0.013 at two and 0.047 at
+small. Across ten seeds the spread is 0.029 at one day, 0.028 at two and 0.048 at
 three. At three days that spread is wider than the gap separating the ARIMA from
-five of the other models in the table, so a single seed could have been reported
+two of the other models in the table, so a single seed could have been reported
 as beating them or losing to them at the analyst's convenience.
 
 Two subsidiary results support the specification choices. Removing the Fourier
@@ -1194,7 +1209,7 @@ question is whether that changes which model wins.
 \caption{Change in rMAE from adding weather covariates, same rolling-origin
 protocol and same reference as Table~\ref{tab:accuracy}. Negative is an
 improvement. The network's weather row is given as its own absolute range
-over five seeds, to be read against its row in Table~\ref{tab:accuracy}.}
+over ten seeds, to be read against its row in Table~\ref{tab:accuracy}.}
 \label{tab:weather}
 \footnotesize
 \input{tables/weather}
@@ -1202,9 +1217,9 @@ over five seeds, to be read against its row in Table~\ref{tab:accuracy}.}
 
 Table~\ref{tab:weather} answers it unevenly across models, and the unevenness
 is itself informative. Gradient boosting improves substantially and at every
-horizon, by 8.5 points of relative error at one day, 1.9 at two and 2.6 at
+horizon, by 8.2 points of relative error at one day, 2.0 at two and 2.9 at
 three on the level target, and similarly on the change target. The random
-forest moves the other way at the longest horizon, 5.0 points worse at three
+forest moves the other way at the longest horizon, 5.3 points worse at three
 days, while ridge improves at one and two days and worsens slightly at three.
 No single story explains all five machine learning rows; weather is not a
 free improvement for every method that can accept it.
@@ -1213,30 +1228,31 @@ The recurrent network is where the extension matters most, because
 Section~\ref{sec:weather} identified wind speed as a specific physical
 candidate for the short range structure the plain network was already
 exploiting at one day ahead. With weather added, the network beats ARIMA
-under all five seeds at one day ahead, as before, but at two days, where
-ARIMA previously won outright, it beats ARIMA clearly under four seeds and
-ties it under the fifth: that seed's 0.8825 against ARIMA's 0.8827 is a
-difference of two parts in ten thousand, well inside the 0.004
-machine-to-machine noise floor established in
-Section~\ref{sec:noise-floor}, so it is reported as a tie rather than a win.
-The other four seeds, 0.844 to 0.853, clear that floor more than ten times
-over. At three days four of the five seeds beat ARIMA, 0.778 to
-0.790 against ARIMA's 0.832, but the fifth lands at 0.877, worse than ARIMA
-and worse than the plain network's own worst seed at that horizon. That one
-outlier is reported rather than dropped, for the same reason every other
-seed-dependent claim in this report is given as a range: a single favourable
-seed is not evidence, and neither is discarding an unfavourable one.
+clearly under all ten seeds at one day ahead, as before. At two days, where
+ARIMA previously won outright, the picture becomes a genuine contest rather
+than a clean win for either side: three of ten seeds beat ARIMA clearly,
+beyond the 0.004 noise floor established in Section~\ref{sec:noise-floor},
+six are indistinguishable from it within that floor, and one is a clear
+loss. At three days a similar three-way split appears with different seeds
+in each role: three of ten beat ARIMA clearly, two are ties, and five, a
+majority, are clear losses, including one seed 0.041 worse than ARIMA.
+Doubling the seed count from the five first fitted is what surfaced this;
+under the first five alone, both horizons had looked like a win for the
+network, and that reading did not survive a second, independent batch of
+five seeds.
 
 The honest summary is that wind speed and temperature measurably help the
-one architecture built to exploit short-range structure, change the two-day
-result from an ARIMA win to a network win, and leave the three-day result a
-contested tie rather than the near-tie it was before, while helping the
-tree-based machine learning models unevenly and the random forest not at all
-at the longest horizon. This was checked against the weather coverage gap
-diagnosed in Section~\ref{sec:weather} by repeating the comparison restricted
-to origins inside the fully observed weather window; every change of sign
-and every ordering above survived that restriction, which is what makes the
-finding a property of the weather signal rather than of how its gap was
+one architecture built to exploit short-range structure at one day ahead,
+leave the two-day comparison a genuine tie rather than the win it first
+appeared to be, and leave three days ahead more often a loss than a win for
+the network, while helping the tree-based machine learning models unevenly
+and the random forest not at all at the longest horizon. This was checked
+against the weather coverage gap diagnosed in Section~\ref{sec:weather} by
+repeating the comparison restricted to origins inside the fully observed
+weather window; the ordering at one day ahead survived that restriction, and
+so did the mixed, seed-dependent picture at two and three days, which is
+what makes the finding a property of the weather signal and of the
+network's own training instability, rather than of how the coverage gap was
 filled.
 
 That accuracy gain was then carried through to Research Question 3 directly,
@@ -1257,16 +1273,17 @@ only difference is which models are allowed to be the best one.}
 
 Table~\ref{tab:weatherbudget} gives the answer, and it favours the ceiling
 over the gain. At several budgets the weather models do not even supply the
-best option, delta exactly zero, 40 and 60 alarms a year at one day ahead,
-60 and 80 at two. Where they do win, the improvement is small: at most 4.6
-points of hit rate, at three days and a budget of 60, and typically under 2.
-That is the same order as the five-point spread across models documented in
+best option, delta exactly zero: 60 alarms a year at one day ahead; 60, 80
+and 100 at two; and 40, 80 and 100 at three. Where they do win, the
+improvement is small: at most 1.2 points of hit rate, at two days and a
+budget of 40, and one point or under at every other budget where they help
+at all. That is well below the five-point spread across models documented in
 Table~\ref{tab:budget} and discussed in Section~\ref{sec:noise-floor}, not a
 new tier above it, and nowhere near the fifty-point range that moving the
-budget itself buys. A substantially more accurate point forecast, 8.5 points
+budget itself buys. A substantially more accurate point forecast, 8.2 points
 of relative error at one day ahead for gradient boosting, translates into at
-most a few points of additional hit rate once it is run through a decision
-threshold. The ceiling this report's central finding describes is not a
+most a little over a point of additional hit rate once it is run through a
+decision threshold. The ceiling this report's central finding describes is not a
 property of the ten original models being insufficiently accurate; it
 persists even after a materially more accurate forecaster is added to the
 comparison.
@@ -1299,19 +1316,21 @@ arm in each column.}
 
 Table~\ref{tab:arms} already shows more structure than a coin flip. Across
 all three matched pairs, every horizon, and all four alarm budgets, 36
-comparisons in total, forecast-then-threshold wins 23, direct
-classification wins 12, and one is an exact tie. That is not the even
+comparisons in total, forecast-then-threshold wins 21, direct
+classification wins 11, and four are exact ties. That is not the even
 split a genuinely arbitrary choice would produce, but the margin each time
-is almost always small: a median difference of 0.010 in hit rate, and a
-largest difference, across every comparison run, of 0.054. Forecasting the
-concentration and then thresholding it has a real, modest edge, concentrated
-at the tighter alarm budgets of 40 to 80 a year; at a budget of 100 the two
-arms are close to indistinguishable, winning two of the three matched
-pairs each. The edge is also uneven by horizon: at one day ahead
-forecast-then-threshold wins 9 of 12 matched comparisons, at two days the
-split is exactly even, 6 and 6, and at three days it wins 8 of 12. There is
-no horizon at which direct classification is the better strategy on
-balance, only one, two days ahead, at which neither strategy is.
+is almost always small: a median difference of 0.011 in hit rate, and a
+largest difference, across every comparison run, of 0.056. Forecasting the
+concentration and then thresholding it has a real, modest edge that shrinks
+steadily as the alarm budget loosens: it wins 8 of 9 comparisons at a
+budget of 40 and 7 of 9 at 60, but direct classification overtakes it at
+the loosest budget this report considers, winning 6 of 9 at 100. The edge
+is also uneven by horizon, narrowing steadily rather than changing hands:
+forecast-then-threshold wins 8 of 12 matched comparisons at one day ahead,
+7 of 12 at two days, and 6 of 12 at three. There is no horizon or budget
+regime in which direct classification leads at one day or two; it only
+overtakes once the alarm budget is loose enough that a classifier's extra
+structure stops mattering.
 
 A plausible reading is that a classifier optimises the exceedance label
 directly and so should have the advantage, while a regressor optimises a
@@ -1349,7 +1368,7 @@ event fixed at the health threshold and only the decision threshold varying.}
 
 Table~\ref{tab:budget} contains the principal result of this project. Moving the
 alarm budget from 40 to 100 per year changes the achievable hit rate at one day
-ahead from 0.377 to 0.873. Holding the budget fixed and changing the model
+ahead from 0.379 to 0.873. Holding the budget fixed and changing the model
 instead moves it by around five points.
 
 \begin{figure}[htbp]
@@ -1381,15 +1400,18 @@ question nobody asked.
 Table~\ref{tab:accuracy} answers the first research question with a
 horizon-dependent result: the deep learning model wins at one day ahead, the
 classical model wins or ties beyond it. Table~\ref{tab:weather}
-(Section~\ref{sec:results-weather}) shows that boundary moving once observed
-weather is added: the network moves ahead at two days as well. Carried
-through to the decision threshold, Table~\ref{tab:weatherbudget} shows that
-gain buys only a few points of hit rate at a fixed alarm budget, confirming
-rather than complicating the answer to the third question.
+(Section~\ref{sec:results-weather}) shows that boundary holding at one day
+ahead once observed weather is added, but across ten seeds rather than the
+original five it leaves two and three days ahead a statistical tie rather
+than a clean win for either model. Carried through to the decision
+threshold, Table~\ref{tab:weatherbudget} shows that gain buys only a little
+over a point of hit rate at a fixed alarm budget at most, confirming rather
+than complicating the answer to the third question.
 Table~\ref{tab:arms} (Section~\ref{sec:arms}) answers the second: matched by
 algorithm rather than by whichever model happens to be best, forecasting the
-concentration and then thresholding it beats direct classification in 23 of
-36 comparisons to 12, a real but modest edge rather than a decisive one.
+concentration and then thresholding it beats direct classification in 21 of
+36 comparisons to 11, with four ties, a real but modest edge rather than a
+decisive one.
 Section~\ref{sec:threshold} answers
 the third, and it is the result the rest of this report is organised around:
 the alarm budget, not the model, is what principally determines warning
@@ -1408,11 +1430,11 @@ numbers. A decision maker who fixes how many alarms per year an operator or
 the public will tolerate has more influence over how many hazardous days are
 caught than a modeller choosing among the ten specifications fitted in this
 project. Moving the budget from 40 to 100 alarms a year moves the achievable
-hit rate at one day ahead from 0.377 to 0.873, a range of fifty points.
+hit rate at one day ahead from 0.379 to 0.873, a range of fifty points.
 Holding the budget fixed and switching the model instead moves the hit rate by
-about five points, and at three days ahead a climatology forecast that uses no
-recent information whatever matches the best fitted model to within four
-thousandths.
+about five points, and at three days ahead, at the loosest budget this report
+considers, a climatology forecast that uses no recent information whatever
+comes within six thousandths of the best fitted model, 0.816 against 0.822.
 
 This is not an argument against modelling. ARIMA and the recurrent network
 both earn real, if modest, gains over persistence in Table~\ref{tab:accuracy},
@@ -1433,22 +1455,29 @@ day to the next, and the annual cycle.
 \section{How Large Is a Difference Between Models?}
 \label{sec:noise-floor}
 
-Two results in this project bound that question from below. Running the identical
-pipeline on two different machines moved the tree models by up to 0.004 in
-relative error, because histogram gradient boosting parallelises with OpenMP and
-floating point summation order depends on the thread count. Changing only the
-random initialisation of the recurrent network moved it by 0.013 to 0.047.
+Three results in this project bound that question from below. Running the
+identical pipeline on two different machines moved the tree models by up to
+0.004 in relative error, because histogram gradient boosting parallelises
+with OpenMP and floating point summation order depends on the thread count.
+Changing only the random initialisation of the recurrent network moved it by
+0.028 to 0.048 across ten seeds. A third and less expected result bounds it
+further: rerunning the identical command with the same seed on the same
+machine moved the network's score by nearly as much as switching to a
+genuinely different seed does, which Section~\ref{sec:limitations} discusses
+and which this report takes as the practical floor on how precisely the
+network's result can be stated at all.
 
 Table~\ref{tab:accuracy} contains several gaps at or below those two floors, and
 naming them is more convincing than asserting that they exist. At one day ahead,
-gradient boosting on the change target scores 0.981 and the random forest on the
-level target scores 0.985, a gap of exactly 0.004; the same gap, 0.004, separates
-gradient boosting's change target from the random forest's level target at
-three days as well, 0.878 against 0.882. Neither pair can be ordered with any
-confidence given a floor measured at that same size on a different model
-entirely; the measurement was never repeated for every pair in the table, so
-the honest reading is that it might apply more broadly than the one architecture
-it was taken on, not that it is known to be absent elsewhere.
+gradient boosting on the change target scores 0.983 and the random forest on the
+level target scores 0.988, a gap of 0.004, right at the floor measured on a
+different model entirely. The same pair sits even closer together at three
+days, 0.878 against 0.879, a gap of 0.001, well inside that floor rather than
+merely at it. Neither pair can be ordered with any confidence given a floor
+measured at that same size on a different model entirely; the measurement was
+never repeated for every pair in the table, so the honest reading is that it
+might apply more broadly than the one architecture it was taken on, not that
+it is known to be absent elsewhere.
 
 The sharpest instance involves the recurrent network directly, because its own
 reported range is wide enough to supply the comparison by itself. At three days
@@ -1457,9 +1486,9 @@ boosting's change-target result of 0.878, several rows lower in the same
 table. Nothing about the data or the method changed between those
 two numbers; a different random seed for the one architecture that has one was
 enough to move it from a result indistinguishable from the classical benchmark,
-at that same horizon the network's best seed ties ARIMA to within 0.0003, to one
-indistinguishable from the weakest-looking machine learning regressor in the
-table. A table that printed only one of those two seeds would have told a reader
+at that same horizon the network's best seed ties ARIMA to within a few parts
+in ten thousand (Section~\ref{sec:results-rq1}), to one indistinguishable from
+the weakest-looking machine learning regressor in the table. A table that printed only one of those two seeds would have told a reader
 something true about that run and nothing reliable about the architecture.
 
 Several of the gaps between adjacent models in Table~\ref{tab:accuracy} are of
@@ -1523,6 +1552,28 @@ configuration that a wider search would find. The machine learning results in
 Table~\ref{tab:accuracy} should therefore be read as a lower bound on what
 those model classes could achieve with more computation, not as their ceiling.
 
+A full rerun of this project's pipeline, performed late in the writing
+process specifically to refresh every result from scratch, surfaced a
+further limitation worth stating plainly rather than leaving implicit in a
+table footnote. Every classical and tree-based model reproduced its
+reported score either exactly (ARIMA, ridge, the benchmarks) or within a
+few thousandths (random forest, gradient boosting) when refitted on the
+same machine with the same fixed random seeds. The recurrent network did
+not: rerunning the identical command with the same \texttt{--seed} moved
+its score by nearly as much as switching to a genuinely different seed
+does, evidently because training accumulates small floating-point
+differences from multi-threaded linear algebra over many epochs in a way a
+single tree fit does not. The practical consequence is that five seeds,
+this project's original sample, was not enough to characterise the network
+reliably: the weather-covariate finding at two and three days ahead
+(Section~\ref{sec:results-weather}) looked like a clear win under the
+first five seeds fitted and looked like a tie or a loss once five more were
+added. The sample was doubled to ten seeds throughout this report for that
+reason, and even ten should be read as a reduction in the problem rather
+than a solution to it; a result reported as a range across seeds is a
+statement about the spread of outcomes this training procedure produces,
+not a bound on where its true performance lies.
+
 Wind speed and temperature were added, in Section~\ref{sec:weather}, but the
 treatment is narrower than a full meteorological extension in two specific
 ways that should be stated plainly rather than discovered by a careful
@@ -1573,28 +1624,33 @@ terms beats every machine learning regressor at every horizon, a result that
 strengthens rather than weakens under the sensitivity analysis in
 Section~\ref{sec:limitations}. Among models using the series' own history
 alone, the recurrent network is the one that wins, and only at one day ahead,
-reported honestly as a range across five random initialisations rather than
+reported honestly as a range across ten random initialisations rather than
 as a single favourable seed. Adding wind speed and temperature
-(Section~\ref{sec:results-weather}) moves that boundary: the weather-enabled
-network then beats ARIMA clearly under four of five seeds at two days, with
-the fifth a tie inside the project's own noise floor, and under four of
-five at three, where the plain comparison had been at best a tie.
-Gradient boosting improves at every horizon with the same weather covariates,
-though the random forest does not, so the gain is specific to which model and
-which architecture, not a blanket effect of adding more inputs. Carried
-through the decision threshold, that accuracy gain buys at most a few
-points of hit rate at a fixed alarm budget and nothing at all at several of
-them, which is this report's central finding recurring at a more demanding
-test: even a materially more accurate forecaster does not escape the
-ceiling the alarm budget imposes.
+(Section~\ref{sec:results-weather}) does not move that boundary as cleanly
+as a first batch of five seeds suggested: across ten seeds the
+weather-enabled network still wins clearly at one day ahead, but at two
+days it is tied with ARIMA within this report's own noise floor for six of
+ten seeds and ahead for only three, and at three days it is more often a
+clear loss than a win, five of ten against three. Doubling the seed count
+is what surfaced this, and Section~\ref{sec:limitations} discusses why the
+network's training is the one part of this project's methodology where a
+fixed seed does not guarantee a fixed answer. Gradient boosting improves at
+every horizon with the same weather covariates, though the random forest
+does not, so the gain is specific to which model and which architecture,
+not a blanket effect of adding more inputs. Carried through the decision
+threshold, that accuracy gain buys at most a little over a point of hit
+rate at a fixed alarm budget and nothing at all at most of them, which is
+this report's central finding recurring at a more demanding test: even a
+forecaster that looked materially more accurate under an initial, smaller
+sample does not escape the ceiling the alarm budget imposes.
 
 On the second research question, forecasting the concentration and then
 thresholding it beats training a classifier directly on the exceedance
 label, but only modestly: matched by algorithm rather than by whichever
-model happens to be best, it wins 23 of 36 comparisons to 12, with one tie,
-a real lean rather than the coin flip a single qualitative judgement would
-suggest, yet still small enough in each individual case, a median of one
-point of hit rate, that either arm is defensible. The forecast-then-threshold
+model happens to be best, it wins 21 of 36 comparisons to 11, with four
+ties, a real lean rather than the coin flip a single qualitative judgement
+would suggest, yet still small enough in each individual case, a little
+over one point of hit rate on average, that either arm is defensible. The forecast-then-threshold
 arm is used throughout this report's own warning-system results for a
 reason beyond that narrow margin: it yields a concentration that can be
 rethresholded for any future health policy without refitting, while a
