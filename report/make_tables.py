@@ -199,6 +199,57 @@ def table_budget(sweep_path):
     write("budget.tex", "\n".join(body) + "\n")
 
 
+def table_weather(base_path, weather_path, series_path, burn_in=1095):
+    """Does adding meteostat wind speed and temperature change anything?
+
+    Reported as the change in rMAE from the already-published
+    Table~\\ref{tab:accuracy} baseline, negative is an improvement, rather
+    than as a second absolute number competing with it, so there remains one
+    place in the report that states what each model scores without weather.
+    The network is the exception, shown as its own absolute range exactly
+    like its row in Table~\\ref{tab:accuracy}, to be read directly against it.
+    """
+    import glob
+    s = load_series(series_path, "date", "PM2.5")
+    scale = ev.mase_scale(s.loc[:s.index[burn_in]].values)
+
+    base = ev.regression_metrics(pd.read_csv(base_path, parse_dates=["origin"]),
+                                 scale, reference="naive_carry")
+    weather = ev.regression_metrics(pd.read_csv(weather_path, parse_dates=["origin"]),
+                                    scale, reference="naive_carry")
+
+    ml_models = ["ridge", "random_forest", "random_forest_delta",
+                 "hist_gbm", "hist_gbm_delta"]
+
+    body = ["\\begin{tabular}{lrrr}", "\\toprule",
+            "Model & $\\Delta$ rMAE, $h=1$ & $\\Delta$ rMAE, $h=2$ & "
+            "$\\Delta$ rMAE, $h=3$ \\\\", "\\midrule"]
+    for name in ml_models:
+        cells = []
+        for h in (1, 2, 3):
+            b = base[(base.model == name) & (base.horizon == h)]["rMAE"]
+            w = weather[(weather.model == name) & (weather.horizon == h)]["rMAE"]
+            cells.append(f"{float(w.iloc[0]) - float(b.iloc[0]):+.3f}"
+                        if len(b) and len(w) else "--")
+        body.append(f"{esc(PRETTY.get(name, name))} & " + " & ".join(cells) + " \\\\")
+    body.append("\\midrule")
+
+    weather_seeds = sorted(glob.glob(os.path.join(ROOT, "gru_weather_seed*.csv")))
+    if weather_seeds:
+        rows = {}
+        for f in weather_seeds:
+            g = ev.regression_metrics(pd.read_csv(f, parse_dates=["origin"]),
+                                      scale, reference="naive_carry")
+            rows[f] = g[g.model == "gru"].set_index("horizon")["rMAE"]
+        G = pd.DataFrame(rows)
+        cells = [f"{G.loc[h].min():.3f} to {G.loc[h].max():.3f}" for h in (1, 2, 3)]
+        body.append(f"{esc(PRETTY['gru'])}, with weather, {len(weather_seeds)} "
+                    "seeds (absolute) & " + " & ".join(cells) + " \\\\")
+        print(f"  weather network row reported over {len(weather_seeds)} seeds")
+    body += ["\\bottomrule", "\\end{tabular}"]
+    write("weather.tex", "\n".join(body) + "\n")
+
+
 def table_cleaning():
     rows = [("Value below zero", "5", "Mass concentration cannot be negative"),
             ("Coverage below 50\\%", "270", "Against the cadence taken from the data"),
@@ -229,6 +280,12 @@ def main():
         table_budget(sweep)
     else:
         print("  threshold_sweep.csv not found; skipping budget.tex")
+
+    weather_ml = os.path.join(ROOT, "forecasts_weather_ml.csv")
+    if os.path.exists(weather_ml):
+        table_weather(os.path.join(ROOT, "forecasts_all.csv"), weather_ml, clean)
+    else:
+        print("  forecasts_weather_ml.csv not found; skipping weather.tex")
 
     # Figures live beside the report so latex finds them without absolute paths.
     import shutil

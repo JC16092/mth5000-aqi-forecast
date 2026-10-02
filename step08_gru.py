@@ -60,8 +60,44 @@ except ImportError as e:
 SEQ_LEN = 30
 
 
-def build_channels(series, exog, seq_fourier=2):
-    """One row per day: log value carried forward, a missing flag, Fourier terms."""
+def fetch_weather(idx, lat=28.61, lon=77.21, variables=("tavg", "wspd")):
+    """Daily station weather for the given index, same source as step 2's
+    --weather flag. Returns only the raw variables named; the ffill-plus-flag
+    treatment happens in build_channels, not here.
+    """
+    try:
+        from meteostat import Point, Daily
+    except ImportError:
+        print("  meteostat not installed. pip install meteostat. Skipping weather.")
+        return None
+
+    point = Point(lat, lon)
+    met = Daily(point, idx.min().to_pydatetime(), idx.max().to_pydatetime()).fetch()
+    if met.empty:
+        print("  meteostat returned nothing for that point and range. Skipping.")
+        return None
+
+    cols = [c for c in variables if c in met.columns]
+    if not cols:
+        print(f"  none of {variables} present in the meteostat response. Skipping.")
+        return None
+    # meteostat returns pandas' nullable Float64; cast to plain float64 so it
+    # merges cleanly with the rest of the channel table instead of silently
+    # degrading the whole array to object dtype, which numpy cannot do math on.
+    return met[cols].astype("float64").reindex(idx)
+
+
+def build_channels(series, exog, weather=None, seq_fourier=2):
+    """One row per day: log value carried forward, a missing flag, Fourier terms.
+
+    weather, if given, is a DataFrame of raw daily observations (one column per
+    variable, e.g. "tavg", "wspd") indexed like series. Each column is carried
+    forward exactly like the log-concentration channel, with its own missing
+    flag, because the weather station's own record ends months before the
+    PM2.5 series does (Section on data quality) and that gap needs the same
+    "I do not know" representation the log channel already has, not a silent
+    zero.
+    """
     log = np.log(series)
     filled = log.ffill()
     miss = series.isna().astype(float)
@@ -69,6 +105,11 @@ def build_channels(series, exog, seq_fourier=2):
     for k in range(1, seq_fourier + 1):
         cols[f"sin{k}"] = exog[f"ann_sin_{k}"].reindex(series.index)
         cols[f"cos{k}"] = exog[f"ann_cos_{k}"].reindex(series.index)
+    if weather is not None:
+        for col in weather.columns:
+            w = weather[col].reindex(series.index)
+            cols[f"wx_{col}"] = w.ffill()
+            cols[f"wx_{col}_missing"] = w.isna().astype(float)
     ch = pd.DataFrame(cols, index=series.index)
     # A leading gap has nothing to carry forward. Back-filling only affects days
     # before the first observation, which no origin in this project reaches.
@@ -256,6 +297,31 @@ def test_gru(verbose=True):
     Xb, _ = make_sequences(ch2, idx[200:250])
     check(np.allclose(Xa, Xb), "a sequence changed when the future was corrupted")
 
+    # The weather path, added for the meteorological covariates extension, gets
+    # the same two checks: corrupting PM2.5 after the cut, and separately
+    # corrupting the weather series after the cut, must both leave every
+    # earlier channel row untouched.
+    wx = pd.DataFrame({
+        "tavg": 20 + 5 * np.sin(2 * np.pi * t / 365.25) + rng.normal(0, 1, n),
+        "wspd": np.clip(3 + rng.normal(0, 1, n), 0, None),
+    }, index=idx)
+    wx.iloc[rng.choice(n, 30, replace=False)] = np.nan
+    chw = build_channels(s, exog, weather=wx)
+    check(chw.notna().all().all(), "the weather channel table still contains NaN")
+    check(set(chw.columns) == {"log", "missing", "sin1", "cos1", "sin2", "cos2",
+                               "wx_tavg", "wx_tavg_missing", "wx_wspd", "wx_wspd_missing"},
+          f"unexpected weather channels: {list(chw.columns)}")
+
+    chw_s2 = build_channels(s2, exog, weather=wx)
+    before = chw.index < cut
+    check(np.allclose(chw.loc[before].values, chw_s2.loc[before].values, equal_nan=True),
+          "a weather channel row before the cut changed when PM2.5 was corrupted")
+
+    wx2 = wx.copy(); wx2.loc[cut:] = wx2.loc[cut:] * 5 + 200
+    chw_wx2 = build_channels(s, exog, weather=wx2)
+    check(np.allclose(chw.loc[before].values, chw_wx2.loc[before].values, equal_nan=True),
+          "a weather channel row before the cut changed when WEATHER was corrupted")
+
     # The label cutoff must be the origin minus h.
     g = GRUForecaster(s, ch, min_train=100, epochs=3)
     origin = idx[600]
@@ -321,6 +387,10 @@ def main():
     ap.add_argument("--hidden", type=int, default=24)
     ap.add_argument("--seed", type=int, default=0,
                     help="network initialisation. Vary it: a single seed is not a result.")
+    ap.add_argument("--weather", action="store_true",
+                    help="add wind speed and temperature channels (needs network)")
+    ap.add_argument("--lat", type=float, default=28.61, help="Delhi by default")
+    ap.add_argument("--lon", type=float, default=77.21)
     ap.add_argument("--existing", default="forecasts_all.csv")
     ap.add_argument("--out", default="forecasts_with_gru.csv")
     ap.add_argument("--test", action="store_true")
@@ -337,7 +407,17 @@ def main():
     extended = s.index.append(pd.date_range(s.index[-1] + pd.Timedelta(days=1),
                                             periods=max(HORIZONS), freq="D"))
     exog = fourier_terms(extended, K=args.fourier)
-    ch = build_channels(s, exog)
+
+    weather = None
+    if args.weather:
+        print("\nFetching weather (wind speed, temperature).")
+        weather = fetch_weather(s.index, args.lat, args.lon)
+        if weather is not None:
+            cov = weather.notna().mean()
+            print(f"  coverage: {', '.join(f'{c}={100*v:.1f}%' for c, v in cov.items())}")
+            print(f"  last observed: {weather.apply(lambda c: c.last_valid_index()).to_dict()}")
+
+    ch = build_channels(s, exog, weather=weather)
 
     first, last = s.index[args.burn_in], s.index[-max(HORIZONS) - 1]
     models = [GRUForecaster(s, ch, name="gru", epochs=args.epochs,
@@ -349,6 +429,7 @@ def main():
     print(f"  origins {first.date()} to {last.date()}, refit every {args.refit_every} days")
     print(f"  sequence length {SEQ_LEN} days, hidden units {args.hidden}, "
           f"up to {args.epochs} epochs with early stopping")
+    print(f"  channels: {list(ch.columns)}")
     print("  Gaps are carried forward with a missingness channel: a recurrent")
     print("  network cannot skip a timestep the way the state space models can.")
 

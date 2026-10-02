@@ -10,6 +10,58 @@ Not early November — that was my own wrong assumption. ~4 weeks from now.
 
 ---
 
+## Meteorological covariates extension (2 October, later again)
+
+Was "Future Work," explicitly out of scope, no sign-off from Dr Tian to add
+it — done anyway, as a full extension, by choice. See
+`PROJECT_STATUS.md`'s "the meteorological covariates extension, done"
+section for the full account; summary here.
+
+- [x] Install and pin `meteostat==1.7.6` (2.x has a different, incompatible
+      API), fix the macOS certificate issue blocking its HTTPS calls.
+- [x] Extend `step08_gru.py`'s `build_channels()` to take wind speed and
+      temperature channels (`step02_features.py`'s ML path already had a
+      `--weather` flag, written earlier, never exercised until now).
+- [x] Fix a real dtype bug: `meteostat` returns nullable `Float64`, which
+      silently turns a mixed DataFrame's `.values` into `object` dtype and
+      breaks `torch`/`numpy` math downstream. Cast to `float64` on fetch.
+- [x] Diagnose the weather record's own defect: 99.9%/99.6% complete
+      (temp/wind) within its window, but that window ends 202 days before
+      the PM2.5 series does. Checked it isn't driving the result via a
+      restricted-window robustness comparison — it isn't.
+- [x] Leak-test the new weather channel path three ways (corrupt PM2.5,
+      corrupt weather, corrupt both through the full harness), baked
+      permanently into `step08_gru.py --test`.
+- [x] Rerun the full rolling-origin harness: ML suite with weather
+      (`forecasts_weather_ml.csv`) and 5 fresh GRU seeds with weather
+      (`gru_weather_seed{0-4}.csv`).
+- [x] Extend `make_tables.py` with `table_weather()` so the new table is
+      generated from the result files like every other number in this
+      report, never hand-typed.
+- [x] Write up the finding in `main.tex`: new Methodology subsection
+      (weather features + the data defect), a paragraph in the GRU
+      subsection, a new Results subsection with the comparison table,
+      rewritten Limitations/Future Work/Main Conclusions/Abstract.
+- [ ] **Rerun `step07_warning.py`'s threshold sweep with the weather
+      models.** The natural next step — does the accuracy gain actually
+      widen the achievable hit rate at a fixed alarm budget? Explicitly
+      flagged as open in the report itself, not quietly skipped.
+- [ ] Commit and push: `step08_gru.py`, `report/make_tables.py`,
+      `report/main.tex`, `report/main.pdf`, `requirements.txt`,
+      `compare_weather.py`, `features_weather.csv`,
+      `forecasts_weather_ml.csv`, `gru_weather_seed{0-4}.csv`,
+      `PROJECT_STATUS.md`, `TODO.md`.
+
+**The finding, briefly:** gradient boosting improves at every horizon;
+ridge improves at h=1/2, worsens slightly at h=3; the random forest is flat
+to worse. The GRU is where it matters: it already beat ARIMA at h=1 only;
+with weather it beats ARIMA under every seed at h=1, clearly under 4 of 5
+at h=2 (the fifth a tie inside the report's own 0.004 noise floor), and
+under 4 of 5 at h=3. **h=2 was a clean ARIMA win before this; it no longer
+is** — a real change to the RQ1 story, not a footnote.
+
+---
+
 ## Supersedes everything below: post-meeting pivot (2 October)
 
 Dr Tian reviewed the 14-page draft. Verdict: correct but far too short for a
@@ -117,7 +169,11 @@ the classifier-detail expansion) is now secondary to this:
 - [x] Limitations: single city
 - [x] Limitations: the 1000 cleaning threshold (uses the sensitivity numbers)
 - [x] Limitations: small hyperparameter grids
-- [x] Limitations: no meteorological covariates
+- [x] Limitations: no meteorological covariates — **superseded, see the
+      "Meteorological covariates extension" section near the top of this
+      file.** This was true when written; it was done as a full extension
+      two sessions later, and the Limitations paragraph now describes what
+      was actually done and its real remaining boundaries instead.
 - [x] Draft Conclusion
 - [x] Revise Discussion + Conclusion together, recompile
 - [x] Literature area 1: Delhi/India ML forecasting (Masood & Ahmad 2020,

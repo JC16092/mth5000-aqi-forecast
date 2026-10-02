@@ -63,7 +63,11 @@ Machine learning earns its place only partially. The classical model beats
 every machine learning regressor at every horizon, a result strengthened
 rather than weakened by a sensitivity analysis on the cleaning threshold, and
 the one model that does win, a recurrent network, wins only at one day ahead,
-reported as a range across seeds rather than a single favourable one. Two
+reported as a range across seeds rather than a single favourable one. Adding
+observed wind speed and temperature narrows that gap further, moving the
+network ahead of the classical model at two days as well, though whether
+that extra accuracy widens the achievable hit rate at a fixed alarm budget
+is left as an open question rather than claimed. Two
 real defects in the source monitor, a clipped instrument ceiling and a
 miscalculated coverage statistic, were diagnosed and corrected before
 modelling began. The recommendation is to design a warning system around its
@@ -695,6 +699,47 @@ state space models skip the measurement update at a gap, so the absence is
 carried as information rather than replaced by a fabricated value. The single
 exception is the recurrent network, discussed in Section~\ref{sec:gru}.
 
+\subsection{Weather Covariates}
+\label{sec:weather}
+
+The feature table above is extended with daily surface weather for the same
+station coordinates, fetched through the \texttt{meteostat} package, which
+aggregates NOAA and GHCN-Daily records. Six variables are available at
+reasonable completeness: mean, minimum and maximum temperature, wind speed,
+mean sea level pressure, and precipitation. Each enters the table at its own
+value, its value one day earlier, and its three day rolling mean, so that a
+model can use both the current reading and its recent trend. Every weather
+column obeys the same rule as every other feature in this table: only
+observations up to and including day $t$ are used. A real early-warning
+system would use a numerical weather \emph{forecast} for the days ahead
+rather than the weather already observed, which would very likely help
+further, but that is a materially stronger claim about what is knowable at
+the forecast origin, and this project does not make it.
+
+The weather record carries its own data quality defect, a third one for this
+project, and it was diagnosed the same way as the two in
+Section~\ref{sec:defects}: checked directly rather than assumed. Within the
+window it covers, the record is close to complete, 99.9 per cent for
+temperature and 99.6 per cent for wind speed. But that window ends 202 days
+before the PM2.5 series does: the station's archive is current only to
+reporting delays of several months, a different failure mode from the two
+already documented, a hard cutoff rather than scattered gaps. Precipitation
+is worse, with only 54 per cent coverage even before that cutoff, and is
+excluded from the recurrent network's channels for this reason, retained only
+for the tree models, which take a sparse column natively rather than needing
+it imputed.
+
+That cutoff means a meaningful share of the rolling-origin test period in
+Section~\ref{sec:rolling} carries no weather observation at the forecast
+origin. Rather than let that pass silently, the comparison in
+Section~\ref{sec:results-rq1} is checked twice: once over every origin, where
+the gap is handled exactly as every other missing value in this project is,
+left as \texttt{NaN} for gradient boosting, imputed from the training window
+for ridge and the random forest, and carried forward with a missingness flag
+for the recurrent network, and once restricted to origins that fall entirely
+inside the window where weather is genuinely observed. The two give the same
+answer, which is what makes the first trustworthy.
+
 \section{Machine Learning Methods}
 \label{sec:ml-methods}
 
@@ -912,6 +957,17 @@ provide one. The one architecture Dr Tian specifically asked to be included
 is the one architecture in the suite that cannot represent the statement
 that a value is unknown.
 
+A second version of this network reads two further channels, the day's mean
+temperature and wind speed from Section~\ref{sec:weather}, each paired with
+its own missingness flag in exactly the same construction used for the
+concentration channel, ten channels in total rather than six. Wind speed in
+particular is a plausible carrier of the short range structure that already
+let the plain network beat ARIMA at one day ahead in the negative result
+anticipated in Section~\ref{sec:lit-dl}: a calm, stagnant airmass is both the
+immediate physical precondition for a particulate episode and a quantity the
+Fourier terms, which know only the calendar, cannot represent at all. Results
+for both versions are given in Section~\ref{sec:results-rq1}.
+
 Because the network's weights are initialised randomly, its forecast depends
 on that initialisation, unlike every other model in this project. It is
 therefore fitted independently across five random seeds, and its result is
@@ -1004,8 +1060,10 @@ from initial data acquisition to this report, is public and runnable at
 \section{Chapter Summary}
 
 This chapter described the data, two defects found in it, and the feature
-table built from it, and then gave the full mathematical specification of
-the two method families compared in this project. Machine learning, in
+table built from it, including an optional weather extension
+(Section~\ref{sec:weather}) carrying its own third data-quality defect, a
+hard cutoff rather than scattered gaps, and then gave the full mathematical
+specification of the two method families compared in this project. Machine learning, in
 Section~\ref{sec:ml-methods}, comprises a classical ARIMA benchmark and three
 regressors, ridge, random forest, and gradient boosting, each controlling
 the bias-variance trade-off by a different mechanism: shrinkage, bagging, or
@@ -1066,6 +1124,71 @@ from the origin rather than the level improves
 both tree models, because a tree cannot extrapolate beyond the targets it was
 trained on and this series drifts downward across the decade.
 
+\subsection{Does Weather Change the Answer?}
+\label{sec:results-weather}
+
+The specification above uses no information beyond the series' own history.
+Section~\ref{sec:weather} adds daily wind speed and temperature, and the
+question is whether that changes which model wins.
+
+\begin{table}[htbp]
+\centering
+\caption{Change in rMAE from adding weather covariates, same rolling-origin
+protocol and same reference as Table~\ref{tab:accuracy}. Negative is an
+improvement. The network's weather row is given as its own absolute range
+over five seeds, to be read against its row in Table~\ref{tab:accuracy}.}
+\label{tab:weather}
+\footnotesize
+\input{tables/weather}
+\end{table}
+
+Table~\ref{tab:weather} answers it unevenly across models, and the unevenness
+is itself informative. Gradient boosting improves substantially and at every
+horizon, by 8.5 points of relative error at one day, 1.9 at two and 2.6 at
+three on the level target, and similarly on the change target. The random
+forest moves the other way at the longest horizon, 5.0 points worse at three
+days, while ridge improves at one and two days and worsens slightly at three.
+No single story explains all five machine learning rows; weather is not a
+free improvement for every method that can accept it.
+
+The recurrent network is where the extension matters most, because
+Section~\ref{sec:weather} identified wind speed as a specific physical
+candidate for the short range structure the plain network was already
+exploiting at one day ahead. With weather added, the network beats ARIMA
+under all five seeds at one day ahead, as before, but at two days, where
+ARIMA previously won outright, it beats ARIMA clearly under four seeds and
+ties it under the fifth: that seed's 0.8825 against ARIMA's 0.8827 is a
+difference of two parts in ten thousand, well inside the 0.004
+machine-to-machine noise floor established in
+Section~\ref{sec:noise-floor}, so it is reported as a tie rather than a win.
+The other four seeds, 0.844 to 0.853, clear that floor more than ten times
+over. At three days four of the five seeds beat ARIMA, 0.778 to
+0.790 against ARIMA's 0.832, but the fifth lands at 0.877, worse than ARIMA
+and worse than the plain network's own worst seed at that horizon. That one
+outlier is reported rather than dropped, for the same reason every other
+seed-dependent claim in this report is given as a range: a single favourable
+seed is not evidence, and neither is discarding an unfavourable one.
+
+The honest summary is that wind speed and temperature measurably help the
+one architecture built to exploit short-range structure, change the two-day
+result from an ARIMA win to a network win, and leave the three-day result a
+contested tie rather than the near-tie it was before, while helping the
+tree-based machine learning models unevenly and the random forest not at all
+at the longest horizon. This was checked against the weather coverage gap
+diagnosed in Section~\ref{sec:weather} by repeating the comparison restricted
+to origins inside the fully observed weather window; every change of sign
+and every ordering above survived that restriction, which is what makes the
+finding a property of the weather signal rather than of how its gap was
+filled.
+
+What this does not do is retest Research Question 3. The threshold sweep in
+Section~\ref{sec:threshold} was not rerun with the weather-augmented models,
+so whether a more accurate point forecast at one and two days ahead actually
+widens the achievable hit rate at a fixed alarm budget, or is absorbed by the
+same five-point ceiling every other model in this report runs into, is an
+open question rather than a claimed result. Section~\ref{sec:future} returns
+to it.
+
 \section{Two Arms of the Same Question}
 
 Neither arm dominates. Forecasting the concentration and then applying a
@@ -1121,7 +1244,11 @@ question nobody asked.
 
 Table~\ref{tab:accuracy} answers the first research question with a
 horizon-dependent result: the deep learning model wins at one day ahead, the
-classical model wins or ties beyond it. Section~\ref{sec:threshold} answers
+classical model wins or ties beyond it. Table~\ref{tab:weather}
+(Section~\ref{sec:results-weather}) shows that boundary moving once observed
+weather is added: the network moves ahead at two days as well, though
+whether that gain survives being tested as a warning system is not yet
+known. Section~\ref{sec:threshold} answers
 the third, and it is the result the rest of this report is organised around:
 the alarm budget, not the model, is what principally determines warning
 performance. Chapter~\ref{chap:discussion} takes up what that means in
@@ -1162,6 +1289,7 @@ every model in this study shares: the persistence of concentration from one
 day to the next, and the annual cycle.
 
 \section{How Large Is a Difference Between Models?}
+\label{sec:noise-floor}
 
 Two results in this project bound that question from below. Running the identical
 pipeline on two different machines moved the tree models by up to 0.004 in
@@ -1229,15 +1357,23 @@ configuration that a wider search would find. The machine learning results in
 Table~\ref{tab:accuracy} should therefore be read as a lower bound on what
 those model classes could achieve with more computation, not as their ceiling.
 
-No meteorological covariate enters any model. Wind speed in particular is a
-well established driver of particulate dispersion and is a plausible source
-of the short-range structure that lets the recurrent network beat ARIMA at one
-day ahead. A version of this project with wind, temperature, and boundary
-layer height added to the feature table is the most direct extension; the
-\texttt{meteostat} package, which wraps NOAA and GHCN station data, would
-supply it without a new data acquisition problem. Its absence here is a scope
-decision made to fit the project inside the time available, not a claim that
-meteorology is unimportant.
+Wind speed and temperature were added, in Section~\ref{sec:weather}, but the
+treatment is narrower than a full meteorological extension in three specific
+ways that should be stated plainly rather than discovered by a careful
+reader. First, only observed weather enters the feature table, never a
+forecast one; a real early-warning system would feed in a numerical weather
+prediction for the days ahead, which is a materially stronger and untested
+claim about what is knowable at the forecast origin. Second, boundary layer
+height, the variable most directly tied to the physical mechanism of a
+particulate episode, a shallow boundary layer trapping pollutants near the
+surface, is not available from \texttt{meteostat} at all; it would need a
+reanalysis product such as ERA5, a separate data acquisition problem rather
+than the free extension this report's own earlier draft assumed it would be.
+Third, the comparison
+in Section~\ref{sec:results-weather} was never put through the threshold
+sweep in Section~\ref{sec:threshold}, so whether the accuracy gain
+translates into a wider achievable hit rate at a fixed alarm budget, the
+quantity Chapter~\ref{chap:discussion} argues matters most, is still open.
 
 % ============================================================================
 \chapter{Conclusion}
@@ -1269,28 +1405,52 @@ here.
 Machine learning earned its place only partially. ARIMA with annual Fourier
 terms beats every machine learning regressor at every horizon, a result that
 strengthens rather than weakens under the sensitivity analysis in
-Section~\ref{sec:limitations}. The one machine learning method that does win,
-the recurrent network, does so only at one day ahead, and only when reported
-honestly as a range across five random initialisations rather than as a single
-favourable seed. The supervisor's instruction to try several methods rather
+Section~\ref{sec:limitations}. Among models using the series' own history
+alone, the recurrent network is the one that wins, and only at one day ahead,
+reported honestly as a range across five random initialisations rather than
+as a single favourable seed. Adding wind speed and temperature
+(Section~\ref{sec:results-weather}) moves that boundary: the weather-enabled
+network then beats ARIMA clearly under four of five seeds at two days, with
+the fifth a tie inside the project's own noise floor, and under four of
+five at three, where the plain comparison had been at best a tie.
+Gradient boosting improves at every horizon with the same weather covariates,
+though the random forest does not, so the gain is specific to which model and
+which architecture, not a blanket effect of adding more inputs. The
+supervisor's instruction to try several methods rather
 than defaulting to ARIMA was the right one: it is what makes the negative
 result at two and three days credible, and what surfaces the one day ahead
 result that a project restricted to classical methods would never have found.
 
 \section{Future Work}
+\label{sec:future}
 
-Two extensions follow directly from the limitations in
-Section~\ref{sec:limitations}. Adding
-meteorological covariates, wind speed in particular, is the most direct route
-to improving the short horizon forecasts that the recurrent network already
-shows have room to improve. Repeating the analysis at a second, independent
-station, ideally one inside the Central Pollution Control Board network once
-its record lengthens, would test whether the findings here are a property of
-Delhi air quality or an artefact of the one diplomatic enclave monitor this
-project was restricted to. Until then, the central recommendation stands on
-its own: a hazardous air quality warning system should be designed around the
-alarm budget its operator can justify, with the forecasting model treated as a
-secondary refinement rather than the primary design choice.
+Three extensions follow directly from where this report's own weather work
+stopped, and a fourth, independent of it, from the single-station limitation
+in Section~\ref{sec:limitations}.
+The most immediate is to put the weather-augmented models from
+Section~\ref{sec:results-weather} through the threshold sweep in
+Section~\ref{sec:threshold}: an accuracy gain at one and two days ahead is
+not yet known to buy a wider achievable hit rate at a fixed alarm budget,
+and given how narrow the gap between models already was in
+Chapter~\ref{chap:discussion}, it may not. That is a question this report
+raises rather than answers. A second is to replace observed weather with
+forecast weather, a numerical weather prediction for the days ahead rather
+than the conditions already measured; this is the stronger and more useful
+claim for an operational system, and the one this project deliberately did
+not make. A third is boundary layer height, unavailable from
+\texttt{meteostat}, which would need a reanalysis product such as ERA5 and
+is the single variable most directly tied to the physical mechanism of a
+particulate episode rather than a correlate of it.
+
+A fourth extension is independent of weather: repeating the analysis at a
+second, independent station, ideally one inside the Central Pollution
+Control Board network once its record lengthens, would test whether the
+findings here are a property of Delhi air quality or an artefact of the one
+diplomatic enclave monitor this project was restricted to. Until then, the
+central recommendation stands on its own: a hazardous air quality warning
+system should be designed around the alarm budget its operator can justify,
+with the forecasting model treated as a secondary refinement rather than the
+primary design choice.
 
 % ============================================================================
 \bibliographystyle{plainnat}
