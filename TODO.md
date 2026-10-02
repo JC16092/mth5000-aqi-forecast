@@ -234,11 +234,24 @@ the classifier-detail expansion) is now secondary to this:
       was fixed to describe their health-risk assessment and their ML
       forecasting comparison as the two separate analyses they actually
       are. See PROJECT_STATUS.md for the full account.
-- [ ] Consider adding "Chapter Summary" subsections to Discussion and
-      Conclusion to match the convention Results already uses. Lower
-      priority, cosmetic.
-- [ ] A full read-through of all the new Methodology/Literature content for
-      voice, since it was written in one sitting rather than slowly.
+- [x] Chapter Summary subsections added to Discussion and Conclusion,
+      matching Results' convention. Discussion's ties together the
+      operational-question argument, the noise floor and the Limitations;
+      Conclusion's is a genuine closing paragraph, the three RQs restated
+      against what tested them (sensitivity check, weather, doubled seeds).
+- [x] Full read-through of Methodology and Literature Review for voice and
+      correctness. Found two real inaccuracies, not just style: (1) the GRU
+      description said it carries "three channels" including "the annual
+      Fourier terms from Section 3.3.3" — the actual code
+      (`step08_gru.py build_channels`, default `seq_fourier=2`, never
+      overridden at any call site) uses six channels and $K=2$ Fourier
+      pairs, not the $K=4$ used everywhere else in the project. Fixed to
+      state this accurately rather than implying it reuses the same
+      Fourier terms as ARIMA. (2) The Literature Review's own chapter
+      summary claimed coverage of "the health consequences of exposure,"
+      which no cited source in that chapter actually covers (the Delhi
+      section covers emission sources and two ML forecasting studies, not
+      health effects). Rewritten to describe what's actually there.
 
 ---
 
@@ -248,9 +261,25 @@ the classifier-detail expansion) is now secondary to this:
       exactly seed 0). Reran the threshold sweep across all 5 seeds and Table 4
       now reports GRU as a range, matching Table 3's own rule. Spread is small
       (0.006–0.014), reinforcing rather than complicating the main finding.
-- [ ] **Not fixed, flagged instead:** Table 4's top "Best hit rate" summary
-      rows still use seed 0's curve, about 0.002 off the true 5-seed best.
-      Below this project's own noise floor; a judgement call, not an oversight.
+- [x] **Now actually fixed.** Table 4's top "Best hit rate" summary rows
+      used only `threshold_sweep.csv` (seed 0's GRU curve) to find the best
+      model at each budget. `table_budget()` in `make_tables.py` now also
+      checks every GRU seed's own sweep file at all three horizons (it only
+      checked h=1 before) and takes the true best across all ten. Moved the
+      h=1 budget-100 headline from 0.873 to 0.881 and several other cells
+      by similar small amounts — real, not noise-floor-sized in every cell,
+      so worth having actually fixed rather than flagged. Caught two
+      further numbers downstream of this in Results that needed
+      re-deriving: "persistence achieves the best hit rate in the study" at
+      h=1/budget=100 is no longer true (the GRU's best seed now beats it by
+      0.008) — replaced with a genuinely true, sharper example found by
+      scanning every horizon/budget combination: at h=3, budget=40,
+      persistence is now the literal best model in the entire study, an
+      exact tie for first rather than close to it. The climatology-vs-best
+      "four thousandths" claim (appearing twice) was already stale before
+      today's fix and got worse after it; replaced both with the real
+      current closest point, roughly a hundredth, at h=3 and the loosest
+      budget.
 - [x] Full audit of every hand-typed number in `main.tex` against its
       source. Found and fixed two real errors: the coverage-defect sentence
       in Data (wrong denominator, 1,085 was over 3,467 rows not 3,199), and
@@ -328,9 +357,11 @@ the classifier-detail expansion) is now secondary to this:
 
 ## Optional, not a gap
 
-- [ ] Expand Results §5.2 ("Two arms of the same question") with more
-      classifier detail from `threshold_sweep.csv` — currently thinner than
-      the rest of Results but not incomplete
+- [x] **Stale — done properly several passes ago.** This item predates the
+      "Fix thin Results and Analysis" pass, which rewrote §4.2 with the
+      matched-pairs methodology, Table 4, and now Figure 7 as well. Left
+      checked off here rather than deleted so the file's own history stays
+      honest about what this list used to say.
 
 ---
 

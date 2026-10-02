@@ -1355,6 +1355,148 @@ the extension than the first run suggested.
    was already read — still worth clarifying directly rather than
    guessing again.
 
+### Same day, a tenth pass: a full audit of what's been left out since the project started, then thirteen decisions from the user, acted on
+
+Asked directly what had been left out since the beginning, including
+everything from the supervisor meetings. Read every meeting-prep and
+status PDF in the project folder (`meeting_prep_tianhai_tian.pdf`,
+`supervisor_meeting_2_prep.pdf`, `supervisor_meeting_3_agenda.pdf` — the
+eighteen questions prepared for a 4 September meeting that worth-checking
+evidence suggests never happened, since work stalled the same day — the
+30 September `MTH5000_Status_and_Next_Steps.pdf` and
+`MTH5000_Progress_Report.pdf`) against `BLUEPRINT.md`'s original plan and
+`PROJECT_STATUS.md`'s own account of the actual 2 October meeting. Found a
+real, numbered list: several administrative questions sent to Dr Tian in
+writing (presentation/seminar component, marking rubric, AI-declaration
+requirement, code submission format, whether code and the logbook are
+themselves assessed) with no recorded answer anywhere in this file; the
+meteorological-covariates extension built without his sign-off, which the
+third pass above already stated honestly; the Kolmogorov-Arnold Network
+stretch goal, dropped under time pressure with no record of telling him;
+RQ1 and RQ2 never having their own dedicated figures, only tables, against
+the original "done" checklist's own requirement; and several already-
+tracked `TODO.md` items. Given to the user as a numbered list; the user
+answered all thirteen points directly. What follows is what was actually
+done in response, item by item:
+
+1. **Oral presentation confirmed**: first week of November 2026, 30–40
+   minutes. Not yet started — it comes after the 31 October report
+   deadline, so logged here rather than built this session. Needs its own
+   planning pass (format, slide tool, content) before it's due.
+2. **Grading split confirmed**: 70% report, 30% seminar/oral presentation.
+   Both matter; this was previously unknown.
+3. AI-tool declaration: user will clarify later. Left open.
+4. **Code submission format confirmed**: a separate zip file plus GitHub,
+   with the required data files included. Built `README.md` (did not
+   exist before this session) documenting the project, setup, every
+   script's purpose, and the exact command sequence to reproduce the
+   whole pipeline from the cleaned data, matching what this file's own
+   "Rebuild it from nothing" section and today's rerun actually used.
+   Built `mth5000_code_submission.zip` (not committed to git — a
+   submission artifact, not source): every script, `requirements.txt`,
+   `README.md`, the three `data/*.csv` files, and `report/` (`main.tex`,
+   `refs.bib`, `make_tables.py`, `figures/*.png`, `main.pdf`). Deliberately
+   left out the 65 intermediate result CSVs (~126\,MB) — regenerable from
+   the data via the README's own instructions and already in the public
+   GitHub repo; a code submission bundling 90\,MB of regenerable
+   intermediates felt like the wrong artifact. 1.1\,MB zipped, 35 files.
+5. **Weather extension sign-off confirmed**: Dr Tian has now approved the
+   meteorological-covariates work after the fact. The third-pass entry
+   above, written when that approval didn't exist yet, is left as
+   written rather than edited, since it was an accurate account of the
+   state at the time.
+6. **Confirmed: both the code and the logbook are assessed**, not just
+   supporting material. Read as the reason to treat the missing README as
+   a real gap rather than a nice-to-have, and to prioritise item 12 below
+   (fixing rather than just flagging a known numeric issue) over leaving
+   it as a documented judgement call.
+7. Kolmogorov-Arnold Network: user isn't sure. Left open, no action.
+8. & 9. **New figures wanted for RQ1 and RQ2, called out as more
+   important than other items.** Added `fig_accuracy()` and `fig_arms()`
+   to `make_figures.py`.
+   `fig6_accuracy.png` is a Cleveland dot plot, Table 3 as a picture: one
+   row per model, one panel per horizon, a dot at its rMAE, a horizontal
+   range bar instead of a dot for the GRU (ten seeds, never a point
+   estimate), climatology and seasonal-naive left off since both are far
+   outside the competitive cluster's axis range at one day ahead.
+   `fig7_arms.png` extends Table 4 (h=1 only) to all three horizons: one
+   line per matched pair, the hit-rate edge of forecast-then-threshold
+   over its matched classifier, by alarm budget, with a zero reference
+   line — directly visualises the "edge narrows, and reverses at the
+   loosest budget" finding from the ninth pass's RQ2 rewrite. Wired both
+   into `report/main.tex` beside their tables with full captions; `report/
+   make_tables.py`'s figure-copy list extended to include them.
+10. **Chapter Summary sections added to Discussion and Conclusion**,
+    matching the convention Results and Literature Review already use.
+    Discussion's ties together the operational-question argument, the
+    noise floor, and Limitations; Conclusion's restates the three RQ
+    answers against what actually tested them this session (the
+    sensitivity check, the weather extension, the doubled seed count).
+11. **Full voice/correctness read-through of Methodology and Literature
+    Review**, written in one sitting several passes ago and never
+    reread end to end. Found two real inaccuracies, not just style:
+    - The GRU's own description said it reads "three channels... the
+      annual Fourier terms from Section 3.3.3," implying the same $K=4$
+      terms used everywhere else. Checked against `step08_gru.py`'s
+      `build_channels(..., seq_fourier=2)` — never overridden at any of
+      its eight call sites — the true count is six channels and $K=2$
+      Fourier pairs, a smaller, different harmonic set than the rest of
+      the project uses, never previously stated. Fixed to say so plainly
+      rather than invent a reason for the difference that isn't in the
+      code or anywhere in this file.
+    - The Reproducibility section claimed "thirteen command line
+      scripts, each carrying an automated correctness test." Counted
+      directly: ten numbered pipeline scripts exist, and only nine carry
+      `--test` (`step01_data_check.py` has `--demo`, not `--test`).
+      Fixed to the true, checked count.
+    - The Literature Review's own chapter summary claimed coverage of
+      "the health consequences of exposure," which no citation in that
+      chapter actually addresses (the Delhi section covers emission
+      sources and two prior ML-forecasting studies, not health effects).
+      Rewritten to describe what the chapter actually contains.
+12. **Table 4's seed-0-only top row, flagged but left unfixed in an
+    earlier pass, actually fixed this time** (the user said to, and that
+    both code and logbook being assessed raised the bar on leaving known
+    issues flagged rather than resolved). `table_budget()` in
+    `make_tables.py` now checks every GRU seed's sweep file at all three
+    horizons, not just seed 0 at h=1, for the top "Best hit rate" row.
+    Moved several cells by real amounts, not all noise-floor-sized (the
+    h=1/budget-100 headline moved from 0.873 to 0.881). This broke two
+    downstream prose claims that depended on the old, wrong top row:
+    "persistence achieves the best hit rate in the study" at h=1/budget
+    100 is no longer true (GRU's best seed now beats it by 0.008) —
+    replaced with a genuinely true and sharper example found by scanning
+    every horizon/budget pair directly: at h=3, budget 40, persistence
+    is now the literal best model in the entire study, an exact tie for
+    first. The "climatology within four thousandths of the best model"
+    claim (stated twice, in Results and Discussion) was already stale
+    from a much earlier pass and got further off after this fix; both
+    replaced with the real current closest point, roughly a hundredth,
+    at h=3 and the loosest budget this report considers.
+13. Citation ambiguity from the Week 3 TODO item: user will decide later.
+    Left open.
+
+Recompiled clean, zero LaTeX warnings, 45 pages (was 43). Re-ran
+`report/make_tables.py` and `make_figures.py` together so the new figures
+and the corrected budget table are generated from the same pass. Rebuilt
+`mth5000_code_submission.zip` with the final `main.pdf` and figures after
+all of the above landed, not before.
+
+**What is still genuinely open, in priority order:**
+
+1. Decide when to send the complete draft to Dr Tian — still the main open
+   item, now with a firmer deadline context: the report is due 31 October,
+   the presentation the first week of November.
+2. Plan and build the oral presentation (30–40 minutes, first week of
+   November, 30% of the grade) — not started.
+3. The AI-tool-use declaration (point 3 above) and the citation-set
+   ambiguity (point 13 above) — both explicitly deferred by the user to a
+   later decision, not forgotten.
+4. The Kolmogorov-Arnold Network (point 7) — genuinely undecided, revisit
+   if there's time after the above.
+5. The 29 references and stale-citations question from several passes
+   ago — still open, lower priority than the above.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required

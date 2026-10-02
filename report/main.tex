@@ -566,10 +566,13 @@ attention-based architectures weighed against the recurrent family before
 narrowing to it, the specific architectural reason a GRU rather than an
 LSTM suits a dataset this size, and the structural limitation, an inability
 to represent a missing input, that a recurrent architecture carries
-regardless of which gated variant is chosen; the physical and epidemiological
-background, emission sources, biomass burning, and the health consequences
-of exposure, that motivates treating this as a hazard-warning problem rather
-than a curve-fitting exercise; and the two literatures, forecast
+regardless of which gated variant is chosen; the physical background and
+Delhi-specific forecasting literature, emission sources, biomass burning,
+and two prior machine learning studies on this same city's PM2.5, that
+motivates treating this as a hazard-warning problem rather than a
+curve-fitting exercise and locates the gap, warning-system evaluation
+against an explicit alarm budget, that those studies leave open; and the
+two literatures, forecast
 verification and air quality monitor data quality, that this project's own
 findings connect back to directly. Taken together, this literature places
 the project's contribution precisely. Applying an established model suite to
@@ -991,9 +994,11 @@ the property that motivated gated architectures in Section~\ref{sec:lit-dl}.
 
 The specific network fitted in this project is a single GRU layer with
 $H=24$ hidden units, reading a sequence of the last 30 days
-($t-29,\dots,t$), each day carrying three channels: the logarithm of
-concentration, a missingness flag, and the annual Fourier terms from
-Section~\ref{sec:features}. A linear output layer maps the final hidden state
+($t-29,\dots,t$), each day carrying six channels: the logarithm of
+concentration, a missingness flag, and two pairs of annual Fourier terms
+($K=2$), a smaller harmonic set than the $K=4$ used for the ARIMA
+specification in Section~\ref{sec:arima} rather than a reuse of it. A
+linear output layer maps the final hidden state
 $h_t$ to a single predicted value, the change in log concentration from the
 forecast origin, with the origin value added back afterwards; modelling the
 change rather than the level is the same device used for the tree models in
@@ -1111,9 +1116,10 @@ imbalanced data generally \citep{saito2015prplot}.
 
 \section{Reproducibility}
 
-The analysis runs end to end from an empty directory in thirteen command line
-scripts, each carrying an automated correctness test that runs before it
-produces any output. The rolling origin harness verifies its own leakage
+The analysis runs end to end from an empty directory via ten numbered
+pipeline scripts, nine of which carry an automated correctness test, run
+with \texttt{--test}, that exits before producing any output if its own
+checks fail. The rolling origin harness verifies its own leakage
 invariant before every run. Every table in this report is generated directly
 from the result files by \texttt{make\_tables.py}; no number has been
 transcribed by hand. Raw and cleaned data are held under version control so
@@ -1159,8 +1165,20 @@ only model whose result depends on one.}
 \input{tables/accuracy}
 \end{table}
 
-Table~\ref{tab:accuracy} answers the first research question, and the answer is
-not uniform across horizons.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/fig6_accuracy}
+\caption{Table~\ref{tab:accuracy} as a dot plot, one row per model, one panel
+per horizon, the vertical line at 1.000 marking persistence. The recurrent
+network has no single dot: its ten seeds are shown as a horizontal range
+bar rather than a point estimate. Climatology and the seasonal-naive
+benchmark are omitted here, both well outside this axis range at one day
+ahead; their numbers are unchanged in Table~\ref{tab:accuracy}.}
+\label{fig:accuracy}
+\end{figure}
+
+Table~\ref{tab:accuracy} and Figure~\ref{fig:accuracy} answer the first
+research question, and the answer is not uniform across horizons.
 
 At one day ahead the recurrent network is the best model, and this is robust:
 across ten initialisation seeds it is numerically ahead of the ARIMA
@@ -1332,6 +1350,19 @@ regime in which direct classification leads at one day or two; it only
 overtakes once the alarm budget is loose enough that a classifier's extra
 structure stops mattering.
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/fig7_arms}
+\caption{Table~\ref{tab:arms} extended to all three horizons: the hit-rate
+advantage of forecast-then-threshold over its matched classifier, by alarm
+budget, one line per matched pair. Above the zero line forecast-then-
+threshold wins; below it the classifier does. The lines start mostly above
+zero at a budget of 40 and drift toward it, and below it, as the budget
+loosens and the horizon lengthens, the same narrowing the text above
+describes as counts rather than as a curve.}
+\label{fig:arms}
+\end{figure}
+
 A plausible reading is that a classifier optimises the exceedance label
 directly and so should have the advantage, while a regressor optimises a
 different quantity, squared or absolute error on the concentration, and
@@ -1368,7 +1399,7 @@ event fixed at the health threshold and only the decision threshold varying.}
 
 Table~\ref{tab:budget} contains the principal result of this project. Moving the
 alarm budget from 40 to 100 per year changes the achievable hit rate at one day
-ahead from 0.379 to 0.873. Holding the budget fixed and changing the model
+ahead from 0.379 to 0.881. Holding the budget fixed and changing the model
 instead moves it by around five points.
 
 \begin{figure}[htbp]
@@ -1381,11 +1412,15 @@ which is the finding. They have deliberately not been separated for legibility.}
 \label{fig:warning}
 \end{figure}
 
-Two individual comparisons make the point sharper than the aggregate does. At a
-budget of 100 alarms per year and one day ahead, persistence achieves a hit rate
-of 0.873, which is the best figure any model in the study achieves at that budget.
-At three days ahead and a budget of 60, a climatological forecast, which uses no
-recent information whatever, matches the best model to within four thousandths.
+Two individual comparisons make the point sharper than the aggregate does. At
+three days ahead and a budget of 40 alarms a year, persistence, a forecast
+that does nothing but repeat yesterday's reading, is not merely competitive
+but is the single best model in the entire study, 0.359, ahead of every
+machine learning regressor, ARIMA, and every one of the recurrent network's
+ten seeds. At the loosest budget this report considers, 100 alarms a year,
+and the same horizon, a climatological forecast, which uses no recent
+information whatever, comes within roughly a hundredth of the best fitted
+model, 0.816 against 0.827.
 Figure~\ref{fig:warning} shows the same result as curves; they very nearly
 coincide, and they have deliberately not been separated for legibility.
 
@@ -1430,11 +1465,11 @@ numbers. A decision maker who fixes how many alarms per year an operator or
 the public will tolerate has more influence over how many hazardous days are
 caught than a modeller choosing among the ten specifications fitted in this
 project. Moving the budget from 40 to 100 alarms a year moves the achievable
-hit rate at one day ahead from 0.379 to 0.873, a range of fifty points.
+hit rate at one day ahead from 0.379 to 0.881, a range of fifty points.
 Holding the budget fixed and switching the model instead moves the hit rate by
 about five points, and at three days ahead, at the loosest budget this report
 considers, a climatology forecast that uses no recent information whatever
-comes within six thousandths of the best fitted model, 0.816 against 0.822.
+comes within roughly a hundredth of the best fitted model, 0.816 against 0.827.
 
 This is not an argument against modelling. ARIMA and the recurrent network
 both earn real, if modest, gains over persistence in Table~\ref{tab:accuracy},
@@ -1592,6 +1627,25 @@ decision threshold only partially, buying a few points of hit rate at some
 budgets and none at others, which is itself the clearer instance of this
 report's central finding rather than a loose end.
 
+\section{Chapter Summary}
+
+Section~\ref{sec:threshold} (Chapter~\ref{chap:results}) established that the
+alarm budget dominates the model; this chapter has argued why that is not an
+argument against modelling, and has tried to be as honest about the limits of
+the modelling itself as about its result. Section~\ref{sec:noise-floor} showed
+that several of the gaps in Table~\ref{tab:accuracy} are no larger than noise
+this project measured directly, so a horizon-by-horizon ranking read off that
+table without the floor in mind would overstate what is known. The
+Limitations above add to that the single-station and single-city scope, a
+cleaning threshold that is a judgement rather than a fact, hyperparameter
+grids that were never exhaustively searched, a weather extension narrower
+than a full meteorological system, and a recurrent network whose training is
+not bit-reproducible even at a fixed seed, discovered only because the
+pipeline was rerun and the result checked rather than assumed. None of these
+overturns the central finding; several of them, the noise floor and the
+seed-count doubling most directly, are the reason that finding can be stated
+with the confidence it is.
+
 % ============================================================================
 \chapter{Conclusion}
 \label{chap:conclusion}
@@ -1690,6 +1744,23 @@ central recommendation stands on its own: a hazardous air quality warning
 system should be designed around the alarm budget its operator can justify,
 with the forecasting model treated as a secondary refinement rather than the
 primary design choice.
+
+\section{Chapter Summary}
+
+Three research questions were asked and three were answered. Machine
+learning earns a real but narrow place: the recurrent network alone beats
+the classical benchmark, and only one day ahead. Forecasting the
+concentration and then thresholding it has a modest, genuine edge over
+classifying the exceedance directly, not a decisive one. And the decision
+threshold, not the model, is what principally determines how many
+hazardous days a warning system actually catches, a finding that held when
+tested against a cleaning-threshold sensitivity check, against a
+materially more accurate weather-augmented forecaster, and against a
+doubled sample of the one model whose own training turned out not to be
+fully reproducible. A project that set out to compare machine learning
+against classical time series methods for a public health problem ends by
+recommending that the comparison matters less than where the operator sets
+the alarm.
 
 % ============================================================================
 \bibliographystyle{plainnat}

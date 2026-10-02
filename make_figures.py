@@ -17,6 +17,10 @@ import statsmodels.api as sm
 from statsmodels.tsa.stattools import acf
 from scipy import stats
 
+import evaluation as ev
+from step01_data_check import load_series
+from step07_warning import operating_point_at_alarms
+
 plt.rcParams.update({
     "font.family": "serif",
     "font.serif": ["Liberation Serif", "Times New Roman", "DejaVu Serif"],
@@ -297,6 +301,128 @@ def fig_warning(sweep_path="threshold_sweep.csv"):
     plt.close(fig)
 
 
+# ---------------------------------------------------------------- figure 6
+def fig_accuracy(fc_path="forecasts_with_gru.csv", series_path=CLEAN, burn_in=1095):
+    """RQ1, the figure Table 3 never had. A Cleveland dot plot: one row per
+    model, one panel per horizon, a dot at that model's rMAE relative to
+    persistence (the dashed line at 1.0). The recurrent network gets a
+    horizontal range bar instead of a dot, across all ten seeds, the same
+    distinction the report's own text insists on rather than a single
+    favourable run. Climatology and the seasonal-naive benchmark are left
+    off: both sit far outside this range at one day ahead and would compress
+    the competitive cluster that is actually the point of the figure; their
+    numbers are in Table 3, unchanged.
+    """
+    s = load_series(series_path, "date", "PM2.5")
+    scale = ev.mase_scale(s.loc[:s.index[burn_in]].values)
+
+    fc = pd.read_csv(fc_path, parse_dates=["origin"])
+    common = ev.restrict_to_common(fc)
+    metrics = ev.regression_metrics(common, scale, reference="naive_carry")
+
+    order = ["gru", "arima_fourier", "hist_gbm_delta", "random_forest_delta",
+             "hist_gbm", "random_forest", "ridge", "naive_carry"]
+    labels = {
+        "gru": "GRU, range over 10 seeds", "arima_fourier": "ARIMA",
+        "hist_gbm_delta": "gradient boosting, change",
+        "random_forest_delta": "random forest, change",
+        "hist_gbm": "gradient boosting, level",
+        "random_forest": "random forest, level",
+        "ridge": "ridge", "naive_carry": "persistence",
+    }
+
+    import glob
+    seed_files = sorted(glob.glob("gru_seed*.csv"))
+    gru_by_h = {h: [] for h in (1, 2, 3)}
+    for f in seed_files:
+        g = ev.restrict_to_common(pd.read_csv(f, parse_dates=["origin"]))
+        gm = ev.regression_metrics(g, scale, reference="naive_carry")
+        for h in (1, 2, 3):
+            row = gm[(gm.model == "gru") & (gm.horizon == h)]
+            if len(row):
+                gru_by_h[h].append(float(row["rMAE"].iloc[0]))
+
+    y = np.arange(len(order))[::-1]
+    fig, axes = plt.subplots(1, 3, figsize=(W, 3.6), sharey=True,
+                             gridspec_kw={"wspace": 0.08})
+
+    for col, h in enumerate([1, 2, 3]):
+        ax = axes[col]
+        ax.axvline(1.0, color="0.75", lw=0.8, zorder=1)
+        for yi, name in zip(y, order):
+            if name == "gru" and gru_by_h[h]:
+                lo, hi = min(gru_by_h[h]), max(gru_by_h[h])
+                ax.plot([lo, hi], [yi, yi], color="black", lw=2.4, zorder=3,
+                        solid_capstyle="round")
+                continue
+            row = metrics[(metrics.model == name) & (metrics.horizon == h)]
+            if not len(row):
+                continue
+            v = float(row["rMAE"].iloc[0])
+            ax.plot(v, yi, "o", ms=4.5, mfc="0.2", mec="none", zorder=3)
+        if col == 0:
+            ax.set_yticks(y)
+            ax.set_yticklabels([labels[n] for n in order], fontsize=7.3)
+        ax.set_ylim(-0.8, len(order) - 0.2)
+        ax.set_xlim(0.78, 1.04)
+        ax.set_xlabel("rMAE")
+        ax.set_title(f"{h} day{'s' if h > 1 else ''} ahead", loc="left")
+        strip(ax, left=(col == 0))
+        ax.tick_params(axis="y", length=0)
+
+    fig.savefig("fig6_accuracy.png")
+    plt.close(fig)
+
+
+# ---------------------------------------------------------------- figure 7
+def fig_arms(sweep_path="threshold_sweep.csv"):
+    """RQ2, the figure Table 4 never had. Table 4 gives the matched-pairs
+    comparison at one day ahead only; this gives it at every horizon, which
+    is where the edge for forecast-then-threshold actually narrows and, at
+    the loosest budget, reverses. One line per matched pair, the hit-rate
+    advantage of forecasting-then-thresholding over its matched classifier;
+    above the zero line it wins, below it the classifier does.
+    """
+    sw = pd.read_csv(sweep_path)
+    budgets = (40, 60, 80, 100)
+    pairs = [
+        ("ridge", "logistic", "ridge vs. logistic", "-"),
+        ("random_forest_delta", "forest_clf", "random forest vs. its classifier", "--"),
+        ("hist_gbm_delta", "hgb_clf", "gradient boosting vs. its classifier", ":"),
+    ]
+
+    fig, axes = plt.subplots(1, 3, figsize=(W, 2.7), sharey=True,
+                             gridspec_kw={"wspace": 0.1})
+
+    for col, h in enumerate([1, 2, 3]):
+        ax = axes[col]
+        ax.axhline(0, color="0.75", lw=0.8, zorder=1)
+        for reg, clf, label, ls in pairs:
+            diffs = []
+            for b in budgets:
+                r = operating_point_at_alarms(sw, reg, h, b)
+                c = operating_point_at_alarms(sw, clf, h, b)
+                d = ((r["hit_rate"] - c["hit_rate"])
+                     if (r is not None and c is not None) else np.nan)
+                diffs.append(d)
+            ax.plot(budgets, diffs, ls, color="black", lw=1.3, marker="o",
+                    ms=3.3, mfc="black", mec="none", zorder=3,
+                    label=label if col == 0 else None)
+        ax.set_xlim(35, 105)
+        ax.set_xticks(budgets)
+        ax.set_xlabel("alarms per year")
+        ax.set_title(f"{h} day{'s' if h > 1 else ''} ahead", loc="left")
+        if col == 0:
+            ax.set_ylabel("hit-rate edge, forecast-\nthen-threshold minus classifier")
+        ax.set_ylim(-0.1, 0.1)
+        strip(ax, left=(col == 0))
+
+    axes[0].legend(loc="lower left", fontsize=6.5, handlelength=2.6,
+                   borderpad=0.2, labelspacing=0.3, frameon=False)
+    fig.savefig("fig7_arms.png")
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     raw = load(RAW)
     clean = load(CLEAN)
@@ -309,6 +435,16 @@ if __name__ == "__main__":
         print("wrote fig5_warning.png")
     except FileNotFoundError:
         print("threshold_sweep.csv not found; skipping figure 5")
+    try:
+        fig_accuracy()
+        print("wrote fig6_accuracy.png")
+    except FileNotFoundError:
+        print("forecasts_with_gru.csv not found; skipping figure 6")
+    try:
+        fig_arms()
+        print("wrote fig7_arms.png")
+    except FileNotFoundError:
+        print("threshold_sweep.csv not found; skipping figure 7")
     _, r2 = deseasonalise(clean)
     print(f"annual Fourier K=4 on log PM2.5: R2 = {r2:.3f}")
     print("wrote fig1_series.png fig2_coverage.png fig3_weekly.png fig4_annual.png")
