@@ -18,21 +18,34 @@ Dr Tian reviewed the 14-page draft. Verdict: correct but far too short for a
 account. The checklist below this point (reading citations, proofreading,
 the classifier-detail expansion) is now secondary to this:
 
-- [ ] **References: grow from 7 entries (~1/3 page) to at least 4 full pages.**
-      Real literature search, every entry CrossRef-verified — this is the
-      single biggest remaining task by volume.
-- [ ] **Methodology: split explicitly into (i) Machine learning and
+- [x] **References: grow from 7 entries (~1/3 page) to at least 4 full pages.**
+      Done: 40 entries, exactly 4 pages (pages 35-38 of 38). Every one found
+      by real CrossRef search and DOI-verified before citing — this caught
+      two wrong guessed DOIs that resolved to unrelated papers (Guttikunda
+      et al. and Miller 1984) before they were used, and one candidate
+      (Chung et al.'s GRU-vs-LSTM workshop paper) was dropped for having no
+      real Crossref DOI. See PROJECT_STATUS.md's "References grown from 11
+      to 40 entries" section for exactly where each new citation was woven
+      into the prose.
+- [x] **Methodology: split explicitly into (i) Machine learning and
       (ii) Deep learning**, each covering the method family's general
       features/theory, then specifically how this project implemented it.
-- [ ] **Add full mathematical detail throughout Methodology**: ridge
+      Done same day as the meeting — see the checked items below.
+- [x] **Add full mathematical detail throughout Methodology**: ridge
       regression's objective, the random forest splitting criterion,
       gradient boosting's functional gradient descent, ARIMA's AR/MA/I
       polynomial form with the Fourier terms written out, the GRU's full
-      gate equations. Prose descriptions are not enough any more.
-- [ ] **Expand Literature Review** to also carry theoretical background on
+      gate equations. Done same day — see below. Literature-lineage
+      citations (bagging, CART, AdaBoost, XGBoost, backprop,
+      vanishing-gradient) added to these same equations in the 2 October
+      references session.
+- [x] **Expand Literature Review** to also carry theoretical background on
       ML and deep learning as method families (mirrors the Methodology
       split above), not just the four application-area citations already
-      there.
+      there. Done same day — see below. Further deepened in the references
+      session with the bagging/CART/AdaBoost lineage, the M3/M4/M5
+      forecasting-competition thread, and the forecast-evaluation-
+      methodology citations (Tashman, Hyndman & Koehler, Hewamalage et al.).
 - [x] Decide how much of the previous student's 6-chapter, 71-page structure
       to adopt — **decided: adopt it fully.**
 - [x] **Restructure into the six-chapter thesis format.** `report` class,
@@ -50,13 +63,10 @@ the classifier-detail expansion) is now secondary to this:
       split, with 4 new CrossRef-verified citations: Hoerl & Kennard 1970
       (ridge), Friedman 2001 (gradient boosting), Cho et al. 2014 (the GRU),
       Hochreiter & Schmidhuber 1997 (LSTM / vanishing gradient).
-- [ ] **References: still only 11 entries (~1 page), not 4+.** The single
-      biggest remaining task. Needs real literature search — likely 30-50
-      more citations — not something to rush. Candidates already identified:
-      a proper ARIMA/Box-Jenkins citation (currently has none), boosting
-      lineage before Friedman, general deep learning references, and more
-      depth wherever Literature Review currently cites only one or two
-      papers per area.
+- [x] **References: still only 11 entries (~1 page), not 4+.** Done, see
+      above — 40 entries, 4 pages, ARIMA/Box-Jenkins and the boosting
+      lineage both now cited, plus a forecast-evaluation-methodology thread
+      and a health/India-context thread that weren't in the original plan.
 - [ ] Read the 4 Delhi/ML-vs-classical citations full-text (still only
       CrossRef-verified, carried over from 30 September).
 - [ ] Consider adding "Chapter Summary" subsections to Discussion and

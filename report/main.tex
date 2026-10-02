@@ -84,7 +84,12 @@ alarm budget, treating the forecasting model as a secondary refinement.
 \section{Research Background}
 
 Air pollution in Indian cities regularly reaches concentrations classified as
-hazardous to human health. The public response to such episodes depends on
+hazardous to human health. Fine particulate matter small enough to be
+classified as PM2.5 penetrates deep into the respiratory system, and
+sustained epidemiological evidence links exposure to it with increased
+cardiopulmonary and all-cause mortality \citep{pope2006health,chen2020mortality},
+which is the reason a health threshold rather than an arbitrary concentration
+is the event this project forecasts. The public response to such episodes depends on
 knowing that a severe day is coming before it arrives: a forecast issued on
 the morning of a hazardous day is of limited value, while one issued a day or
 more ahead can change behaviour, whether through health advisories,
@@ -200,31 +205,100 @@ warning system rather than by a single average-error statistic
 The classical approach to a series with this structure is an autoregressive
 integrated moving average (ARIMA) model, in which a series is differenced to
 stationarity and then modelled as a linear combination of its own past values
-and past forecast errors. Seasonal variants extend this by one additional
-seasonal period, but a series with two seasonal periods, for instance a
-weekly cycle and an annual one, cannot be accommodated by a single seasonal
-ARIMA order, which is one of the two assumptions this project tests directly
-rather than carrying over unexamined.
+and past forecast errors, following the identification and estimation
+methodology set out by \citet{box2008time}. Seasonal variants extend this by
+one additional seasonal period, but a series with two seasonal periods, for
+instance a weekly cycle and an annual one, cannot be accommodated by a single
+seasonal ARIMA order, which is one of the two assumptions this project tests
+directly rather than carrying over unexamined. The order itself is
+conventionally chosen by an information-criterion search over a bounded grid
+rather than fixed in advance, an approach formalised for routine use by
+\citet{hyndman2008autoarima}; this project follows the same principle, an
+explicit grid scored by the Akaike information criterion rather than a single
+order asserted without justification (Section~\ref{sec:arima}). Where the
+seasonal pattern itself is complex, for instance more than one period or a
+period that does not divide the sampling interval evenly, Fourier terms
+offer a compact way to carry it as a small number of exogenous regressors
+rather than as a large seasonal order; \citet{delivera2011fourier} develop
+this idea within an exponential smoothing framework for series with multiple
+seasonal periods, and the same device, harmonic regressors at a fixed set of
+frequencies, is the one this project uses to carry the annual cycle in an
+ARIMA model's exogenous term (Section~\ref{sec:arima}).
 
 Machine learning offers an alternative that does not assume a linear
 relationship between a forecast and its predictors. Penalised linear
 regression controls the variance of an ordinary least squares fit by
 shrinking its coefficients, which matters when predictors are highly
 correlated, as lagged and rolling-window features of the same series
-necessarily are \citep{hoerl1970ridge}. Random forests fit an ensemble of
-decision trees to bootstrap-resampled data and average their predictions,
-which reduces variance without the linearity assumption
-\citep{breiman2001random}. Gradient boosting fits an ensemble additively,
-each new tree correcting the residual error of the ensemble so far, which
-historically gives better bias-variance trade-offs than a single tree or a
-randomised ensemble on tabular data \citep{friedman2001gradient}. None of
-these three methods assumes stationarity, a seasonal order, or a linear
+necessarily are \citep{hoerl1970ridge}. Random forests and gradient boosting
+both build on classification and regression trees \citep{breiman1984cart},
+which recursively partition the feature space to minimise within-region
+error, but combine many trees by two different mechanisms. A random forest
+averages trees fitted independently to bootstrap-resampled data, a technique
+named bootstrap aggregating, or bagging, and shown to reduce the variance of
+an unstable predictor such as a tree without changing its bias
+\citep{breiman1996bagging,breiman2001random}. Gradient boosting instead
+fits an ensemble additively, each new tree correcting the residual error of
+the ensemble so far; this traces to boosting algorithms that combine many
+weak learners into a strong one by reweighting misclassified examples
+\citep{freund1997adaboost}, which \citet{friedman2001gradient} reformulated
+as stagewise functional gradient descent, the form implemented by the
+histogram-based estimator used in this project (Section~\ref{sec:ml-methods})
+and, in a widely used alternative implementation not used here, by
+\textsc{XGBoost} \citep{chen2016xgboost}. None of these three machine
+learning methods assumes stationarity, a seasonal order, or a linear
 functional form, which is their appeal relative to ARIMA; their cost is that
 they fit the function empirically from a necessarily finite sample, and
 \citet{makridakis2020m4} report, across 100{,}000 series in the M4
 forecasting competition, that this flexibility does not reliably translate
 into an advantage over classical benchmarks on series of a few thousand
 observations, which is the order of magnitude available in this project.
+This was not a new finding when M4 confirmed it at scale:
+\citet{makridakis2018statistical} had already reported the same pattern on
+the smaller M3 dataset and argued that the forecasting community had adopted
+machine learning methods faster than the evidence for their superiority had
+accumulated, and \citet{siaminamini2018comparison} report a direct head-to-head
+instance of it, an LSTM failing to beat ARIMA on a set of financial and
+economic series very different in domain from this project's but identical
+in being short relative to a deep network's capacity. The picture is not
+uniformly negative for machine learning, however: in the M5 competition,
+run on retail demand series with genuine exogenous and hierarchical
+structure to exploit, gradient boosting methods won decisively
+\citep{makridakis2022m5}. Read together, M4 and M5 suggest the deciding
+factor is not machine learning versus classical methods in the abstract but
+whether the series on offer gives a flexible method something structural to
+exploit beyond what a classical model already captures; Chapter~\ref{chap:results}
+revisits this reading directly; a single daily PM2.5 series with no
+exogenous predictors is closer to the M4 setting than the M5 one, which is
+the comparison this project's own result in Chapter~\ref{chap:results}
+confirms rather than contradicts. A different strand of this literature
+asks not which family wins outright but whether they can be combined:
+\citet{zhang2003hybrid} fit a neural network to an ARIMA model's residuals
+and report a gain over either model alone. This project does not pursue a
+hybrid, evaluating the two families side by side instead, precisely so that
+the comparison in Chapter~\ref{chap:results} is informative about which
+family suits this series rather than obscured by a blend of both.
+
+Whichever family is used, the comparison is only as trustworthy as the
+procedure used to test it, a methodological point this project treats as
+seriously as the choice of model. \citet{tashman2000outofsample} reviews decades of
+out-of-sample forecasting evaluations and argues that a single train-test
+split, still common practice at the time, understates how much accuracy
+varies across time periods; \citet{hewamalage2023evaluation} revisit the
+same concern two decades later and document the same pitfalls still
+occurring routinely in applied forecasting work, including exactly the
+single-split optimism this project found and corrected in
+Section~\ref{sec:rolling}. The rolling-origin design adopted here
+(Section~\ref{sec:rolling}) is this project's answer to both papers' shared
+complaint. The accuracy measure itself is a related choice:
+\citet{hyndman2006mase} propose the mean absolute scaled error specifically
+because percentage errors are undefined when a series can be zero and
+unstable when it is close to zero, and this project reports it alongside
+the relative mean absolute error introduced in Section~\ref{sec:evalmeasures}
+for exactly the reason their paper gives, that a scaled error's apparent
+improvement can reflect a change in the series' own volatility rather than
+a change in forecast skill, which is precisely what was found when the
+single split was replaced by the rolling-origin harness.
 
 \section{Deep Learning Methods for Time Series Forecasting}
 \label{sec:lit-dl}
@@ -235,14 +309,21 @@ A recurrent neural network processes a sequence by maintaining a hidden
 state that is updated at every timestep as a function of the current input
 and the previous hidden state, which in principle lets it represent
 dependence on the arbitrarily distant past without the fixed lag structure a
-regression feature table imposes. In practice, a plain recurrent network
-trained by backpropagation through time suffers from vanishing or exploding
-gradients as the sequence lengthens, which makes it unable to learn
-long-range dependence reliably \citep{hochreiter1997lstm}. The long
-short-term memory (LSTM) architecture addressed this with a memory cell and
-three multiplicative gates controlling what is written to, read from, and
-forgotten by that cell, at the cost of a comparatively large number of
-parameters for a short daily series.
+regression feature table imposes, trained by backpropagation through time, a
+direct extension of the backpropagation algorithm for feedforward networks
+\citep{rumelhart1986backprop}. In practice, a plain recurrent network trained
+this way suffers from vanishing or exploding gradients as the sequence
+lengthens: \citet{bengio1994vanishing} show formally that the conditions
+which let a recurrent network store information robustly over many
+timesteps are, under gradient descent, precisely the conditions under which
+the gradient of a distant error with respect to an early input either
+vanishes or explodes, so that reliably learning long-range dependence and
+reliably training by gradient descent are in tension with each other.
+\citet{hochreiter1997lstm} address this with the long short-term memory
+(LSTM) architecture, a memory cell and three multiplicative gates
+controlling what is written to, read from, and forgotten by that cell, at
+the cost of a comparatively large number of parameters for a short daily
+series.
 
 \subsection{The Gated Recurrent Unit}
 
@@ -254,20 +335,69 @@ in Section~\ref{sec:gru}. The GRU's appeal for a daily series with roughly
 three thousand observations is precisely its smaller parameter count relative
 to an LSTM, which matters more on a dataset this size than the slightly
 larger representational capacity an LSTM's extra gate and cell state provide.
+\citet{lim2021survey} survey the broader move of deep learning into time
+series forecasting of which the GRU and LSTM are one part, alongside
+convolutional and attention-based sequence architectures developed since,
+and note that the gain such architectures offer over classical methods
+depends heavily on how much data and exogenous structure a given forecasting
+problem provides, the same conditioning factor Section~\ref{sec:lit-ml}
+identifies as deciding whether machine learning or a classical benchmark
+wins on a series of a given size; this survey, and the general account of
+deep learning's strengths and limits given by \citet{lecun2015deep}, frame
+the GRU result in Chapter~\ref{chap:results} as an instance of a known
+pattern rather than an isolated one. A practical limitation specific to
+recurrent architectures, and directly relevant to this project's own series,
+is that they require a value at every timestep and cannot represent a
+missing observation natively; \citet{che2018rnn} study exactly this problem
+for multivariate clinical time series and adopt the same device used in
+Section~\ref{sec:gru}, carrying the last observed value forward alongside an
+explicit missingness indicator, as a principled rather than ad hoc way to
+hand a recurrent network a gap in its input.
 
 \section{Machine Learning Applications to Delhi and Indian Air Quality}
 
+Delhi's air pollution problem is well characterised at the level of sources
+and policy before any forecasting model is applied to it.
+\citet{guttikunda2014nature} review the emission inventory across major
+Indian cities and identify vehicular traffic, industry, and seasonal biomass
+burning as the dominant contributors, the last of which is the specific
+mechanism behind the stubble burning season discussed below. Satellite-based
+studies independently quantify that mechanism's contribution to Delhi's
+severe episodes: \citet{cusworth2018quantifying} attribute a substantial
+share of Delhi's post-monsoon particulate spikes to agricultural fires
+further north, and \citet{jethva2019connecting} connect the same fires to
+reduced regional air quality using more than a decade of satellite fire
+counts. None of these three studies forecasts the series; they establish the
+physical mechanism that a purely statistical model, such as every model in
+this project, can only infer indirectly from the series' own seasonal
+structure, which is worth stating plainly as a limitation of the
+approach taken here.
+
 Machine learning applied specifically to Delhi PM2.5 is not a new proposal.
-\citet{masood2020delhi} fit several regression models directly to Delhi's
-particulate record to predict concentrations, establishing that a standard
-machine learning toolkit is applicable to this series at all.
-\citet{singh2025stubble} narrow the same problem to the stubble burning
-season, September to December, when biomass burning in neighbouring states
-drives the city's most severe episodes, and frame their evaluation around
-health risk rather than average error alone. Neither paper evaluates its
-forecasts as a warning system in the sense used here, with an explicit alarm
-budget and a false alarm rate reported alongside the hit rate; both report
-accuracy on held-out data without decomposing it by the operating point at
+\citet{masood2020delhi} fit two models, a support vector machine and an
+artificial neural network, to predict Delhi's PM2.5 concentrations from
+meteorological and pollutant covariates and report that the neural network
+is the more accurate of the two; their inputs are exogenous measurements at
+the forecast target day itself rather than the series' own lagged history,
+which is a different forecasting problem from the one addressed here, where
+the only inputs available at origin are the series' own past.
+\citet{singh2025stubble} narrow the problem to Delhi's autumn stubble
+burning season, when biomass burning in neighbouring states drives the
+city's most severe episodes and, by their own account, its air pollutant
+levels peak in October and November specifically. Their paper combines two
+analyses rather than one: a health-risk assessment of stubble-season
+exposure using a dedicated health-risk model, and, separately, a comparison
+of three machine learning models, an artificial neural network, a support
+vector machine, and a random forest, for PM2.5 forecasting, with the random
+forest the most consistent of the three. The health-risk analysis and the
+forecasting comparison sit alongside each other rather than one inside the
+other: the forecasting models are themselves still scored by the same
+average-error measures, $R^2$, RMSE and MAE, that this project argues are
+insufficient on their own, not by a health-weighted criterion. Neither paper
+evaluates its forecasts as a warning system in the sense used here, with an
+explicit alarm budget and a false alarm rate reported alongside the hit
+rate; both report accuracy on held-out data without decomposing it by the
+operating point at
 which an alarm would actually be raised. That gap, between forecast accuracy
 and warning system performance, is the space this project's third research
 question occupies.
@@ -297,7 +427,30 @@ decision threshold is more informative than any single accuracy score. Its
 central methodological point, that verification measures should be chosen to
 match the decision a forecast supports rather than borrowed by default from
 a different problem, motivated reporting hit rate and false alarm rate as a
-pair in Section~\ref{sec:evalmeasures} rather than a single skill score.
+pair in Section~\ref{sec:evalmeasures} rather than a single skill score. The
+critical success index reported alongside them, the fraction of forecast or
+observed events that were correctly forecast, with correct quiet days
+excluded from both numerator and denominator, was introduced by
+\citet{schaefer1990csi} specifically to avoid a statistic inflated by the
+large number of quiet days that dominate a rare-event problem such as this
+one, where fewer than a third of days exceed the health threshold.
+
+That same imbalance, a minority of hazardous days against a majority of
+quiet ones, is the reason this project never reports plain classification
+accuracy as a warning-system measure. \citet{he2009imbalance} survey the
+broader problem of learning from imbalanced data and document how a
+classifier can score highly on overall accuracy by predicting the majority
+class essentially always, a failure mode this project's own alarm-budget
+framing (Section~\ref{sec:evalmeasures}) is designed to make visible rather
+than hide, since an alarm budget of zero would trivially achieve a hit rate
+of zero rather than a flattering accuracy figure. \citet{saito2015prplot}
+make the related point that a receiver operating characteristic curve, a
+common default for a binary classifier, can look similarly optimistic on
+imbalanced data because it is insensitive to a large true-negative count
+that costs nothing to accumulate; a precision-recall-style decomposition, of
+which the hit rate and false alarm rate pair used throughout this report is
+a close relative, is the more informative choice for exactly this kind of
+problem.
 
 \section{Data Quality in Reference Air Quality Monitors}
 
@@ -317,27 +470,54 @@ distribution suggest that reference-grade air quality monitors carry
 systematic measurement pathologies that a forecasting study must
 characterise explicitly rather than assume away.
 
+A third data quality question, separate from an implausible value being
+present, is a plausible value being absent. \citet{little2019missing} set
+out the standard framework for reasoning about why data are missing, missing
+completely at random, missing at random given other observed information, or
+missing in a way that depends on the unobserved value itself, and show that
+the appropriate treatment differs sharply between the three. The coverage
+rule adopted in Section~\ref{sec:defects}, excluding a day when too few
+readings contributed to its mean, is a judgement that the gaps here are
+closer to the first two categories than the third: nothing in the station's
+own account of why a reading is missing suggests that a reading is more
+likely to be dropped specifically when the true concentration is unusually
+high or low, as opposed to for reasons such as instrument maintenance that
+are unrelated to the pollution level itself. The remaining short gaps that
+survive the coverage rule are carried forward rather than discarded, using
+the same forward-fill-plus-indicator treatment discussed for the recurrent
+network in Section~\ref{sec:gru}, which is defensible under the same
+assumption.
+
 \section{Research Gap and Chapter Summary}
 
-This chapter has covered four bodies of literature: the statistical
+This chapter has covered five bodies of literature: the statistical
 characteristics of air quality series that motivate the methodological
 choices in Chapter~\ref{chap:method}; classical and machine learning methods
-for time series forecasting generally, and why the forecasting-competition
-literature predicts a flexible learner need not beat a classical benchmark on
-a small sample; deep learning methods for sequences, and the specific
-architectural reason a GRU rather than an LSTM suits a dataset this size;
-and the two literatures, forecast verification and air quality monitor data
-quality, that this project's own findings connect back to directly. Taken
-together, this literature places the project's contribution precisely.
-Applying an established model suite to Delhi's air quality problem is not
-new, and neither is the finding that classical methods hold their ground
-against machine learning on a modest sample. What the Delhi-specific studies
-above do not do is evaluate that comparison as a warning system with an
-explicit, varying alarm budget, using verification methodology from a
-literature that reaches air quality forecasting only indirectly.
-Chapter~\ref{chap:results} shows why that omission matters: the ranking of
-models looks different once accuracy is separated from operational
-usefulness, a finding neither literature taken alone would have anticipated.
+for time series forecasting, their shared lineage through bagging, boosting
+and regression trees, and why the forecasting-competition literature
+predicts a flexible learner need not beat a classical benchmark on a small
+sample, together with the methodology for testing that comparison honestly,
+out-of-sample evaluation and scale-free accuracy measures, rather than
+taking any single reported number at face value; deep learning methods for
+sequences, the specific architectural reason a GRU rather than an LSTM suits
+a dataset this size, and the structural limitation, an inability to
+represent a missing input, that a recurrent architecture carries regardless
+of which gated variant is chosen; the physical and epidemiological
+background, emission sources, biomass burning, and the health consequences
+of exposure, that motivates treating this as a hazard-warning problem rather
+than a curve-fitting exercise; and the two literatures, forecast
+verification and air quality monitor data quality, that this project's own
+findings connect back to directly. Taken together, this literature places
+the project's contribution precisely. Applying an established model suite to
+Delhi's air quality problem is not new, and neither is the finding that
+classical methods hold their ground against machine learning on a modest
+sample. What the Delhi-specific studies above do not do is evaluate that
+comparison as a warning system with an explicit, varying alarm budget, using
+verification methodology from a literature that reaches air quality
+forecasting only indirectly. Chapter~\ref{chap:results} shows why that
+omission matters: the ranking of models looks different once accuracy is
+separated from operational usefulness, a finding neither literature taken
+alone would have anticipated.
 
 % ============================================================================
 \chapter{Methodology}
@@ -533,8 +713,9 @@ concentration, which has no physical meaning.
 \label{sec:arima}
 
 Let $y_t = \log(\text{PM2.5}_t)$ and let $B$ denote the backshift operator,
-$B y_t = y_{t-1}$. An autoregressive integrated moving average model of order
-$(p,d,q)$ with exogenous regressors $x_t$ is
+$B y_t = y_{t-1}$. Following the Box-Jenkins formulation \citep{box2008time},
+an autoregressive integrated moving average model of order $(p,d,q)$ with
+exogenous regressors $x_t$ is
 \begin{equation}
 \phi(B)\,(1-B)^d y_t \;=\; c \;+\; \theta(B)\,\varepsilon_t \;+\; \beta^\top x_t,
 \label{eq:arima}
@@ -552,7 +733,15 @@ block is $(p,d,q) = (1,1,1)$, so Equation~\ref{eq:arima} specialises to
 \end{equation}
 with four pairs of annual Fourier terms ($K=4$) as the exogenous regressors
 $x_t$, carrying the annual cycle established in Section~\ref{sec:weekly} and
-deliberately carrying no weekly seasonal order.
+deliberately carrying no weekly seasonal order. Using trigonometric
+regressors at a fixed set of frequencies to carry a seasonal pattern inside
+an otherwise standard model, rather than through a seasonal differencing
+order, follows the same logic \citet{delivera2011fourier} apply to
+exponential smoothing for series with seasonal patterns too complex for a
+single seasonal order to represent; here the device is used to keep the
+annual cycle outside the ARIMA order entirely, which is what makes carrying
+no weekly term in parallel straightforward rather than a second seasonal
+order fighting the first.
 
 Back-transformation from the log scale is not innocent. If $\log y$ has
 forecast mean $m$ and forecast variance $s^2$, then under the model's
@@ -563,7 +752,13 @@ Gaussian error assumption $y$ is lognormally distributed, and
 \end{equation}
 Both quantities were produced as separately named models, since a report
 that back-transforms without stating which one it reports has silently
-changed what is being forecast.
+changed what is being forecast. The gap between the two, and specifically
+the tendency of the median variant to systematically under-forecast a
+right-skewed quantity, is a known bias rather than a property special to
+this project: \citet{miller1984bias} derive the same correction term,
+$\exp(\tfrac{1}{2}s^2)$ in Equation~\ref{eq:lognormal}, for curve-fitting
+contexts generally, as the adjustment needed to recover an unbiased mean
+from a model fitted on the logarithm of a quantity.
 
 \subsection{Penalised Linear Regression}
 
@@ -587,7 +782,13 @@ cross-validation on the training block at every refit.
 A random forest \citep{breiman2001random} fits $B$ regression trees to
 independent bootstrap resamples of the training data, each tree considering
 only a random subset of features at every split, and averages their
-predictions:
+predictions. Averaging over bootstrap resamples in this way is bootstrap
+aggregating, or bagging \citep{breiman1996bagging}; a random forest adds the
+random feature subset at each split on top of bagging specifically to
+decorrelate the resulting trees further, since trees grown on overlapping
+bootstrap samples of the same series would otherwise tend to split on the
+same dominant lag features and average out less variance than independent
+trees would:
 \begin{equation}
 \hat f(x) \;=\; \frac{1}{B}\sum_{b=1}^{B} T_b(x).
 \label{eq:rf}
@@ -601,15 +802,23 @@ $s$ is chosen to minimise the total within-region sum of squared error,
 \label{eq:rf-split}
 \end{equation}
 where $R_1$ and $R_2$ are the two resulting regions and $\bar y_{R_1}$,
-$\bar y_{R_2}$ their mean targets. Averaging over many such trees, each
-trained on a different resample and a different random subset of features at
-each split, reduces the variance of a single tree's prediction without
-imposing a linear functional form.
+$\bar y_{R_2}$ their mean targets, the splitting rule set out for
+classification and regression trees generally by \citet{breiman1984cart}.
+Averaging over many such trees, each trained on a different resample and a
+different random subset of features at each split, reduces the variance of a
+single tree's prediction without imposing a linear functional form.
 
 \subsection{Histogram Gradient Boosting}
 
 Gradient boosting \citep{friedman2001gradient} fits an ensemble additively
-rather than by averaging independent trees. The ensemble is initialised as a
+rather than by averaging independent trees, generalising an older idea,
+boosting, in which many weak learners are combined into one strong learner
+by repeatedly reweighting the examples a classifier got wrong so that the
+next learner in the sequence focuses on them \citep{freund1997adaboost}.
+Friedman's reformulation recasts that reweighting as gradient descent in
+function space rather than in the space of example weights, which is what
+lets the same framework cover arbitrary differentiable loss functions rather
+than only classification error. The ensemble is initialised as a
 constant, $F_0(x) = \arg\min_{\gamma} \sum_i L(y_i,\gamma)$, and for
 $m = 1,\dots,M$ a regression tree $h_m$ is fitted to the negative gradient of
 the loss with respect to the current ensemble's predictions,
@@ -627,7 +836,14 @@ where $0 < \nu \le 1$ is a shrinkage (learning rate) parameter that controls
 how much each new tree is allowed to correct the ensemble. The
 histogram-based implementation used here bins continuous features before
 searching for splits, which accepts missing values natively, consistent with
-the decision in Section~\ref{sec:features} never to impute. Both the number
+the decision in Section~\ref{sec:features} never to impute. This is the same
+binning strategy that made gradient boosting practical on large tabular
+datasets in implementations such as \textsc{XGBoost} \citep{chen2016xgboost};
+scikit-learn's histogram-based estimator used here applies the same idea at
+the scale this project needs, a few thousand rows rather than millions, so
+the speed advantage that motivated the original design matters less here
+than the fact that it accepts missing values without a separate imputation
+step. Both the number
 of boosting iterations $M$ and the per-tree leaf count were chosen at every
 refit from a small explicit grid, since an uncontrolled $M$ overfits badly on
 a series of this length, a failure mode encountered and corrected during
@@ -659,11 +875,14 @@ h_t &= (1-z_t)\odot h_{t-1} \;+\; z_t \odot \tilde h_t, \label{eq:gru-h}
 \end{align}
 where $\sigma$ is the logistic sigmoid, $\odot$ is elementwise
 multiplication, and $W_z,W_r,W_h,U_z,U_r,U_h,b_z,b_r,b_h$ are the parameters
-learned by training. Because the final state $h_t$ in Equation~\ref{eq:gru-h}
-is a convex combination of the previous state and the new candidate rather
-than a product of many successive nonlinear transformations, gradients can
-flow backward through many timesteps without vanishing, which is the
-property that motivated gated architectures in Section~\ref{sec:lit-dl}.
+learned by training, fitted by backpropagation through time, the sequential
+application of the backpropagation algorithm \citep{rumelhart1986backprop}
+across every timestep in the input window. Because the final state $h_t$ in
+Equation~\ref{eq:gru-h} is a convex combination of the previous state and the
+new candidate rather than a product of many successive nonlinear
+transformations, gradients can flow backward through many timesteps without
+vanishing in the sense formalised by \citet{bengio1994vanishing}, which is
+the property that motivated gated architectures in Section~\ref{sec:lit-dl}.
 
 The specific network fitted in this project is a single GRU layer with
 $H=24$ hidden units, reading a sequence of the last 30 days
@@ -685,9 +904,13 @@ way the state space model in Section~\ref{sec:arima} skips a measurement
 update, and it cannot accept a missing value the way the histogram gradient
 boosting model in Section~\ref{sec:ml-methods} can. Gaps are therefore carried
 forward in the log-concentration channel, with the separate missingness flag
-marking which days were filled rather than observed. The one architecture
-Dr Tian specifically asked to be included is the one architecture in the
-suite that cannot represent the statement that a value is unknown.
+marking which days were filled rather than observed, the same
+forward-fill-plus-indicator construction \citet{che2018rnn} use for
+recurrent networks over clinical time series with the same structural gap,
+a value required at every timestep and a sensor that does not always
+provide one. The one architecture Dr Tian specifically asked to be included
+is the one architecture in the suite that cannot represent the statement
+that a value is unknown.
 
 Because the network's weights are initialised randomly, its forecast depends
 on that initialisation, unlike every other model in this project. It is
@@ -708,10 +931,16 @@ This is not a refinement of a single train-test split; it replaces one, for the
 reason standard cross-validation is inappropriate for dependent data in the
 first place: shuffling origins lets a model trained on the future score itself
 against the past \citep{bergmeir2012crossvalidation}. On a single test block the
-ARIMA scored 0.940 in relative terms at one day ahead against 0.903 on the
-single block, because that block happened to be calmer than the training
+ARIMA scored 0.903 in relative terms at one day ahead; under the rolling-origin
+harness built to replace it, the same model scores 0.940, worse rather than
+better, because the single block happened to be calmer than the training
 period and was flattering every model. A single split is one draw from a
-process, and a conclusion drawn from it is a conclusion about that period.
+process, and a conclusion drawn from it is a conclusion about that period,
+exactly the instability in single-split evaluation that \citet{tashman2000outofsample}
+documents across decades of applied forecasting studies and that
+\citet{hewamalage2023evaluation} report as still common practice. The
+rolling-origin design used throughout this project is adopted specifically
+to avoid being another instance of the pattern both papers describe.
 
 The governing invariant is that at origin $t$ a model may use observations up to
 and including day $t$ and nothing else: not the value at $t+1$, not a parameter
@@ -735,18 +964,28 @@ Accuracy is reported separately at each horizon and never averaged, since skill
 decays with horizon and concealing that would defeat the purpose. The headline
 measure is relative mean absolute error against the persistence forecast computed
 on identical rows, so that 1.000 is persistence and values below one beat it.
-Mean absolute scaled error is reported alongside, but it divides by the training
+Mean absolute scaled error, proposed by \citet{hyndman2006mase} as a scale-free
+accuracy measure that remains defined even when the series passes through
+values near zero, is reported alongside, but it divides by the training
 period volatility and therefore also reflects any difference in volatility
-between periods, which is material here.
+between periods, which is material here; this is the same distinction between
+a scaled error and a relative error that motivated reporting both rather than
+either alone.
 
 As a warning system, a day is an event if the observed concentration exceeds the
 health threshold, and an alarm is raised when the forecast exceeds a decision
 threshold. These are separate quantities and are kept separate throughout.
 Reported are the hit rate, the false alarm rate defined as false alarms divided
-by quiet days, precision, the critical success index, and alarms raised per year.
-The last is included because a false alarm rate of 0.10 sounds negligible and
-means roughly one wasted alarm every ten quiet days, which is what an operator
-actually experiences.
+by quiet days, precision, the critical success index \citep{schaefer1990csi},
+and alarms raised per year. The last is included because a false alarm rate of
+0.10 sounds negligible and means roughly one wasted alarm every ten quiet days,
+which is what an operator actually experiences. Plain classification accuracy
+is deliberately never reported as a warning-system measure: with hazardous days
+a minority class throughout the record, a model that never raises an alarm
+scores well on accuracy while being useless as a warning system
+\citep{he2009imbalance}, the same distortion that motivates reporting a
+precision-recall-style decomposition rather than a single aggregate rate on
+imbalanced data generally \citep{saito2015prplot}.
 
 \section{Reproducibility}
 

@@ -763,27 +763,115 @@ cosmetic `xdvipdfmx` notice about a page-anchor name collision from the
 roman/arabic numbering switch, which has no visible effect. Pushed to
 `github.com/JC16092/mth5000-aqi-forecast` (commit `e90d941`).
 
+### Week 7, same day, later still: References grown from 11 to 40 entries, 4 pages. Done.
+
+The single largest open item from the meeting is now closed. Added 29 new
+entries to `refs.bib` (11 to 40), every one found by a real CrossRef
+bibliographic search and then verified by fetching its DOI record directly
+from `api.crossref.org` and checking title/author/journal/year against what
+was about to be cited, before writing a single word of prose against it.
+This caught two near-misses that would otherwise have silently become
+fabricated citations: a guessed DOI for the Guttikunda/Goel/Pant Delhi
+emissions paper resolved to a completely unrelated satellite paper, and a
+guessed DOI for the Miller 1984 log-transform bias paper resolved to an
+unrelated "Comment" in the same journal issue. Both were re-found by title
+search and the correct DOI substituted. One candidate (Chung et al.'s
+empirical GRU-vs-LSTM comparison, an oft-cited NeurIPS workshop paper) was
+dropped rather than cited, because it has no real Crossref-registered DOI
+(workshop papers often don't) and this project holds citations to a higher
+bar than "I'm fairly sure this is real."
+
+The bibliography now compiles to exactly 4 pages (pages 35-38 of the 38-page
+PDF), matching Dr Tian's "at least four full pages" instruction on the nose
+rather than padding past it. Report grew from 32 to 38 pages overall. Zero
+new LaTeX warnings, zero BibTeX warnings (every new entry has the fields it
+needs), zero undefined references, zero overfull/underfull boxes. Not yet
+committed or pushed to GitHub.
+
+**Every new citation was woven into existing prose, not appended as a dangling
+list** — each sits next to the specific equation, design choice, or claim it
+supports:
+
+- **Literature Review, classical/ML section**: Box & Jenkins for the ARIMA
+  model itself (previously had no citation at all); De Livera, Hyndman &
+  Snyder for the Fourier-terms-for-seasonality device; the bagging/CART/
+  AdaBoost lineage underneath Breiman's random forest and Friedman's
+  gradient boosting, plus XGBoost as the modern alternative implementation
+  not used here; Zhang's hybrid ARIMA-ANN as the "why not combine them"
+  counterpoint to this project's side-by-side comparison; Makridakis 2018
+  (PLOS, the M3-era precursor to M4) and Makridakis 2022 (M5, where gradient
+  boosting won decisively) bracketing the M4 finding with its precursor and
+  its counterexample, reframed as "does the series offer exogenous/
+  hierarchical structure to exploit" rather than "ML vs classical" in the
+  abstract; Siami-Namini et al.'s direct ARIMA-vs-LSTM comparison; Tashman
+  and Hewamalage et al. on single-split optimism (feeding directly into the
+  rolling-origin justification); Hyndman & Koehler on MASE.
+- **Literature Review, deep learning section**: Rumelhart/Hinton/Williams
+  for backprop itself; Bengio/Simard/Frasconi for the actual original
+  vanishing-gradient result (previously only Hochreiter & Schmidhuber was
+  cited for this, which is really the LSTM solution, not the original
+  problem statement); LeCun/Bengio/Hinton's Nature survey; Lim & Zohren's
+  deep-learning-for-forecasting survey, which directly echoes this
+  project's own "gain depends on whether there's structure to exploit"
+  reading; Che et al. for the forward-fill-plus-missingness-indicator
+  technique, which is exactly what `step08_gru.py` does and previously had
+  no literature anchor.
+- **Literature Review, verification section**: Schaefer for the CSI
+  definition itself (reported in every results table, previously
+  uncited); He & Garcia and Saito & Rehmsmeier for why plain accuracy and
+  ROC are the wrong defaults on an imbalanced rare-event problem like this
+  one.
+- **Literature Review, Delhi section**: a new opening paragraph on
+  Guttikunda/Goel/Pant (general Indian-city emission sources) and the
+  satellite studies (Cusworth et al., Jethva et al.) that establish the
+  stubble-burning mechanism Singh & Srivastava's paper assumes, stated
+  explicitly as a limitation: this project infers the mechanism from
+  seasonal structure in the series, it doesn't observe it directly the way
+  the satellite studies do.
+- **Introduction, Research Background**: Pope & Dockery and Chen & Hoek for
+  the health-effects claim that was previously asserted with no citation at
+  all ("regularly reaches concentrations classified as hazardous").
+- **Methodology**: Box & Jenkins and De Livera et al. again at the actual
+  ARIMA/Fourier equations (the "implementation" half of the double
+  treatment Dr Tian asked for, mirroring the "theory" half in Lit Review);
+  Miller 1984 attached directly to the log back-transform bias equation,
+  which is the exact phenomenon his 1984 correction term addresses;
+  bagging and CART cited at the random forest split criterion; AdaBoost and
+  XGBoost cited at the gradient boosting update; backprop and the vanishing-
+  gradient paper cited at the GRU's training description; Che et al. cited
+  again at the GRU missingness-channel paragraph; Tashman and Hewamalage
+  again at the rolling-origin design; Hyndman & Koehler, Schaefer, He &
+  Garcia and Saito & Rehmsmeier at the Evaluation Measures section, each
+  next to the specific measure they justify.
+- **Data Quality section**: a new paragraph on Little & Rubin's missing-data
+  framework (MCAR/MAR/MNAR), used to state explicitly which category this
+  project is assuming when it carries short gaps forward rather than
+  discarding them, a judgement that was previously made silently.
+- **Research Gap and Chapter Summary**: lightly rewritten from "four bodies
+  of literature" to "five" to reflect the new forecast-evaluation-
+  methodology thread and the health/India-context thread, without
+  rewriting the paragraph's actual argument.
+
 **What is still genuinely open, in priority order:**
 
-1. **References, 11 entries to 4+ pages.** This is now the single largest
-   remaining task. Real literature search, every entry CrossRef-verified —
-   likely another 30-50 citations needed. Natural places to grow it: more
-   depth in each of the four Literature Review theory/application sections,
-   plus standard references for topics only named in passing so far (ARIMA
-   itself has no citation yet — Box & Jenkins or a modern equivalent is
-   worth adding; AdaBoost/boosting lineage before Friedman; general deep
-   learning references).
-2. **Read the four Delhi/ML-vs-classical citations from 30 September**
-   full-text — still only CrossRef-verified, not read, same caveat as
-   before.
-3. Consider whether Results, Discussion, and Conclusion chapters would
+1. **Read the four Delhi/ML-vs-classical citations from 30 September**
+   full-text — still only CrossRef-verified, not read. The 29 new citations
+   added this session carry the same caveat and the same priority: verified
+   real and correctly characterised in the one or two sentences written
+   against each, but not read start to finish.
+2. Consider whether Results, Discussion, and Conclusion chapters would
    benefit from the same subsection granularity the reference report uses
    (it has a "Chapter Summary" at the end of Results; this report's Results
    chapter has one too, but Discussion and Conclusion do not yet carry the
    same convention throughout — a smaller, lower-priority polish item).
-4. A full read-through of the new content for voice consistency, since it
-   was written in one session rather than slowly across weeks like the
-   original draft.
+3. A full read-through of the whole report for voice consistency, since it
+   was written across several sessions rather than slowly across weeks like
+   the original draft, and this session's additions are denser with
+   citations than anything written before them.
+4. Commit and push this session's changes (`refs.bib`, `main.tex`,
+   `PROJECT_STATUS.md`, `TODO.md`) — not yet done.
+5. Decide when to send the complete draft to Dr Tian, given roughly three
+   and a half weeks of runway left to the 31 October deadline.
 
 Positron as the editor, Python 3.13.15 in a `.venv` inside the project folder.
 The system `python3` is a 3.14 alpha and must not be used. Activate with
