@@ -1038,24 +1038,64 @@ weather items renumbered; Main Conclusions and the Results chapter summary
 both updated to state the ceiling held. Recompiled clean, still 40 pages
 (the new table fit without pushing the page count up).
 
-**Not yet done:** committing and pushing this pass's changes.
+**Not yet done at the time:** committing and pushing. Done in the next pass,
+see below.
+
+### Same day, a fifth pass: the Literature Review's deep learning landscape was too narrow
+
+The user compared this report's Deep Learning Methods section in Chapter 2
+against the 71-page reference report Dr Tian showed, and noticed a real
+inconsistency: the reference report surveys MLP, CNN, LSTM, GRU and
+Transformer as a family before narrowing down; this report only ever
+covered the recurrent lineage (plain RNN to LSTM to GRU), never naming MLP,
+CNN or Transformer at all. **This was an inconsistency with this report's
+own established pattern, not a judgement call** — the Machine Learning
+Methods literature already does the "name the siblings before choosing"
+treatment (bagging and CART under random forest, AdaBoost under gradient
+boosting, XGBoost as an unused alternative), and the deep learning side
+should have matched it but didn't.
+
+Fixed by adding a new first subsection, "The Deep Learning Landscape for
+Time Series" (§2.3.1), before the existing RNN/vanishing-gradient
+subsection, covering MLP (universal approximation
+\citep{hornik1989universal}, the classic ANN-forecasting survey
+\citep{zhang1998ann}), CNN (the foundational LeNet paper
+\citep{lecun1998cnn}, a directly comparable seasonal-time-series-with-trends
+application \citep{liu2020cnn}), and Transformer (the Temporal Fusion
+Transformer \citep{lim2021tft} — note "Attention Is All You Need" itself
+has no real Crossref DOI, NeurIPS doesn't register one, the search returned
+obvious spam entries at a fake prefix; cited the TFT paper instead, which
+describes the same self-attention mechanism in the course of applying it to
+forecasting, rather than force an uncitable claim). Each architecture gets
+a specific reason it was not chosen for this project — MLP needs the
+sequence hand-engineered into lagged features already, a CNN's fixed
+receptive field matters less here only because the Fourier terms already
+carry the annual cycle, a Transformer's parameter count assumes a dataset
+far larger than three thousand observations — so the GRU choice is now
+justified against the whole field, not just against LSTM. References grew
+from 40 to 45 entries; bibliography still lands on exactly 4 pages.
+Recompiled clean, 40 pages (`mdls` count unchanged).
+
+**The user also said explicitly: page count is not a constraint on this
+report, up to 70 pages is fine.** Saved as a standing memory
+([[feedback_mth5000_report_length]]) — stop treating page growth as a cost
+when adding real content; Dr Tian's own calibration example was 71 pages.
+
+**Committed and pushed, both this pass and the previous (threshold sweep)
+pass together**, see below for the exact file list.
 
 **What is still genuinely open, in priority order:**
 
-1. Commit and push: `build_weather_regression.py`,
-   `compare_weather_threshold.py`, `regression_weather_seed{0-4}.csv`,
-   `threshold_sweep_weather_seed{0-4}.csv`, `report/make_tables.py`,
-   `report/main.tex`, `report/main.pdf`, this file, `TODO.md`.
-2. Consider whether Results, Discussion, and Conclusion chapters would
+1. Consider whether Results, Discussion, and Conclusion chapters would
    benefit from the same subsection granularity the reference report uses
    (cosmetic, low priority, unchanged from before).
-3. Decide when to send the complete draft to Dr Tian, given roughly three
+2. Decide when to send the complete draft to Dr Tian, given roughly three
    and a half weeks of runway left to the 31 October deadline. Both weather
-   passes are now complete and the finding reinforces rather than
-   complicates the report's central thesis — if anything this strengthens
-   the case for sending the current draft rather than waiting.
-4. The 29 references added two passes ago are CrossRef-verified and
-   spot-checked, not read full-text. Unchanged, still lower priority.
+   passes and the literature-review fix are now complete; nothing currently
+   known to be wrong or missing stands between this draft and sending it.
+3. The 34 references added across the last two passes (29 + 5) are
+   CrossRef-verified and spot-checked, not read full-text. Unchanged, still
+   lower priority.
 
 Positron as the editor, Python 3.13.15 in a `.venv` inside the project folder.
 The system `python3` is a 3.14 alpha and must not be used. Activate with

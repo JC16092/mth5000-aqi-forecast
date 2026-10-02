@@ -62,10 +62,7 @@ section for the full account; summary here.
       the five-point model-to-model spread, nowhere near the fifty-point
       budget spread — and at several budgets weather doesn't even supply
       the best option. See `PROJECT_STATUS.md`'s "fourth pass" section.
-- [ ] Commit and push this second round: `build_weather_regression.py`,
-      `compare_weather_threshold.py`, `regression_weather_seed{0-4}.csv`,
-      `threshold_sweep_weather_seed{0-4}.csv`, `report/make_tables.py`,
-      `report/main.tex`, `report/main.pdf`, `PROJECT_STATUS.md`, `TODO.md`.
+- [x] Commit and push this second round. Commit `ce72892`.
 
 **The finding, briefly:** gradient boosting improves at every horizon;
 ridge improves at h=1/2, worsens slightly at h=3; the random forest is flat
@@ -78,6 +75,22 @@ threshold (the point of this project), that accuracy gain buys at most a
 few points of achievable hit rate and nothing at several budgets — RQ3's
 answer, that the alarm budget dominates the model, holds even against the
 most accurate model in the whole suite.
+
+- [x] **Broaden the Literature Review's deep learning section to cover MLP,
+      CNN and Transformer, not just the recurrent lineage.** Spotted by the
+      user comparing against Dr Tian's 71-page reference report, which
+      surveys the whole family (MLP, CNN, LSTM, GRU, Transformer) before
+      narrowing down — this report only ever covered the recurrent side, an
+      inconsistency with how the Machine Learning Methods section already
+      treats its own unused siblings (bagging, CART, AdaBoost, XGBoost).
+      Added a new §2.3.1 "The Deep Learning Landscape for Time Series" with
+      5 new CrossRef-verified citations (Hornik et al. 1989, Zhang et al.
+      1998, LeCun et al. 1998, Liu et al. 2020, Lim et al. 2021 — dropped
+      "Attention Is All You Need" itself, no real Crossref DOI exists for
+      it), each architecture given a specific reason it wasn't chosen here.
+      References now 45 entries, still exactly 4 pages. Also: the user said
+      page count isn't a constraint on this report (up to 70 pages fine) —
+      saved to memory, stop treating page growth as a cost.
 
 ---
 

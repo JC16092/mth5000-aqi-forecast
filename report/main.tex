@@ -308,6 +308,58 @@ single split was replaced by the rolling-origin harness.
 \section{Deep Learning Methods for Time Series Forecasting}
 \label{sec:lit-dl}
 
+\subsection{The Deep Learning Landscape for Time Series}
+\label{sec:lit-dl-landscape}
+
+Before narrowing to the single architecture this project fits, it is worth
+stating why the others on offer were not chosen, since "we used a recurrent
+network" is a much weaker claim without the alternatives it was weighed
+against. The simplest deep architecture is the multilayer perceptron (MLP),
+a feedforward network shown to approximate any continuous function given
+enough hidden units \citep{hornik1989universal}, applied to forecasting
+since at least the 1990s \citep{zhang1998ann}. An MLP has no sense of
+sequence order built in: it treats its input as an unordered feature vector,
+so applying one to a time series means first constructing lagged and
+rolling-window features exactly as Section~\ref{sec:features} already does
+for the penalised regression and tree models. An MLP fed that table would
+not be a meaningfully different model from those already in the suite; the
+sequence-aware architectures below exist precisely to avoid depending on
+which lags a human chose to hand-engineer.
+
+Convolutional neural networks (CNNs) take the opposite approach, sliding a
+learned kernel along the time axis to detect local patterns directly from
+the raw sequence, originally developed for images
+\citep{lecun1998cnn} and adapted to seasonal time series with trends
+directly comparable to this project's own series \citep{liu2020cnn}. A
+convolution's receptive field is fixed by its kernel width and depth, so
+capturing a cycle as long as a year needs either a very deep stack or a
+very wide kernel; this project's own annual cycle is instead handed to
+every model directly as a small number of Fourier terms
+(Section~\ref{sec:features}), which removes much of the advantage a CNN's
+automatic pattern detection would otherwise offer here.
+
+Transformer architectures replace recurrence altogether with self-attention,
+letting every timestep attend directly to every other one rather than
+propagating information step by step, and have been adapted for
+multi-horizon time series forecasting, for instance by the Temporal Fusion
+Transformer \citep{lim2021tft}. The appeal is long-range dependence without
+the vanishing-gradient problem a recurrent network has at all, but at the
+cost of a substantially larger parameter count than a small GRU, tuned and
+validated on datasets several orders of magnitude larger than the roughly
+three thousand daily observations available here. The same sample-size
+argument Section~\ref{sec:lit-ml} makes against flexible machine learning
+methods on a series this size applies with more force to an architecture
+built for sequences of many thousands of tokens.
+
+Weighed against all three, a recurrent network is the architecture whose
+assumptions best match this project's data: it reads the sequence directly,
+unlike an MLP; it is not limited to a fixed receptive field, unlike a CNN,
+though that limitation matters less here given the Fourier terms already
+carry the annual cycle; and it has a parameter count suited to a few
+thousand observations, unlike a Transformer. Within the recurrent family,
+the remaining choice is between a plain recurrent network and a gated one,
+which the next two subsections address.
+
 \subsection{Recurrent Neural Networks and the Vanishing Gradient Problem}
 
 A recurrent neural network processes a sequence by maintaining a hidden
@@ -341,16 +393,16 @@ three thousand observations is precisely its smaller parameter count relative
 to an LSTM, which matters more on a dataset this size than the slightly
 larger representational capacity an LSTM's extra gate and cell state provide.
 \citet{lim2021survey} survey the broader move of deep learning into time
-series forecasting of which the GRU and LSTM are one part, alongside
-convolutional and attention-based sequence architectures developed since,
-and note that the gain such architectures offer over classical methods
-depends heavily on how much data and exogenous structure a given forecasting
-problem provides, the same conditioning factor Section~\ref{sec:lit-ml}
-identifies as deciding whether machine learning or a classical benchmark
-wins on a series of a given size; this survey, and the general account of
-deep learning's strengths and limits given by \citet{lecun2015deep}, frame
-the GRU result in Chapter~\ref{chap:results} as an instance of a known
-pattern rather than an isolated one. A practical limitation specific to
+series forecasting of which the recurrent, convolutional and attention-based
+families in Section~\ref{sec:lit-dl-landscape} are all part, and note that
+the gain such architectures offer over classical methods depends heavily on
+how much data and exogenous structure a given forecasting problem provides,
+the same conditioning factor Section~\ref{sec:lit-ml} identifies as deciding
+whether machine learning or a classical benchmark wins on a series of a
+given size; this survey, and the general account of deep learning's
+strengths and limits given by \citet{lecun2015deep}, frame the GRU result
+in Chapter~\ref{chap:results} as an instance of a known pattern rather than
+an isolated one. A practical limitation specific to
 recurrent architectures, and directly relevant to this project's own series,
 is that they require a value at every timestep and cannot represent a
 missing observation natively; \citet{che2018rnn} study exactly this problem
@@ -504,10 +556,12 @@ predicts a flexible learner need not beat a classical benchmark on a small
 sample, together with the methodology for testing that comparison honestly,
 out-of-sample evaluation and scale-free accuracy measures, rather than
 taking any single reported number at face value; deep learning methods for
-sequences, the specific architectural reason a GRU rather than an LSTM suits
-a dataset this size, and the structural limitation, an inability to
-represent a missing input, that a recurrent architecture carries regardless
-of which gated variant is chosen; the physical and epidemiological
+sequences, the wider landscape of feedforward, convolutional and
+attention-based architectures weighed against the recurrent family before
+narrowing to it, the specific architectural reason a GRU rather than an
+LSTM suits a dataset this size, and the structural limitation, an inability
+to represent a missing input, that a recurrent architecture carries
+regardless of which gated variant is chosen; the physical and epidemiological
 background, emission sources, biomass burning, and the health consequences
 of exposure, that motivates treating this as a hazard-warning problem rather
 than a curve-fitting exercise; and the two literatures, forecast
