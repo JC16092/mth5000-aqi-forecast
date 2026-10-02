@@ -700,6 +700,91 @@ theoretical background on each method family (not just the four areas already
 written), and growing References to four-plus real pages is the priority,
 roughly in that order, within the four weeks available.
 
+### Same day, later: the restructure done. Report is now 32 pages.
+
+Chose, with the user, to adopt the full six-chapter thesis structure rather
+than expand within the old seven-section shape. Converted
+`\documentclass{article}` to `report`, added Abstract / Table of Contents /
+List of Figures / List of Tables as roman-numbered front matter, and split
+into Introduction, Literature Review, Methodology, Results and Analysis,
+Discussion, Conclusion as proper chapters. All of the 30 September content is
+preserved; nothing was cut.
+
+**Introduction** expanded to six subsections: Background, Problem,
+Objectives, Questions, Significance, Structure of the Report.
+
+**Literature Review** gained two new theory sections, mirroring the
+Methodology split: "Classical and Machine Learning Methods for Time Series
+Forecasting" and "Deep Learning Methods for Time Series Forecasting" (the
+latter with its own Recurrent Neural Networks / vanishing-gradient
+subsection and a Gated Recurrent Unit subsection). Four new citations, all
+CrossRef-verified: Hoerl & Kennard (1970, ridge regression), Friedman (2001,
+gradient boosting), Cho et al. (2014, the GRU itself), Hochreiter &
+Schmidhuber (1997, LSTM, cited for the vanishing-gradient problem it
+addressed). Bibliography is now 11 entries, roughly one page — the 4-page
+target is still open, see below.
+
+**Methodology is the chapter that actually changed shape.** It now has an
+explicit "Machine Learning Methods" section and a "Deep Learning Methods"
+section, each covering the method's general form before this project's
+specific configuration, per Dr Tian's repeated instruction. Full math added
+throughout, checked against the actual implementation before writing (not
+generic textbook description):
+
+- ARIMA: the AR/I/MA backshift-polynomial form, specialised to the actual
+  $(1,1,1)$ order with the four annual Fourier pairs written out as the
+  exogenous term, and the log-normal median/mean back-transform as a
+  derivation.
+- Ridge regression: the penalised least-squares objective and its
+  closed-form solution.
+- Random forest: the bagged-ensemble averaging formula and the
+  squared-error splitting criterion.
+- Gradient boosting: the stagewise additive update and the
+  functional-gradient-descent residual, including why it reduces to the
+  ordinary residual under squared-error loss.
+- The GRU: all four gate equations (update, reset, candidate state, state
+  update), followed by the specific architecture actually fitted — confirmed
+  directly against `step08_gru.py` rather than assumed: single `nn.GRU`
+  layer, 24 hidden units, Adam optimiser, L1 (MAE) loss, early stopping on
+  the last 15% of each training window as a chronological holdout.
+
+Moved Reproducibility to the end of Methodology (it belongs with the methods
+it describes, not dangling after the Conclusion).
+
+**One real bug found and fixed in passing:** `make_tables.py`'s hardcoded
+cleaning table had "sensitivity analysis in Section 6" baked in as a literal
+string, which the restructure would have made wrong (that content is now in
+Section 5.3). Replaced with a proper `\ref` to the Limitations section, so
+it tracks automatically through any future restructuring instead of needing
+to be remembered and hand-fixed again.
+
+Compiles cleanly: zero undefined references, zero LaTeX warnings beyond one
+cosmetic `xdvipdfmx` notice about a page-anchor name collision from the
+roman/arabic numbering switch, which has no visible effect. Pushed to
+`github.com/JC16092/mth5000-aqi-forecast` (commit `e90d941`).
+
+**What is still genuinely open, in priority order:**
+
+1. **References, 11 entries to 4+ pages.** This is now the single largest
+   remaining task. Real literature search, every entry CrossRef-verified —
+   likely another 30-50 citations needed. Natural places to grow it: more
+   depth in each of the four Literature Review theory/application sections,
+   plus standard references for topics only named in passing so far (ARIMA
+   itself has no citation yet — Box & Jenkins or a modern equivalent is
+   worth adding; AdaBoost/boosting lineage before Friedman; general deep
+   learning references).
+2. **Read the four Delhi/ML-vs-classical citations from 30 September**
+   full-text — still only CrossRef-verified, not read, same caveat as
+   before.
+3. Consider whether Results, Discussion, and Conclusion chapters would
+   benefit from the same subsection granularity the reference report uses
+   (it has a "Chapter Summary" at the end of Results; this report's Results
+   chapter has one too, but Discussion and Conclusion do not yet carry the
+   same convention throughout — a smaller, lower-priority polish item).
+4. A full read-through of the new content for voice consistency, since it
+   was written in one session rather than slowly across weeks like the
+   original draft.
+
 Positron as the editor, Python 3.13.15 in a `.venv` inside the project folder.
 The system `python3` is a 3.14 alpha and must not be used. Activate with
 `source .venv/bin/activate` from the project folder; the folder name contains a

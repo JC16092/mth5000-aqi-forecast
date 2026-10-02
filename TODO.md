@@ -33,10 +33,37 @@ the classifier-detail expansion) is now secondary to this:
       ML and deep learning as method families (mirrors the Methodology
       split above), not just the four application-area citations already
       there.
-- [ ] Decide how much of the previous student's 6-chapter, 71-page structure
-      to adopt (separate Results / Discussion / Conclusion chapters, List of
-      Figures / List of Tables) versus achieving the needed depth by
-      expanding the current 7-section report. A judgement call, not yet made.
+- [x] Decide how much of the previous student's 6-chapter, 71-page structure
+      to adopt — **decided: adopt it fully.**
+- [x] **Restructure into the six-chapter thesis format.** `report` class,
+      Abstract/TOC/List of Figures/List of Tables as roman-numbered front
+      matter, six proper chapters. Report is now 32 pages (was 14). Compiles
+      clean, pushed to GitHub (`e90d941`).
+- [x] **Split Methodology into Machine Learning Methods and Deep Learning
+      Methods sections**, each with full math: ARIMA (AR/I/MA form + Fourier
+      terms + log/exp back-transform derivation), ridge regression
+      (objective + closed form), random forest (ensemble + splitting
+      criterion), gradient boosting (stagewise update + functional gradient),
+      GRU (all four gate equations), all checked against the actual
+      implementation (`step08_gru.py`) before writing, not assumed.
+- [x] **Add theory sections to Literature Review** mirroring the Methodology
+      split, with 4 new CrossRef-verified citations: Hoerl & Kennard 1970
+      (ridge), Friedman 2001 (gradient boosting), Cho et al. 2014 (the GRU),
+      Hochreiter & Schmidhuber 1997 (LSTM / vanishing gradient).
+- [ ] **References: still only 11 entries (~1 page), not 4+.** The single
+      biggest remaining task. Needs real literature search — likely 30-50
+      more citations — not something to rush. Candidates already identified:
+      a proper ARIMA/Box-Jenkins citation (currently has none), boosting
+      lineage before Friedman, general deep learning references, and more
+      depth wherever Literature Review currently cites only one or two
+      papers per area.
+- [ ] Read the 4 Delhi/ML-vs-classical citations full-text (still only
+      CrossRef-verified, carried over from 30 September).
+- [ ] Consider adding "Chapter Summary" subsections to Discussion and
+      Conclusion to match the convention Results already uses. Lower
+      priority, cosmetic.
+- [ ] A full read-through of all the new Methodology/Literature content for
+      voice, since it was written in one sitting rather than slowly.
 
 ---
 
