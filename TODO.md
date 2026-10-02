@@ -42,15 +42,30 @@ section for the full account; summary here.
       (weather features + the data defect), a paragraph in the GRU
       subsection, a new Results subsection with the comparison table,
       rewritten Limitations/Future Work/Main Conclusions/Abstract.
-- [ ] **Rerun `step07_warning.py`'s threshold sweep with the weather
-      models.** The natural next step — does the accuracy gain actually
-      widen the achievable hit rate at a fixed alarm budget? Explicitly
-      flagged as open in the report itself, not quietly skipped.
-- [ ] Commit and push: `step08_gru.py`, `report/make_tables.py`,
+- [x] Commit and push: `step08_gru.py`, `report/make_tables.py`,
       `report/main.tex`, `report/main.pdf`, `requirements.txt`,
       `compare_weather.py`, `features_weather.csv`,
       `forecasts_weather_ml.csv`, `gru_weather_seed{0-4}.csv`,
-      `PROJECT_STATUS.md`, `TODO.md`.
+      `PROJECT_STATUS.md`, `TODO.md`. Commit `8516378`.
+- [x] **Rerun `step07_warning.py`'s threshold sweep with the weather
+      models.** Done same session. Built `build_weather_regression.py` to
+      assemble one combined 15-model regression file per GRU seed (the
+      weather models reuse the no-weather models' names, so they had to be
+      renamed `*_weather` before concatenating), ran the sweep once per
+      seed reusing the existing classification arm, then
+      `compare_weather_threshold.py` (ported into `make_tables.py` as
+      `table_weather_budget()`) to compare "best hit rate within budget"
+      with vs without weather models as candidates, scored on the *same*
+      rows both times so only the candidate set differs. **Answer: the
+      central thesis survives contact with its best model.** The gain is
+      real (up to 4.6 points of hit rate) but small — the same order as
+      the five-point model-to-model spread, nowhere near the fifty-point
+      budget spread — and at several budgets weather doesn't even supply
+      the best option. See `PROJECT_STATUS.md`'s "fourth pass" section.
+- [ ] Commit and push this second round: `build_weather_regression.py`,
+      `compare_weather_threshold.py`, `regression_weather_seed{0-4}.csv`,
+      `threshold_sweep_weather_seed{0-4}.csv`, `report/make_tables.py`,
+      `report/main.tex`, `report/main.pdf`, `PROJECT_STATUS.md`, `TODO.md`.
 
 **The finding, briefly:** gradient boosting improves at every horizon;
 ridge improves at h=1/2, worsens slightly at h=3; the random forest is flat
@@ -58,7 +73,11 @@ to worse. The GRU is where it matters: it already beat ARIMA at h=1 only;
 with weather it beats ARIMA under every seed at h=1, clearly under 4 of 5
 at h=2 (the fifth a tie inside the report's own 0.004 noise floor), and
 under 4 of 5 at h=3. **h=2 was a clean ARIMA win before this; it no longer
-is** — a real change to the RQ1 story, not a footnote.
+is** — a real change to the RQ1 story. But carried through the decision
+threshold (the point of this project), that accuracy gain buys at most a
+few points of achievable hit rate and nothing at several budgets — RQ3's
+answer, that the alarm budget dominates the model, holds even against the
+most accurate model in the whole suite.
 
 ---
 

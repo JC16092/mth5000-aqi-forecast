@@ -65,9 +65,10 @@ rather than weakened by a sensitivity analysis on the cleaning threshold, and
 the one model that does win, a recurrent network, wins only at one day ahead,
 reported as a range across seeds rather than a single favourable one. Adding
 observed wind speed and temperature narrows that gap further, moving the
-network ahead of the classical model at two days as well, though whether
-that extra accuracy widens the achievable hit rate at a fixed alarm budget
-is left as an open question rather than claimed. Two
+network ahead of the classical model at two days as well, but when that
+extra accuracy is carried through the decision threshold the achievable hit
+rate at a fixed alarm budget moves by at most a few points, reinforcing
+rather than overturning the central finding above. Two
 real defects in the source monitor, a clipped instrument ceiling and a
 miscalculated coverage statistic, were diagnosed and corrected before
 modelling began. The recommendation is to design a warning system around its
@@ -1181,13 +1182,37 @@ and every ordering above survived that restriction, which is what makes the
 finding a property of the weather signal rather than of how its gap was
 filled.
 
-What this does not do is retest Research Question 3. The threshold sweep in
-Section~\ref{sec:threshold} was not rerun with the weather-augmented models,
-so whether a more accurate point forecast at one and two days ahead actually
-widens the achievable hit rate at a fixed alarm budget, or is absorbed by the
-same five-point ceiling every other model in this report runs into, is an
-open question rather than a claimed result. Section~\ref{sec:future} returns
-to it.
+That accuracy gain was then carried through to Research Question 3 directly,
+by rerunning the threshold sweep from Section~\ref{sec:threshold} with the
+weather models added to the roster of candidates at every budget, on exactly
+the same rows the accuracy comparison above used.
+
+\begin{table}[htbp]
+\centering
+\caption{Best achievable hit rate within an alarm budget, before and after
+adding the weather models as candidates, averaged over the five network
+seeds. The two rows at each horizon are scored on identical origins; the
+only difference is which models are allowed to be the best one.}
+\label{tab:weatherbudget}
+\footnotesize
+\input{tables/weather_budget}
+\end{table}
+
+Table~\ref{tab:weatherbudget} gives the answer, and it favours the ceiling
+over the gain. At several budgets the weather models do not even supply the
+best option, delta exactly zero, 40 and 60 alarms a year at one day ahead,
+60 and 80 at two. Where they do win, the improvement is small: at most 4.6
+points of hit rate, at three days and a budget of 60, and typically under 2.
+That is the same order as the five-point spread across models documented in
+Table~\ref{tab:budget} and discussed in Section~\ref{sec:noise-floor}, not a
+new tier above it, and nowhere near the fifty-point range that moving the
+budget itself buys. A substantially more accurate point forecast, 8.5 points
+of relative error at one day ahead for gradient boosting, translates into at
+most a few points of additional hit rate once it is run through a decision
+threshold. The ceiling this report's central finding describes is not a
+property of the ten original models being insufficiently accurate; it
+persists even after a materially more accurate forecaster is added to the
+comparison.
 
 \section{Two Arms of the Same Question}
 
@@ -1246,9 +1271,11 @@ Table~\ref{tab:accuracy} answers the first research question with a
 horizon-dependent result: the deep learning model wins at one day ahead, the
 classical model wins or ties beyond it. Table~\ref{tab:weather}
 (Section~\ref{sec:results-weather}) shows that boundary moving once observed
-weather is added: the network moves ahead at two days as well, though
-whether that gain survives being tested as a warning system is not yet
-known. Section~\ref{sec:threshold} answers
+weather is added: the network moves ahead at two days as well. Carried
+through to the decision threshold, Table~\ref{tab:weatherbudget} shows that
+gain buys only a few points of hit rate at a fixed alarm budget, confirming
+rather than complicating the answer to the third question.
+Section~\ref{sec:threshold} answers
 the third, and it is the result the rest of this report is organised around:
 the alarm budget, not the model, is what principally determines warning
 performance. Chapter~\ref{chap:discussion} takes up what that means in
@@ -1358,7 +1385,7 @@ Table~\ref{tab:accuracy} should therefore be read as a lower bound on what
 those model classes could achieve with more computation, not as their ceiling.
 
 Wind speed and temperature were added, in Section~\ref{sec:weather}, but the
-treatment is narrower than a full meteorological extension in three specific
+treatment is narrower than a full meteorological extension in two specific
 ways that should be stated plainly rather than discovered by a careful
 reader. First, only observed weather enters the feature table, never a
 forecast one; a real early-warning system would feed in a numerical weather
@@ -1369,11 +1396,11 @@ particulate episode, a shallow boundary layer trapping pollutants near the
 surface, is not available from \texttt{meteostat} at all; it would need a
 reanalysis product such as ERA5, a separate data acquisition problem rather
 than the free extension this report's own earlier draft assumed it would be.
-Third, the comparison
-in Section~\ref{sec:results-weather} was never put through the threshold
-sweep in Section~\ref{sec:threshold}, so whether the accuracy gain
-translates into a wider achievable hit rate at a fixed alarm budget, the
-quantity Chapter~\ref{chap:discussion} argues matters most, is still open.
+What was carried through, in Section~\ref{sec:results-weather}, is the
+threshold sweep: the accuracy gain from weather survives contact with the
+decision threshold only partially, buying a few points of hit rate at some
+budgets and none at others, which is itself the clearer instance of this
+report's central finding rather than a loose end.
 
 % ============================================================================
 \chapter{Conclusion}
@@ -1415,7 +1442,12 @@ the fifth a tie inside the project's own noise floor, and under four of
 five at three, where the plain comparison had been at best a tie.
 Gradient boosting improves at every horizon with the same weather covariates,
 though the random forest does not, so the gain is specific to which model and
-which architecture, not a blanket effect of adding more inputs. The
+which architecture, not a blanket effect of adding more inputs. Carried
+through the decision threshold, that accuracy gain buys at most a few
+points of hit rate at a fixed alarm budget and nothing at all at several of
+them, which is this report's central finding recurring at a more demanding
+test: even a materially more accurate forecaster does not escape the
+ceiling the alarm budget imposes. The
 supervisor's instruction to try several methods rather
 than defaulting to ARIMA was the right one: it is what makes the negative
 result at two and three days credible, and what surfaces the one day ahead
@@ -1424,25 +1456,23 @@ result that a project restricted to classical methods would never have found.
 \section{Future Work}
 \label{sec:future}
 
-Three extensions follow directly from where this report's own weather work
-stopped, and a fourth, independent of it, from the single-station limitation
+Two extensions follow directly from where this report's own weather work
+stopped, and a third, independent of it, from the single-station limitation
 in Section~\ref{sec:limitations}.
-The most immediate is to put the weather-augmented models from
-Section~\ref{sec:results-weather} through the threshold sweep in
-Section~\ref{sec:threshold}: an accuracy gain at one and two days ahead is
-not yet known to buy a wider achievable hit rate at a fixed alarm budget,
-and given how narrow the gap between models already was in
-Chapter~\ref{chap:discussion}, it may not. That is a question this report
-raises rather than answers. A second is to replace observed weather with
-forecast weather, a numerical weather prediction for the days ahead rather
-than the conditions already measured; this is the stronger and more useful
-claim for an operational system, and the one this project deliberately did
-not make. A third is boundary layer height, unavailable from
-\texttt{meteostat}, which would need a reanalysis product such as ERA5 and
-is the single variable most directly tied to the physical mechanism of a
-particulate episode rather than a correlate of it.
+The threshold sweep has already been put through the weather-augmented
+models (Section~\ref{sec:results-weather}), so the open thread is not
+whether that comparison happened but what would change its answer: a real
+forecast weather product, a numerical weather prediction for the days ahead
+rather than the conditions already measured, is the stronger and more
+useful claim for an operational system, and the one this project
+deliberately did not make. A second is boundary layer height, unavailable
+from \texttt{meteostat}, which would need a reanalysis product such as ERA5
+and is the single variable most directly tied to the physical mechanism of
+a particulate episode rather than a correlate of it; whether it would move
+the threshold-sweep result more than wind speed and temperature did is an
+open question precisely because the gain so far has been small.
 
-A fourth extension is independent of weather: repeating the analysis at a
+A third extension is independent of weather: repeating the analysis at a
 second, independent station, ideally one inside the Central Pollution
 Control Board network once its record lengthens, would test whether the
 findings here are a property of Delhi air quality or an artefact of the one

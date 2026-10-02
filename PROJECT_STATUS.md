@@ -984,26 +984,77 @@ inaccuracy fixed while writing this: a sentence claimed the weather-GRU
 support once the noise floor is applied — corrected to the honest 4-clear-
 plus-1-tie characterisation before it ever got committed.
 
-**Not yet done:** the threshold-sweep rerun (the natural next step, explicitly
-flagged in the report itself); committing and pushing this session's changes.
+### Same day, a fourth pass: the threshold sweep rerun with the weather models. RQ3 holds.
+
+The natural next step flagged at the end of the previous pass, done the same
+session. **This is the more important result of the two.**
+
+**Mechanically.** `step07_warning.py`'s sweep needs one `--regression` file
+containing every model to be compared; `forecasts_weather_ml.csv` and
+`gru_weather_seed{0-4}.csv` reuse the *same* model names as the no-weather
+baseline (`ridge`, `random_forest`, ...), which would collide on
+`(origin, horizon, model)` if concatenated directly. Wrote
+`build_weather_regression.py` to assemble one combined file per GRU seed —
+the no-weather baseline unchanged, the five weather ML models renamed
+`*_weather`, that seed's GRU renamed `gru_weather` — 15 models each,
+`regression_weather_seed{0-4}.csv`. Ran `step07_warning.py` once per seed,
+`--reuse-classification forecasts_classification.csv` so the direct
+classification arm (unaffected by weather, not rebuilt) is only reused, not
+refitted, the same pattern already established when GRU was first added.
+18 models in total per sweep; `restrict_to_common` kept 20,610 of the
+original rows. Produced `threshold_sweep_weather_seed{0-4}.csv`.
+
+**The fair comparison, and why it needed its own script.** The naive thing,
+comparing these new numbers against the old `threshold_sweep.csv`'s budget
+table, would be comparing two different row samples, since adding 6 more
+models to the common-origin intersection can only shrink it. Instead wrote
+`compare_weather_threshold.py` (logic then ported into `make_tables.py` as
+`table_weather_budget()`, so the report number is generated, not hand-typed)
+to compute "best hit rate within budget B" **twice from the same sweep
+file**: once restricted to only the original 12 models, once allowing all
+18 — so the only variable between the two numbers is which models are
+*candidates*, never which rows were scored.
+
+**The finding: the gain is real but small, and the central thesis survives
+being tested against its most accurate model.** At several budgets the
+weather models don't even supply the best option (delta exactly zero: 40
+and 60 alarms/yr at h=1, 60 and 80 at h=2). Where they do win, the best
+improvement is 4.6 points of hit rate (h=3, budget 60); most wins are under
+2 points. That's the same order as the five-point model-to-model spread
+already established, not a new tier above it, and nowhere near the
+fifty-point spread moving the budget itself buys. Gradient boosting's 8.5
+points of accuracy gain (rMAE) at h=1 — a large number by this report's own
+standards — buys at most a few points of hit rate once run through a
+decision threshold. The alarm-budget-dominates finding was tested against
+its own best shot at being wrong, and held.
+
+**Report changes:** the "What this does not do is retest RQ3" paragraph in
+§4.1.1 replaced with the actual retest, a new table (`tables/weather_budget.tex`,
+Table 4.3) and its discussion; Limitations' three-boundaries paragraph
+trimmed to two (RQ3 untested is no longer one of them) with a closing
+sentence stating what was found instead; Future Work's "most immediate"
+item (the threshold rerun) removed since it's done, the remaining two
+weather items renumbered; Main Conclusions and the Results chapter summary
+both updated to state the ceiling held. Recompiled clean, still 40 pages
+(the new table fit without pushing the page count up).
+
+**Not yet done:** committing and pushing this pass's changes.
 
 **What is still genuinely open, in priority order:**
 
-1. Rerun the threshold sweep (`step07_warning.py`) with the weather-augmented
-   models to find out whether the accuracy gain above actually widens the
-   achievable hit rate at a fixed alarm budget, or gets absorbed the way
-   everything else in this report has been. This is the natural next step
-   and the report says so explicitly.
+1. Commit and push: `build_weather_regression.py`,
+   `compare_weather_threshold.py`, `regression_weather_seed{0-4}.csv`,
+   `threshold_sweep_weather_seed{0-4}.csv`, `report/make_tables.py`,
+   `report/main.tex`, `report/main.pdf`, this file, `TODO.md`.
 2. Consider whether Results, Discussion, and Conclusion chapters would
    benefit from the same subsection granularity the reference report uses
    (cosmetic, low priority, unchanged from before).
 3. Decide when to send the complete draft to Dr Tian, given roughly three
-   and a half weeks of runway left to the 31 October deadline. The weather
-   finding is a genuinely new result discovered after the "ready to send"
-   assessment two passes ago — worth mentioning to him given he may want
-   to see RQ3 retested with it first, or may prefer to see the draft now
-   and treat the extension as a known open thread.
-4. The 29 references added in the previous pass are CrossRef-verified and
+   and a half weeks of runway left to the 31 October deadline. Both weather
+   passes are now complete and the finding reinforces rather than
+   complicates the report's central thesis — if anything this strengthens
+   the case for sending the current draft rather than waiting.
+4. The 29 references added two passes ago are CrossRef-verified and
    spot-checked, not read full-text. Unchanged, still lower priority.
 
 Positron as the editor, Python 3.13.15 in a `.venv` inside the project folder.

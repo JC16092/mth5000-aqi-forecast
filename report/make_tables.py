@@ -15,7 +15,13 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from step01_data_check import load_series          # noqa: E402
+from step07_warning import operating_point_at_alarms  # noqa: E402
 import evaluation as ev                            # noqa: E402
+
+NO_WEATHER_MODELS = {"naive_carry", "seasonal_naive_7", "climatology",
+                     "arima_fourier", "ridge", "random_forest",
+                     "random_forest_delta", "hist_gbm", "hist_gbm_delta",
+                     "logistic", "forest_clf", "hgb_clf"}
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -250,6 +256,59 @@ def table_weather(base_path, weather_path, series_path, burn_in=1095):
     write("weather.tex", "\n".join(body) + "\n")
 
 
+def table_weather_budget(pattern, budgets=(40, 60, 80, 100)):
+    """Does adding the weather models widen the achievable hit rate at a
+    fixed alarm budget, or does the five-point ceiling in Table~\\ref{tab:budget}
+    absorb the accuracy gain from Table~\\ref{tab:weather}?
+
+    Each sweep file already contains both the original and the weather
+    models, scored by the same restrict_to_common call, over the same rows.
+    So "without weather" and "with weather" below differ in exactly one
+    thing, which models are allowed to be the best one at that budget, never
+    in which rows were scored. Averaged over the five GRU weather seeds.
+    """
+    import glob
+    files = sorted(glob.glob(os.path.join(ROOT, pattern)))
+    if not files:
+        print(f"  no files matching {pattern}; skipping weather_budget.tex")
+        return
+
+    body = ["\\begin{tabular}{lrrrr}", "\\toprule",
+            "Alarms per year & 40 & 60 & 80 & 100 \\\\", "\\midrule"]
+    for h in (1, 2, 3):
+        no_wx_row, wx_row = [], []
+        for budget in budgets:
+            no_wx, wx = [], []
+            for f in files:
+                sweep = pd.read_csv(f)
+                all_models = set(sweep.model.unique())
+                best_no = max(
+                    (operating_point_at_alarms(sweep, m, h, budget)["hit_rate"]
+                     for m in NO_WEATHER_MODELS & all_models
+                     if operating_point_at_alarms(sweep, m, h, budget) is not None),
+                    default=None)
+                best_wx = max(
+                    (operating_point_at_alarms(sweep, m, h, budget)["hit_rate"]
+                     for m in all_models
+                     if operating_point_at_alarms(sweep, m, h, budget) is not None),
+                    default=None)
+                if best_no is not None:
+                    no_wx.append(best_no)
+                if best_wx is not None:
+                    wx.append(best_wx)
+            no_wx_row.append(sum(no_wx) / len(no_wx) if no_wx else None)
+            wx_row.append(sum(wx) / len(wx) if wx else None)
+        no_cells = [f"{v:.3f}" if v is not None else "--" for v in no_wx_row]
+        wx_cells = [f"{v:.3f}" if v is not None else "--" for v in wx_row]
+        body.append(f"Best hit rate, $h={h}$, no weather & " + " & ".join(no_cells) + " \\\\")
+        body.append(f"\\quad with weather models added & " + " & ".join(wx_cells) + " \\\\")
+        if h < 3:
+            body.append("\\midrule")
+    body += ["\\bottomrule", "\\end{tabular}"]
+    write("weather_budget.tex", "\n".join(body) + "\n")
+    print(f"  weather budget table averaged over {len(files)} GRU weather seeds")
+
+
 def table_cleaning():
     rows = [("Value below zero", "5", "Mass concentration cannot be negative"),
             ("Coverage below 50\\%", "270", "Against the cadence taken from the data"),
@@ -286,6 +345,8 @@ def main():
         table_weather(os.path.join(ROOT, "forecasts_all.csv"), weather_ml, clean)
     else:
         print("  forecasts_weather_ml.csv not found; skipping weather.tex")
+
+    table_weather_budget("threshold_sweep_weather_seed*.csv")
 
     # Figures live beside the report so latex finds them without absolute paths.
     import shutil
