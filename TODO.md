@@ -67,8 +67,13 @@ the classifier-detail expansion) is now secondary to this:
       above — 40 entries, 4 pages, ARIMA/Box-Jenkins and the boosting
       lineage both now cited, plus a forecast-evaluation-methodology thread
       and a health/India-context thread that weren't in the original plan.
-- [ ] Read the 4 Delhi/ML-vs-classical citations full-text (still only
-      CrossRef-verified, carried over from 30 September).
+- [x] Read the 4 Delhi/ML-vs-classical citations full-text. Full text
+      proper wasn't obtainable through any legitimate route (paywalls and
+      bot walls on every host tried), but abstract-level reading caught a
+      real overclaim: Singh & Srivastava's "evaluation around health risk"
+      was fixed to describe their health-risk assessment and their ML
+      forecasting comparison as the two separate analyses they actually
+      are. See PROJECT_STATUS.md for the full account.
 - [ ] Consider adding "Chapter Summary" subsections to Discussion and
       Conclusion to match the convention Results already uses. Lower
       priority, cosmetic.
@@ -136,11 +141,16 @@ the classifier-detail expansion) is now secondary to this:
 
 - [x] Personal motivation paragraph, pulled from the approved proposal into
       the Introduction
-- [ ] Full read-through of `report/main.tex` end to end (written across
+- [x] Full read-through of `report/main.tex` end to end (written across
       several sessions spanning weeks — check the voice is consistent and
-      nothing repeats)
-- [ ] Fix anything found in the read-through; confirm tables/figures still
-      match after the sensitivity rerun
+      nothing repeats). Voice holds up throughout, including today's
+      citation-dense additions. One real bug found: the Rolling-Origin
+      Evaluation section had the single-split and rolling-origin rMAE
+      numbers (0.903 and 0.940) transposed. Fixed.
+- [x] Fix anything found in the read-through; confirm tables/figures still
+      match after the sensitivity rerun. The transposed-numbers bug above
+      was the one thing found and it's fixed; tables/figures unaffected
+      since they're generated from the result files, not hand-typed.
 - [x] Draft Abstract (leads with the alarm-budget finding, ~230 words)
 - [ ] Full compile and proofread on paper, formatting against the style
       rules one more time

@@ -852,26 +852,77 @@ supports:
   methodology thread and the health/India-context thread, without
   rewriting the paragraph's actual argument.
 
+### Same day, later again: the four Delhi/ML citations read, one real overclaim found and fixed, committed and pushed
+
+Fetched the actual abstracts of all four 30-September Delhi/ML-vs-classical
+citations (Masood & Ahmad 2020, Singh & Srivastava 2025, Makridakis et al.
+2020/M4, Jiang et al. 2023) via the Semantic Scholar API after DOI
+resolution to ScienceDirect/Springer/Taylor & Francis repeatedly hit bot
+walls (Cloudflare CAPTCHA on PMC, a login redirect on Springer, a JS-only
+shell on ScienceDirect, 403s on ResearchGate and Scribd). Full text proper
+was not obtainable through any legitimate channel tried for any of the
+four — Singh & Srivastava is genuinely paywalled with no open-access
+version at all; the other three have "open access" PDF links on paper that
+are themselves bot-gated. Abstract-level verification was still enough to
+catch a real problem:
+
+- **Singh & Srivastava 2025 was mischaracterised.** The report said their
+  paper "frame[s] their evaluation around health risk rather than average
+  error alone." Their actual abstract makes clear the paper does two
+  separate things: a health-risk assessment of stubble-season PM2.5
+  exposure using a dedicated risk model (AirQ+), and, separately, a
+  comparison of three ML models (ANN, SVM-RBF, random forest) for PM2.5
+  forecasting that is itself still scored by ordinary $R^2$/RMSE/MAE — the
+  exact "average error alone" the sentence claimed they moved past. Fixed
+  in `main.tex` to describe the two analyses as parallel rather than one
+  nested in the other.
+- **Masood & Ahmad 2020 was also loosely stated.** "Several regression
+  models" was two (SVM and ANN), and — more substantively — their inputs
+  are meteorological and pollutant covariates *at the forecast target day*,
+  not the series' own lagged history, which is a different forecasting
+  problem from this project's. Fixed to state both precisely, framed as a
+  contrast with this project's own lagged-history-only setup rather than a
+  throwaway correction.
+- Masood & Ahmad, Jiang et al., and the M4 competition's abstracts all held
+  up against what the report already claimed of them — no further changes.
+
+**Full read-through of `report/main.tex`, start to end, done.** Surfaced
+one more real error, unrelated to today's citation work and present since
+at least the restructure: in the Rolling-Origin Evaluation section, the
+sentence comparing the single-split and rolling-origin rMAE at h=1 had the
+two numbers transposed, stating the ARIMA "scored 0.940 ... against 0.903
+on the single block" when the true history (recorded correctly elsewhere
+in this file) is the reverse — 0.903 on the single flattering split, 0.940
+under the honest rolling-origin harness. Fixed. Otherwise the read-through
+found the voice consistent throughout, including today's citation-dense
+additions sitting comfortably against the older prose — no other changes
+needed.
+
+**Committed and pushed**, commit `70f2ded`: `refs.bib`, `main.tex`,
+`PROJECT_STATUS.md`, `TODO.md`, and the rebuilt `main.pdf`. Left untouched
+and unstaged, as out of scope for this session: `supervisor_meeting_3_prep.pdf`
+(modified before this session, not by it) and a pile of untracked files
+from earlier sessions (`PROJECT_LOGBOOK.pdf`, the three `MTH5000_*.pdf`
+meeting documents, `build_logbook.py`, `build_meeting_agenda.py`,
+`supervisor_meeting_3_agenda.pdf`, a `Claude outputs/` directory) plus the
+usual LaTeX build byproducts (`main.aux`/`.blg`/`.fdb_latexmk`/`.fls`/`.log`/
+`.out`, `report/tables/`, `.tmp` files) that this repo has never tracked.
+
 **What is still genuinely open, in priority order:**
 
-1. **Read the four Delhi/ML-vs-classical citations from 30 September**
-   full-text — still only CrossRef-verified, not read. The 29 new citations
-   added this session carry the same caveat and the same priority: verified
-   real and correctly characterised in the one or two sentences written
-   against each, but not read start to finish.
-2. Consider whether Results, Discussion, and Conclusion chapters would
+1. Consider whether Results, Discussion, and Conclusion chapters would
    benefit from the same subsection granularity the reference report uses
    (it has a "Chapter Summary" at the end of Results; this report's Results
    chapter has one too, but Discussion and Conclusion do not yet carry the
    same convention throughout — a smaller, lower-priority polish item).
-3. A full read-through of the whole report for voice consistency, since it
-   was written across several sessions rather than slowly across weeks like
-   the original draft, and this session's additions are denser with
-   citations than anything written before them.
-4. Commit and push this session's changes (`refs.bib`, `main.tex`,
-   `PROJECT_STATUS.md`, `TODO.md`) — not yet done.
-5. Decide when to send the complete draft to Dr Tian, given roughly three
+2. Decide when to send the complete draft to Dr Tian, given roughly three
    and a half weeks of runway left to the 31 October deadline.
+3. The 29 references added earlier today are CrossRef-verified and
+   correctly characterised in the one or two sentences written against
+   each (spot-checked, not exhaustively), but not read full-text the way
+   the original four just were. Lower priority than the above since
+   nothing wrong was found when this file's own past citations were
+   checked this same way.
 
 Positron as the editor, Python 3.13.15 in a `.venv` inside the project folder.
 The system `python3` is a 3.14 alpha and must not be used. Activate with
