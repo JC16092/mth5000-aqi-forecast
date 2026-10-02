@@ -2,13 +2,17 @@
 
 Handover note so a new conversation can pick up without re-reading everything.
 For the schedule and the step by step plan, see `BLUEPRINT.md`, but note its
-dates are now stale (see below).
-Last updated: 30 September 2026. The report draft is complete except the
-Literature citations still need a personal read-through; see the new section
-near the end, "Week 7, after a stall".
+dates and structure are now superseded (see below).
+Last updated: 2 October 2026, after a supervisor meeting that substantially
+changed what the report needs to look like. See "Week 7, meeting with Dr Tian"
+near the end. **Read that section before touching the report again.**
 
-**Deadline: no longer fixed to BLUEPRINT.md's 19 to 22 October.** As of 30
-September there is runway to roughly the first week of November 2026.
+**Deadline, confirmed by Dr Tian: the last day of October 2026.** Not early
+November as previously assumed. Call it four weeks from 2 October.
+
+**The report's scope just grew substantially.** The 14-page draft is not close
+to sufficient. Dr Tian's own worked example from a previous student is 71
+pages. Do not resume writing without reading the new section below in full.
 
 ---
 
@@ -628,7 +632,73 @@ Everything above is committed to git. `PROJECT_STATUS.md` and
 `supervisor_meeting_3_prep.pdf` still carry an older uncommitted edit from
 before this session; not touched.
 
-### Environment, settled
+### Week 7, meeting with Dr Tian, 2 October. Everything below supersedes
+### the writing plan above. Read this in full before writing anything.
+
+Sent the progress report, the draft, and the code/data walkthrough on 30
+September. Met in person on 2 October. The outcome changes the report's
+required depth substantially, not just its content.
+
+**1. The deadline is the last day of October 2026, confirmed directly.** Not
+"early November" as this document assumed after the 30 September session. That
+assumption was mine, not his, and it was wrong. Roughly four weeks from today.
+
+**2. References: at least four full pages.** The current bibliography has
+seven entries on about a third of a page. This is roughly an order of
+magnitude short. Every one of the additional entries still needs CrossRef
+verification before use; this is a large literature-search task, not a
+formatting one, and it cannot be fabricated to hit a page count.
+
+**3. The main instruction, repeated twice: focus on Methodology.** He named
+two method families explicitly and wants them treated as the two pillars of
+the section, not folded together as the current draft does:
+
+- **(i) Machine learning** — ridge regression, random forest, gradient
+  boosting, and the ARIMA classical benchmark arguably belongs in conversation
+  with this group too, since it is the comparison point.
+- **(ii) Deep learning** — the GRU.
+
+For each of the two, he wants: the general features and theoretical
+properties of the method family, and then specifically how this project
+implemented it. Two passes, not one: what the method is, then what we did
+with it.
+
+**4. This is a mathematics degree, and the report must read like one.** Full
+mathematical detail: algorithms, derivations, formulas, worked notation, not
+prose summaries of what a model does. The current draft has almost none of
+this; it describes models in words (for example, "ARIMA with annual Fourier
+terms, fitted on the logarithm of concentration") without ever writing the
+actual equations. This has to change throughout Methodology at minimum:
+ridge regression's penalised least squares objective, the random forest
+splitting criterion, gradient boosting's additive functional-gradient-descent
+formulation, ARIMA's difference and AR/MA polynomial form with the Fourier
+exogenous terms written out, and the GRU's full gate equations (reset gate,
+update gate, candidate state, state update). The log/exp back-transform
+mean-vs-median relationship already in the draft is the right level of
+mathematical detail; the rest of Methodology needs to match it.
+
+**5. A worked example was shown**, a previous student's report, 71 pages. Its
+index (saved as reference) has a six-chapter structure: Introduction,
+Literature Review (which has its own dedicated subsections per method family,
+mirroring point 3), Methodology (same per-model subsections again, this time
+implementation-focused — this double treatment, theory in Lit Review,
+implementation in Methodology, is the pattern to copy), Results and Analysis,
+Discussion, Conclusion, each as its own chapter with its own numbered
+subsections, plus separate List of Figures and List of Tables pages. This was
+shown as a calibration point for depth and structure, not necessarily a
+template to copy chapter-for-chapter — judgement is needed on how much of the
+formal six-chapter split to adopt versus how much to achieve by expanding the
+existing seven-section report.
+
+**What this means practically.** The 14-page draft was evaluated as a
+complete, correctly-argued, but far too short treatment of a mathematics
+capstone. The content is not wrong; it is insufficiently deep in exactly the
+place (Methodology) that counts for the most marks, and insufficiently
+supported by literature. Expanding Methodology with full mathematical
+treatment of both method families, expanding Literature Review to carry
+theoretical background on each method family (not just the four areas already
+written), and growing References to four-plus real pages is the priority,
+roughly in that order, within the four weeks available.
 
 Positron as the editor, Python 3.13.15 in a `.venv` inside the project folder.
 The system `python3` is a 3.14 alpha and must not be used. Activate with

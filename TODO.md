@@ -5,8 +5,38 @@ a single session on 30 September instead of spread across the month, so this
 checklist reflects what's actually true rather than the original day-by-day
 spread. Tick items off as you go; this file is yours to edit.
 
-**Deadline: no longer fixed to 19–22 October. Runway to roughly the first
-week of November 2026.**
+**Deadline, confirmed by Dr Tian on 2 October: the last day of October 2026.**
+Not early November — that was my own wrong assumption. ~4 weeks from now.
+
+---
+
+## Supersedes everything below: post-meeting pivot (2 October)
+
+Dr Tian reviewed the 14-page draft. Verdict: correct but far too short for a
+24-point mathematics capstone, specifically in Methodology. See
+`PROJECT_STATUS.md`'s "Week 7, meeting with Dr Tian" section for the full
+account. The checklist below this point (reading citations, proofreading,
+the classifier-detail expansion) is now secondary to this:
+
+- [ ] **References: grow from 7 entries (~1/3 page) to at least 4 full pages.**
+      Real literature search, every entry CrossRef-verified — this is the
+      single biggest remaining task by volume.
+- [ ] **Methodology: split explicitly into (i) Machine learning and
+      (ii) Deep learning**, each covering the method family's general
+      features/theory, then specifically how this project implemented it.
+- [ ] **Add full mathematical detail throughout Methodology**: ridge
+      regression's objective, the random forest splitting criterion,
+      gradient boosting's functional gradient descent, ARIMA's AR/MA/I
+      polynomial form with the Fourier terms written out, the GRU's full
+      gate equations. Prose descriptions are not enough any more.
+- [ ] **Expand Literature Review** to also carry theoretical background on
+      ML and deep learning as method families (mirrors the Methodology
+      split above), not just the four application-area citations already
+      there.
+- [ ] Decide how much of the previous student's 6-chapter, 71-page structure
+      to adopt (separate Results / Discussion / Conclusion chapters, List of
+      Figures / List of Tables) versus achieving the needed depth by
+      expanding the current 7-section report. A judgement call, not yet made.
 
 ---
 
