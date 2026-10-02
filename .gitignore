@@ -3,4 +3,5 @@ __pycache__/
 features.csv
 *.png
 !report/figures/monash-logo.png
+!report/figures/monash-logo-stacked.png
 .DS_Store
