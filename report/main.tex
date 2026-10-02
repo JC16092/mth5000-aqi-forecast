@@ -711,14 +711,59 @@ and an annual period as the central modelling difficulty, since a seasonal ARIMA
 accommodates only one seasonal period.
 
 Tested on the cleaned series, the weekly cycle is not present at this station.
-Three independent tests agree. The periodogram gives dominant periods of 357.9,
-178.9, 188.4, 397.7, 325.4 and 60.7 days, which is the annual cycle and its
-harmonics, with nothing near seven. On the deseasonalised logarithm of
-concentration the autocorrelation at lag 7 is 0.173, while lag 6 is 0.179 and lag
-8 is 0.153, so lag 7 lies on the decay curve rather than above it; the same holds
-at lags 14 and 21. The day of week effect on the same residuals spans 6.5 per
-cent between the highest and lowest day, with an analysis of variance giving
-$F = 1.13$, $p = 0.34$ and a Kruskal-Wallis test giving $p = 0.77$.
+Three independent tests agree, each asking a different kind of question of
+the same series: whether its variance concentrates at a weekly frequency,
+whether a lag-7 dependency survives beyond what the series' own short-range
+decay would produce anyway, and whether the day of the week carries a mean
+effect.
+
+The periodogram estimates how a series' variance decomposes across
+frequency, from the magnitude of its discrete Fourier transform at each
+Fourier frequency $\omega_j = 2\pi j/n$,
+\begin{equation}
+I(\omega_j) \;=\; \frac{1}{n}\left[\Big(\sum_{t=1}^{n} y_t\cos(\omega_j t)\Big)^2
+\;+\; \Big(\sum_{t=1}^{n} y_t\sin(\omega_j t)\Big)^2\right],
+\label{eq:periodogram}
+\end{equation}
+read as a period of $n/j$ days rather than a frequency. It gives dominant
+periods of 357.9, 178.9, 188.4, 397.7, 325.4 and 60.7 days, which is the
+annual cycle and its harmonics, with nothing near seven.
+
+On the deseasonalised logarithm of concentration, the sample autocorrelation
+at lag $k$,
+\begin{equation}
+\hat\rho_k \;=\; \frac{\sum_{t=k+1}^{n}(y_t-\bar y)(y_{t-k}-\bar y)}
+{\sum_{t=1}^{n}(y_t-\bar y)^2},
+\label{eq:acf}
+\end{equation}
+is 0.173 at lag 7, while lag 6 is 0.179 and lag 8 is 0.153, so lag 7 lies on
+the decay curve rather than above it; the same holds at lags 14 and 21. A
+genuine weekly effect would show as a spike at lag 7 breaking that otherwise
+smooth decay, not merely as some nonzero value, since every short lag is
+autocorrelated regardless of any seasonal structure at all.
+
+The day of week effect on the same residuals spans 6.5 per cent between the
+highest and lowest day. A one-way analysis of variance tests whether the
+seven day-of-week group means differ by more than the scatter within each
+group predicts,
+\begin{equation}
+F \;=\; \frac{\sum_{g=1}^{7} n_g(\bar y_g - \bar y)^2 \,/\, (7-1)}
+{\sum_{g=1}^{7}\sum_{i=1}^{n_g}(y_{gi} - \bar y_g)^2 \,/\, (n-7)},
+\label{eq:anova}
+\end{equation}
+giving $F = 1.13$, $p = 0.34$ against an $F_{6,\,n-7}$ reference
+distribution, and a Kruskal-Wallis test,
+\begin{equation}
+H \;=\; \frac{12}{n(n+1)}\sum_{g=1}^{7}\frac{R_g^2}{n_g} \;-\; 3(n+1),
+\label{eq:kruskalwallis}
+\end{equation}
+the same comparison on each observation's rank summed within group $g$,
+$R_g$, rather than on the residual directly, asymptotically $\chi^2_6$ under
+the null and free of the normal-residual assumption Equation~\ref{eq:anova}
+makes, gives $p = 0.77$. Three tests built on different assumptions, a
+spectral decomposition, a linear-model F-test, and a distribution-free
+rank test, agreeing is what makes the absence convincing rather than an
+artefact of one test's particular assumptions failing to hold here.
 
 \begin{figure}[htbp]
 \centering
@@ -832,9 +877,22 @@ exogenous regressors $x_t$ is
 \end{equation}
 where $\phi(B) = 1 - \phi_1 B - \cdots - \phi_p B^p$ is the autoregressive
 polynomial, $\theta(B) = 1 + \theta_1 B + \cdots + \theta_q B^q$ is the moving
-average polynomial, and $\varepsilon_t$ is white noise. The order selected
-from an explicit grid by the Akaike information criterion on the training
-block is $(p,d,q) = (1,1,1)$, so Equation~\ref{eq:arima} specialises to
+average polynomial, and $\varepsilon_t$ is white noise. The order is chosen
+from an explicit grid of candidate $(p,d,q)$ triples by the Akaike
+information criterion,
+\begin{equation}
+\mathrm{AIC} \;=\; -2\ln\hat L \;+\; 2k,
+\label{eq:aic}
+\end{equation}
+where $\hat L$ is the model's maximised likelihood and $k$ its number of
+free parameters, so the criterion rewards fit while charging a fixed penalty
+for every additional parameter rather than letting the largest model in the
+grid win by construction. The order scoring lowest on the training block is
+$(p,d,q) = (1,1,1)$, AIC 1892.5, with the next best candidate in the grid,
+$(1,1,2)$, at 1893.6: a gap of 1.1, too small to call $(1,1,1)$ decisively
+better rather than a more parsimonious specification of roughly equal
+support, which is the more defensible reading of why it was selected.
+Equation~\ref{eq:arima} specialises to
 \begin{equation}
 (1 - \phi_1 B)(1-B)\,y_t \;=\; c \;+\; (1+\theta_1 B)\,\varepsilon_t \;+\;
 \sum_{k=1}^{4}\Big[\alpha_k \sin\!\Big(\tfrac{2\pi k t}{365.25}\Big) +
@@ -843,7 +901,21 @@ block is $(p,d,q) = (1,1,1)$, so Equation~\ref{eq:arima} specialises to
 \end{equation}
 with four pairs of annual Fourier terms ($K=4$) as the exogenous regressors
 $x_t$, carrying the annual cycle established in Section~\ref{sec:weekly} and
-deliberately carrying no weekly seasonal order. Using trigonometric
+deliberately carrying no weekly seasonal order. Fitted on the training
+block, $\hat\phi_1 = 0.581$ and $\hat\theta_1 = -0.987$. Both must satisfy
+$|\phi_1| < 1$ and $|\theta_1| < 1$ for the differenced series to be
+stationary and the model invertible, the conditions under which an ARMA
+process has the causal, one-sided representation Box-Jenkins estimation
+assumes \citep{box2008time}; the fit satisfies both, although $\hat\theta_1$
+sits only 0.013 inside its boundary, a near-cancellation between the
+differencing and the moving average term that is a known signature of a
+series close to overdifferenced rather than evidence the order search chose
+badly, since $(1,1,1)$ still scored lowest of every order in the grid. The
+implementation used here does not constrain the optimiser to this region,
+\texttt{enforce\_stationarity=False} and \texttt{enforce\_invertibility=False}
+in the SARIMAX call, so satisfying both conditions is a property of the
+fitted optimum on this data rather than one guaranteed by construction.
+Using trigonometric
 regressors at a fixed set of frequencies to carry a seasonal pattern inside
 an otherwise standard model, rather than through a seasonal differencing
 order, follows the same logic \citet{delivera2011fourier} apply to
@@ -882,10 +954,28 @@ coefficient vector:
 \hat\beta \;=\; \arg\min_{\beta} \; \|y - X\beta\|_2^2 \;+\; \lambda \|\beta\|_2^2,
 \label{eq:ridge}
 \end{equation}
-with closed-form solution $\hat\beta = (X^\top X + \lambda I)^{-1} X^\top y$.
-The penalty $\lambda > 0$ shrinks the coefficients toward zero, trading a
-small increase in bias for a reduction in variance; $\lambda$ is selected by
-cross-validation on the training block at every refit.
+Unlike every other regressor in this section, Equation~\ref{eq:ridge} has a
+closed-form minimiser rather than one found by an iterative search. Writing
+the objective as $J(\beta) = (y-X\beta)^\top(y-X\beta) + \lambda\beta^\top\beta$
+and differentiating with respect to $\beta$,
+\begin{equation}
+\nabla_\beta J \;=\; -2X^\top(y-X\beta) \;+\; 2\lambda\beta,
+\label{eq:ridge-grad}
+\end{equation}
+setting Equation~\ref{eq:ridge-grad} to zero gives the penalised normal
+equations, $(X^\top X + \lambda I)\hat\beta = X^\top y$, so
+\begin{equation}
+\hat\beta \;=\; (X^\top X + \lambda I)^{-1} X^\top y.
+\label{eq:ridge-solution}
+\end{equation}
+$X^\top X + \lambda I$ is positive definite for any $\lambda > 0$ even when
+$X^\top X$ itself is singular or near singular, which is exactly the
+collinear case the opening sentence of this subsection describes, so
+Equation~\ref{eq:ridge-solution} exists and is unique where the ordinary
+least squares solution, $\lambda = 0$, may not. The penalty $\lambda > 0$
+shrinks the coefficients toward zero, trading a small increase in bias for
+a reduction in variance; $\lambda$ is selected by cross-validation on the
+training block at every refit.
 
 \subsection{Random Forest}
 
@@ -903,6 +993,23 @@ trees would:
 \hat f(x) \;=\; \frac{1}{B}\sum_{b=1}^{B} T_b(x).
 \label{eq:rf}
 \end{equation}
+Why decorrelation matters beyond bagging alone follows from the variance of
+an average of $B$ identically distributed but not independent predictors,
+each with variance $\sigma^2$ and pairwise correlation $\rho$,
+\begin{equation}
+\mathrm{Var}\big(\hat f(x)\big) \;=\; \rho\sigma^2 \;+\; \frac{1-\rho}{B}\sigma^2,
+\label{eq:rf-variance}
+\end{equation}
+the bound \citet{breiman2001random} derives as the reason a random forest
+can outperform plain bagging rather than merely matching it. The second
+term in Equation~\ref{eq:rf-variance} vanishes as $B$ grows, but the first
+does not, so $\rho\sigma^2$ is a floor that averaging alone, however many
+trees, cannot fall below. Bagging without the random feature subset still
+has every tree free to split on whichever lag dominates, which keeps $\rho$
+high; restricting each split to a random subset of features is specifically
+what lowers $\rho$, and with it the floor itself, a mechanism unrelated to
+how many trees are averaged.
+
 Each tree $T_b$ is grown by recursively partitioning the feature space: at a
 node with data $\{(x_i,y_i)\}$, the split $(j,s)$ on feature $j$ at threshold
 $s$ is chosen to minimise the total within-region sum of squared error,
@@ -928,15 +1035,32 @@ next learner in the sequence focuses on them \citep{freund1997adaboost}.
 Friedman's reformulation recasts that reweighting as gradient descent in
 function space rather than in the space of example weights, which is what
 lets the same framework cover arbitrary differentiable loss functions rather
-than only classification error. The ensemble is initialised as a
-constant, $F_0(x) = \arg\min_{\gamma} \sum_i L(y_i,\gamma)$, and for
-$m = 1,\dots,M$ a regression tree $h_m$ is fitted to the negative gradient of
-the loss with respect to the current ensemble's predictions,
+than only classification error. The justification is a first-order Taylor
+expansion of the loss around the current ensemble $F_{m-1}$, treating the
+update $h$ added at that point as the variable being optimised,
+\begin{equation}
+L\big(y_i, F_{m-1}(x_i) + h(x_i)\big) \;\approx\; L\big(y_i, F_{m-1}(x_i)\big)
+\;+\; h(x_i)\left[\frac{\partial L(y_i,F(x_i))}{\partial F(x_i)}\right]_{F=F_{m-1}},
+\label{eq:boost-taylor}
+\end{equation}
+which, to this linear order, is decreased fastest for a step of fixed size
+by setting $h(x_i)$ in the direction opposite the bracketed gradient at
+every training point: an infinite-dimensional analogue of ordinary gradient
+descent, with one coordinate per training example rather than one per
+model parameter, which is the sense in which this is descent in function
+space rather than in the space of example weights. Fitting the gradient
+exactly at every training point would reproduce the training data and
+generalise nowhere, so the update is instead constrained to be a regression
+tree, fitted not to the gradient itself but to its value at the training
+points, the pseudo-residual
 \begin{equation}
 r_{im} \;=\; -\left[\frac{\partial L(y_i,F(x_i))}{\partial F(x_i)}\right]_{F=F_{m-1}},
 \label{eq:grad-residual}
 \end{equation}
-which for squared-error loss reduces to the ordinary residual
+The ensemble is initialised as a
+constant, $F_0(x) = \arg\min_{\gamma} \sum_i L(y_i,\gamma)$, and for
+$m = 1,\dots,M$ a regression tree $h_m$ is fitted to this target, which for
+squared-error loss reduces to the ordinary residual
 $r_{im} = y_i - F_{m-1}(x_i)$, and the ensemble is updated by
 \begin{equation}
 F_m(x) \;=\; F_{m-1}(x) \;+\; \nu\, h_m(x),
@@ -1010,6 +1134,27 @@ minimising mean absolute error with the Adam optimiser, with early stopping
 on a chronological holdout, the most recent 15 per cent of each training
 window, so that training stops once validation error no longer improves
 rather than at a fixed epoch count.
+
+Writing $d$ for the number of input channels, Equations~\ref{eq:gru-z}
+to~\ref{eq:gru-h} fix weight matrices $W_z,W_r,W_h \in \mathbb{R}^{H\times d}$
+and $U_z,U_r,U_h \in \mathbb{R}^{H\times H}$ for the three gates, $3H(d+H)$
+weights before a single bias is counted. The implementation used here,
+PyTorch's \texttt{nn.GRU}, trains each gate's bias as two separately
+learned halves rather than the one term $b_z$, $b_r$, $b_h$ that
+Equations~\ref{eq:gru-z} to~\ref{eq:gru-h} show, one added to the input
+term and one to the hidden term and the two summed inside the gate, a
+convention shared with cuDNN-backed implementations generally rather than a
+departure from what those equations state. That doubles the bias count the
+equations alone would suggest, $6H$ rather than $3H$, giving
+\begin{equation}
+3H(d+H+2) \;+\; (H+1)
+\label{eq:gru-params}
+\end{equation}
+trainable parameters in total, the second term the linear output layer's
+own weight vector and bias. For $H=24$, Equation~\ref{eq:gru-params} gives
+2{,}329 parameters for the six-channel network, $d=6$, and 2{,}617 for the
+ten-channel weather version, $d=10$, both confirmed directly by counting
+the fitted model objects' own parameters rather than trusted as arithmetic.
 
 A recurrent network forces a compromise that no other model in this project
 requires. It must be handed a value at every timestep: it cannot skip one the
@@ -1091,31 +1236,133 @@ three rows per refit and would have been entirely invisible in the output.
 \label{sec:evalmeasures}
 
 Accuracy is reported separately at each horizon and never averaged, since skill
-decays with horizon and concealing that would defeat the purpose. The headline
-measure is relative mean absolute error against the persistence forecast computed
-on identical rows, so that 1.000 is persistence and values below one beat it.
-Mean absolute scaled error, proposed by \citet{hyndman2006mase} as a scale-free
+decays with horizon and concealing that would defeat the purpose. Writing
+$e_i = \hat y_i - y_i$ for the forecast error of row $i$ among the $n$ rows a
+model is scored on, the headline measure is relative mean absolute error
+against the persistence forecast, computed on identical rows,
+\begin{equation}
+\mathrm{rMAE} \;=\; \frac{\mathrm{MAE}(\text{model})}{\mathrm{MAE}(\text{persistence})},
+\qquad \mathrm{MAE} = \frac{1}{n}\sum_{i=1}^{n}|e_i|,
+\label{eq:rmae}
+\end{equation}
+so that 1.000 is persistence and values below one beat it. Mean absolute
+scaled error,
+\begin{equation}
+\mathrm{MASE} \;=\; \frac{\mathrm{MAE}(\text{model})}
+{\frac{1}{n_{\text{train}}-1}\sum_{t=2}^{n_{\text{train}}}|y_t - y_{t-1}|},
+\label{eq:mase}
+\end{equation}
+proposed by \citet{hyndman2006mase} as a scale-free
 accuracy measure that remains defined even when the series passes through
-values near zero, is reported alongside, but it divides by the training
-period volatility and therefore also reflects any difference in volatility
-between periods, which is material here; this is the same distinction between
-a scaled error and a relative error that motivated reporting both rather than
-either alone.
+values near zero, is reported alongside, but its denominator is fixed on the
+training period and therefore also reflects any difference in volatility
+between training and test periods, which is material here; this is the same
+distinction between a scaled error and a relative error that motivated
+reporting both rather than either alone.
 
 As a warning system, a day is an event if the observed concentration exceeds the
 health threshold, and an alarm is raised when the forecast exceeds a decision
 threshold. These are separate quantities and are kept separate throughout.
-Reported are the hit rate, the false alarm rate defined as false alarms divided
-by quiet days, precision, the critical success index \citep{schaefer1990csi},
-and alarms raised per year. The last is included because a false alarm rate of
-0.10 sounds negligible and means roughly one wasted alarm every ten quiet days,
-which is what an operator actually experiences. Plain classification accuracy
-is deliberately never reported as a warning-system measure: with hazardous days
-a minority class throughout the record, a model that never raises an alarm
-scores well on accuracy while being useless as a warning system
-\citep{he2009imbalance}, the same distortion that motivates reporting a
-precision-recall-style decomposition rather than a single aggregate rate on
-imbalanced data generally \citep{saito2015prplot}.
+Every warning-system measure reported is a ratio of four counts accumulated
+over the days a model is scored on: true positives $\mathrm{TP}$, an alarm
+on an event day; false positives $\mathrm{FP}$, an alarm on a quiet day;
+false negatives $\mathrm{FN}$, a missed event; and true negatives
+$\mathrm{TN}$, a quiet day correctly left unflagged. Reported are the hit
+rate,
+\begin{equation}
+\text{hit rate} \;=\; \frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FN}},
+\label{eq:hitrate}
+\end{equation}
+the share of actual events the model catches; the false alarm rate, defined
+as false alarms divided by quiet days rather than by alarms raised,
+\begin{equation}
+\text{false alarm rate} \;=\; \frac{\mathrm{FP}}{\mathrm{FP}+\mathrm{TN}};
+\label{eq:farrate}
+\end{equation}
+precision, the share of alarms that were right,
+\begin{equation}
+\text{precision} \;=\; \frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}};
+\label{eq:precision}
+\end{equation}
+the critical success index \citep{schaefer1990csi},
+\begin{equation}
+\mathrm{CSI} \;=\; \frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}+\mathrm{FN}},
+\label{eq:csi}
+\end{equation}
+which discards $\mathrm{TN}$ entirely; and alarms raised per year,
+$365.25\,(\mathrm{TP}+\mathrm{FP})/n$, included because a false alarm rate of
+0.10 sounds negligible and means roughly one wasted alarm every ten quiet
+days, which is what an operator actually experiences. Plain classification
+accuracy, $(\mathrm{TP}+\mathrm{TN})/n$, is deliberately never reported as a
+warning-system measure: with hazardous days a minority class throughout the
+record, $\mathrm{TN}$ dominates $n$, so a model that never raises an alarm,
+$\mathrm{TP}=\mathrm{FP}=0$, scores $\mathrm{TN}/n$ on accuracy, high by
+construction, while catching none of the events it exists to catch
+\citep{he2009imbalance}. Equations~\ref{eq:hitrate} to~\ref{eq:csi} are
+exactly the decomposition that distortion motivates, a precision-recall-style
+reading of the same contingency table rather than a single aggregate rate on
+imbalanced data \citep{saito2015prplot}.
+
+\section{Statistical Comparison of Forecasts}
+\label{sec:dmtest}
+
+Section~\ref{sec:noise-floor} bounds how large a gap between two models'
+scores must be before it is more than measurement noise, but that bound is
+empirical: it is the amount a score moved when nothing about the model or
+the data changed, not a sampling distribution with a $p$-value attached.
+The Diebold-Mariano test \citep{diebold1995predictive} supplies the formal
+version of the same question. For two models with forecast errors $e_{1,t}$
+and $e_{2,t}$ at the same horizon $h$ and the same forecast origins, define
+the loss differential
+\begin{equation}
+d_t \;=\; L(e_{1,t}) \;-\; L(e_{2,t}),
+\label{eq:dm-diff}
+\end{equation}
+with $L(e) = |e|$ throughout, matching this report's own headline measure,
+Equation~\ref{eq:rmae}, rather than squared error. Under the null hypothesis
+of equal predictive accuracy, $E[d_t] = 0$, and the test statistic is
+\begin{equation}
+\mathrm{DM} \;=\; \frac{\bar d}{\sqrt{\widehat{\mathrm{Var}}(\bar d)}},
+\qquad \bar d = \frac{1}{n}\sum_{t=1}^{n} d_t,
+\label{eq:dm-stat}
+\end{equation}
+asymptotically standard normal under the null. The variance estimate is not
+the plain sample variance divided by $n$: an optimally specified $h$-step
+forecast has errors that are at most an $\mathrm{MA}(h-1)$ process, so the
+loss differential it produces carries genuine serial correlation up to lag
+$h-1$, which Diebold and Mariano's derivation folds into a long-run
+variance,
+\begin{equation}
+\widehat{\mathrm{Var}}(\bar d) \;=\; \frac{1}{n}\left[\hat\gamma_0 \;+\;
+2\sum_{k=1}^{h-1}\hat\gamma_k\right], \qquad
+\hat\gamma_k \;=\; \frac{1}{n}\sum_{t=k+1}^{n}(d_t-\bar d)(d_{t-k}-\bar d),
+\label{eq:dm-var}
+\end{equation}
+rather than the plain estimator a reader more familiar with an ordinary
+paired $t$-test might expect; at $h=1$ there is nothing to correct for and
+Equation~\ref{eq:dm-var} reduces to the ordinary case, $\hat\gamma_0/n$.
+Because this project's longest horizon is three days, the correction is
+never more than two autocovariance terms. The asymptotic normal
+approximation can be anti-conservative at the sample sizes forecasting
+studies actually have, so this report uses the small-sample correction of
+\citet{harvey1997dmtest},
+\begin{equation}
+\mathrm{DM}^{*} \;=\; \mathrm{DM}\left[\frac{n+1-2h+h(h-1)/n}{n}\right]^{1/2},
+\label{eq:dm-hln}
+\end{equation}
+referred to a $t_{n-1}$ distribution rather than the standard normal, which
+is uniformly more conservative and is what every statistic and $p$-value
+attributed to this test in Chapter~\ref{chap:results} actually uses.
+
+This is applied to exactly the comparison Section~\ref{sec:results-rq1}
+already makes by counting seed signs against the empirical noise floor: the
+recurrent network against the ARIMA benchmark, with and without weather, at
+every horizon. Because the network alone depends on a random
+initialisation, the test is run once per seed against the same ARIMA
+forecast and reported as the range across all ten, exactly the convention
+already used for every other seed-dependent number in this report, rather
+than as a single run's $p$-value that a different seed could have produced
+differently.
 
 \section{Reproducibility}
 
@@ -1148,7 +1395,9 @@ specifically what lets it avoid the vanishing-gradient failure of a plain
 recurrent network. Every model is evaluated under the same rolling-origin
 protocol, specified in Section~\ref{sec:rolling}, and scored by the same
 measures, specified in Section~\ref{sec:evalmeasures}, so that the comparison
-in Chapter~\ref{chap:results} is a fair one.
+in Chapter~\ref{chap:results} is a fair one; where that comparison involves
+the network against the ARIMA benchmark, it is also given a formal
+significance test, specified in Section~\ref{sec:dmtest}.
 
 % ============================================================================
 \chapter{Results and Analysis}
@@ -1196,6 +1445,27 @@ has a seed that clears the floor against the other: the best network seed,
 0.831, and ARIMA's 0.832 are separated by a few parts in ten thousand, a tie
 in any language that would survive examination, while the worst network
 seed, 0.879, is clearly the weaker of the two.
+
+\begin{table}[htbp]
+\centering
+\caption{Diebold-Mariano test of the recurrent network against the ARIMA
+benchmark (Section~\ref{sec:dmtest}), run once per seed and given as the
+range across all ten. A negative statistic favours the network at that
+seed; a positive one favours ARIMA. The last column counts seeds reaching
+$p<0.05$, two-sided.}
+\label{tab:significance}
+\input{tables/significance}
+\end{table}
+
+Table~\ref{tab:significance} puts a formal test behind the comparison the
+paragraph above makes by counting seed signs against an empirical floor. At
+one day ahead the statistic favours the network in all ten seeds and the
+advantage reaches $p<0.05$ in four of them. At two days, every seed's
+$p$-value exceeds 0.07 and none reaches significance. At three days exactly
+one seed does, and in ARIMA's favour, $p=0.0056$; the rest do not.
+Section~\ref{sec:noise-floor} returns to this table directly, since it asks
+the same question the empirical noise floor does and answers it more
+conservatively at every horizon reported there.
 
 The mechanism is coherent. At one day ahead the forecast is dominated by
 short-range structure, where a nonlinear model has something to exploit. As the
@@ -1261,6 +1531,20 @@ Doubling the seed count from the five first fitted is what surfaced this;
 under the first five alone, both horizons had looked like a win for the
 network, and that reading did not survive a second, independent batch of
 five seeds.
+
+The same formal test behind Table~\ref{tab:significance} reaches a similar
+verdict for the weather version, in its lower block. At one day ahead it
+favours the network in all ten seeds and reaches $p<0.05$ in seven, a
+stronger formal result than the plain network's four, consistent with wind
+speed carrying genuine short-range information rather than noise that a
+larger input simply fits more closely. At two days the direction itself
+splits, six seeds favour the network and four favour ARIMA, and not one
+seed on either side reaches significance; by this reading the three-way
+split the seed-counting above reports is closer to no detectable difference
+at all than to a genuine three-way contest. At three days one seed reaches
+significance, $p=0.049$, and it favours ARIMA, consistent with the
+majority-loss reading above, though a $p$-value that close to the threshold
+means a single further seed could move the count either way.
 
 The honest summary is that wind speed and temperature measurably help the
 one architecture built to exploit short-range structure at one day ahead,
@@ -1533,6 +1817,34 @@ Several of the gaps between adjacent models in Table~\ref{tab:accuracy} are of
 that order even where no seed or machine-level floor was measured directly for
 that pair. Any claim that one of those models is better than another, made
 without stating the run to run variation, is not supported by the evidence.
+
+A formal test of the same question, rather than a tolerance measured by
+rerunning and compared by eye, is available for the one comparison in this
+report with enough seeds to support it: the network against ARIMA, in
+Table~\ref{tab:significance} (Section~\ref{sec:results-rq1}). It is,
+throughout, the more conservative reading. At one day ahead the network's
+advantage reaches conventional significance in four of the ten seeds, not
+the eight credited to it by the noise-floor count above; at two days none
+of the ten reaches it, where the noise-floor count had already read most of
+the table as a tie; at three days a single seed does, and even that one
+only at $p=0.049$. The two readings differ because each bounds something
+different. The noise floor measured here, 0.004 to 0.048, bounds how much a
+score moves for reasons that have nothing to do with which model is better:
+thread scheduling, floating point summation order, a different draw of
+initial weights. The Diebold-Mariano statistic bounds something else
+entirely, how much the mean of a loss differential computed over roughly
+1{,}700 individually autocorrelated daily forecast errors can vary by
+chance even when the two models being compared are, in truth, equally
+good. Both are genuine sources of uncertainty in a result this report
+already reports as a range rather than a point; the formal test shows the
+second is generally the larger of the two in this project, which is a
+reason to read Table~\ref{tab:accuracy}'s gaps even more cautiously than the
+noise floor alone suggests, not a reason to discard the noise floor in
+favour of the test. The noise floor is measured directly from reruns,
+where the Diebold-Mariano variance estimate in Equation~\ref{eq:dm-var} is
+necessarily a model of the error process rather than a direct measurement
+of it; a result that failed either bound on its own would be the one
+actually worth re-examining.
 
 \section{Limitations}
 \label{sec:limitations}

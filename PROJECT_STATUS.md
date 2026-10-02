@@ -1497,6 +1497,103 @@ all of the above landed, not before.
 5. The 29 references and stale-citations question from several passes
    ago — still open, lower priority than the above.
 
+### Same day, an eleventh pass: more mathematics throughout, plus a formal significance test for RQ1
+
+User asked for "more mathematics in the report." Asked back whether that
+meant richer derivations in the existing write-up, formalising the
+sections that were prose-only despite being quantitative, or a genuinely
+new formal statistical test — got all three. Report is now 58 pages (was
+52).
+
+**Richer derivations, no new code.** Ridge's closed form is now actually
+derived (gradient of the penalised objective, set to zero, normal
+equations, a note that $X^\top X+\lambda I$ is positive definite even when
+$X^\top X$ is singular, which is the collinearity the subsection opens
+with). Random forest gets the variance-of-correlated-predictors bound,
+$\mathrm{Var}(\hat f)=\rho\sigma^2+(1-\rho)\sigma^2/B$, Breiman's own
+justification for why the random feature subset buys something bagging
+alone does not. Gradient boosting gets the first-order Taylor-expansion
+argument for why the negative gradient is the right direction, i.e. why
+this is "gradient descent in function space" rather than just an assertion
+of the phrase. ARIMA gets the AIC formula and, checked directly by
+refitting ARIMA(1,1,1) on the actual training block with the project's own
+code: $\hat\phi_1=0.581$, $\hat\theta_1=-0.987$ (invertible but only 0.013
+inside the boundary, worth flagging honestly), and the real next-best order
+in the grid, $(1,1,2)$ at AIC 1893.6 against 1892.5 for the chosen order, a
+gap of 1.1, too close to call the choice decisive rather than a parsimony
+tiebreak. GRU gets a parameter-count formula, $3H(d+H+2)+(H+1)$, the "+2"
+rather than "+1" because PyTorch's `nn.GRU` trains two separate bias halves
+per gate rather than the one term the gate equations already in the report
+show; checked against the actual fitted model objects (2,329 and 2,617
+parameters for the six- and ten-channel networks), not just arithmetic.
+
+**Formalised what was prose-only.** Evaluation Measures (hit rate, false
+alarm rate, precision, CSI) now has actual TP/FP/FN/TN formulas instead of
+word definitions; rMAE and MASE too. The seasonality section (periodogram,
+ACF, one-way ANOVA, Kruskal-Wallis) now states the periodogram, ACF, F, and
+H formulas instead of only the resulting numbers, which were already
+correct and untouched.
+
+**The significance test, the substantial addition.** The report has argued
+all along, by counting seed signs against an empirical 0.004–0.048 noise
+floor, that the network ties ARIMA at two and three days. That floor is a
+measured tolerance, not a hypothesis test. Added a proper one: new
+`significance.py` at the project root (sibling to `evaluation.py`, not a
+numbered pipeline step, imported the same way), implementing the
+Diebold-Mariano test with the MA($h-1$) long-run variance correction and
+the Harvey-Leybourne-Newbold small-sample correction, both CrossRef
+verified (`diebold1995predictive`, `harvey1997dmtest`) and added to
+`refs.bib`. Caught one real bug while writing it: the lag-$k$ autocovariance
+terms were dividing by $n-k$ (`np.mean` on a shortened array) instead of
+the standard $n$ convention the written formula uses; fixed before any
+number was generated, not after. Has its own `test_significance()`,
+including an exact check against `scipy.stats.ttest_rel` (the
+HLN-corrected statistic at $h=1$ is an exact algebraic identity with the
+textbook paired $t$-test, not merely close to it) and a check that a
+genuinely autocorrelated loss differential gives a different answer at
+$h=3$ than at $h=1$. `make_tables.py` gained `table_significance()`,
+reading the same `gru_seed*.csv` / `gru_weather_seed*.csv` files
+`table_accuracy`/`table_weather` already use, run once per seed exactly
+like every other seed-dependent number in this report.
+
+The actual result, computed before any report prose was written: at one
+day ahead the network's advantage over ARIMA reaches $p<0.05$ in 4 of 10
+plain seeds and 7 of 10 weather seeds; at two days, 0 of 10 for either
+version; at three days, 1 of 10 for either version, and in both cases that
+one significant seed favours ARIMA, not the network. This is more
+conservative than the existing noise-floor reading (which had credited
+eight of ten seeds at one day ahead), and the gap between the two readings
+is itself a genuine finding, written up as its own paragraph in
+Section 5.2: the noise floor bounds measurement and initialisation noise,
+the formal test bounds the sampling uncertainty of a mean computed over
+~1,700 autocorrelated daily errors, and the second turns out to be the
+larger source of uncertainty in this project. Neither reading was adjusted
+to fit the other; the numbers came first, the prose was written to match
+them, including the places where the formal test is harder on the network
+than the existing text had been.
+
+New table, `tables/significance.tex` (Table 4.2 in the current numbering),
+inserted in §4.1 after the main accuracy table, with matching prose in
+both the plain-network and weather-network parts of that section, plus the
+Section 5.2 reconciliation paragraph above. Compiled clean: the only
+warnings are the same three pre-existing, already-reviewed ones (a 2.7pt
+List of Figures overflow, a 4.64pt section-heading overflow, one underfull
+box in the cleaning table), confirmed by checking the final convergent
+tectonic pass, not just the first one. Visually spot-checked nine of the
+new/changed pages at 150dpi before calling it done.
+
+Noticed in passing, not fixed: `refs.bib`'s `breiman1984cart` entry cites
+the 2017 Routledge reprint (DOI resolves, so it's not fabricated) rather
+than the 1984 original, which reads oddly next to prose that attributes
+the method to Breiman "generally" in a context implying the foundational
+paper. Defensible either way; flagged for the user to decide rather than
+changed unprompted.
+
+Rebuilt `mth5000_code_submission.zip` with the new `main.pdf`,
+`main.tex`, `refs.bib`, `make_tables.py`, and — missing from every
+previous zip — `significance.py` itself and the stacked Monash logo PNG.
+Committed and pushed.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required

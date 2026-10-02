@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from step01_data_check import load_series          # noqa: E402
 from step07_warning import operating_point_at_alarms  # noqa: E402
 import evaluation as ev                            # noqa: E402
+import significance as sig                         # noqa: E402
 
 NO_WEATHER_MODELS = {"naive_carry", "seasonal_naive_7", "climatology",
                      "arima_fourier", "ridge", "random_forest",
@@ -269,6 +270,57 @@ def table_weather(base_path, weather_path, series_path, burn_in=1095):
     write("weather.tex", "\n".join(body) + "\n")
 
 
+def table_significance(plain_pattern="gru_seed*.csv",
+                       weather_pattern="gru_weather_seed*.csv",
+                       other_model="arima_fourier", seed_model="gru",
+                       horizons=(1, 2, 3)):
+    """Diebold-Mariano test of the network against the ARIMA benchmark.
+
+    Run once per seed, exactly like every other seed-dependent number in
+    this report, and reported as the range across all ten rather than a
+    single run's statistic. A negative DM statistic favours the network at
+    that seed; a positive one favours ARIMA. This is the formal counterpart
+    to the seed-by-seed sign counting already given for Table~\\ref{tab:accuracy}
+    in Section~\\ref{sec:results-rq1}, and to the empirical noise floor in
+    Section~\\ref{sec:noise-floor}: that floor bounds measurement and
+    initialisation noise, not the sampling uncertainty of a mean computed
+    over one finite, autocorrelated run of forecast errors, which is what
+    this test bounds instead.
+    """
+    import glob
+    rows = []
+    for label, pattern in [("Plain network vs.\\ ARIMA", plain_pattern),
+                           ("Network with weather vs.\\ ARIMA", weather_pattern)]:
+        files = sorted(glob.glob(os.path.join(ROOT, pattern)))
+        if not files:
+            print(f"  no files matching {pattern}; skipping its significance rows")
+            continue
+        for h in horizons:
+            d = sig.dm_over_seeds(files, seed_model, other_model, h)
+            n_sig = int((d["pvalue"] < 0.05).sum())
+            rows.append({
+                "label": label, "h": h, "n_seeds": len(files),
+                "dm_lo": d["dm_hln"].min(), "dm_hi": d["dm_hln"].max(),
+                "p_lo": d["pvalue"].min(), "p_hi": d["pvalue"].max(),
+                "n_sig": n_sig,
+            })
+            print(f"  DM {label}, h={h}: statistic {d['dm_hln'].min():.2f} to "
+                  f"{d['dm_hln'].max():.2f}, p {d['pvalue'].min():.4f} to "
+                  f"{d['pvalue'].max():.4f}, {n_sig}/{len(files)} significant at 0.05")
+
+    body = ["\\begin{tabular}{llccc}", "\\toprule",
+            "Comparison & $h$ & DM statistic & $p$-value & Sig.\\ seeds \\\\",
+            "\\midrule"]
+    for r in rows:
+        p_lo = "$<$0.001" if r["p_lo"] < 0.001 else f"{r['p_lo']:.3f}"
+        body.append(
+            f"{r['label']} & {r['h']} & {r['dm_lo']:.2f} to {r['dm_hi']:.2f} & "
+            f"{p_lo} to {r['p_hi']:.3f} & {r['n_sig']}/{r['n_seeds']} \\\\")
+    body += ["\\bottomrule", "\\end{tabular}"]
+    write("significance.tex", "\n".join(body) + "\n")
+    return pd.DataFrame(rows)
+
+
 def table_weather_budget(pattern, budgets=(40, 60, 80, 100)):
     """Does adding the weather models widen the achievable hit rate at a
     fixed alarm budget, or does the five-point ceiling in Table~\\ref{tab:budget}
@@ -420,6 +472,7 @@ def main():
     table_accuracy(fc, clean)
     table_warning(fc)
     table_cleaning()
+    table_significance()
     if os.path.exists(sweep):
         table_budget(sweep)
         table_arms(sweep)
