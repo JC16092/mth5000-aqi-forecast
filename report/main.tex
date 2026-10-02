@@ -11,11 +11,12 @@
 % learning and deep learning methods used, each as its own pillar of the
 % chapter, and Literature Review carries the corresponding theory.
 
-\documentclass[11pt,a4paper]{report}
+\documentclass[12pt,a4paper]{report}
 
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{mathptmx}                 % Times for text and mathematics
+\usepackage{microtype}                 % micro-typographic adjustments to avoid overfull lines
 \usepackage[margin=25mm]{geometry}
 \usepackage{booktabs}
 \usepackage{graphicx}
@@ -982,7 +983,8 @@ r_t &= \sigma\big(W_r x_t + U_r h_{t-1} + b_r\big), \label{eq:gru-r}\\
 h_t &= (1-z_t)\odot h_{t-1} \;+\; z_t \odot \tilde h_t, \label{eq:gru-h}
 \end{align}
 where $\sigma$ is the logistic sigmoid, $\odot$ is elementwise
-multiplication, and $W_z,W_r,W_h,U_z,U_r,U_h,b_z,b_r,b_h$ are the parameters
+multiplication, and $W_z$, $W_r$, $W_h$, $U_z$, $U_r$, $U_h$, $b_z$, $b_r$,
+$b_h$ are the parameters
 learned by training, fitted by backpropagation through time, the sequential
 application of the backpropagation algorithm \citep{rumelhart1986backprop}
 across every timestep in the input window. Because the final state $h_t$ in
@@ -1162,7 +1164,7 @@ recurrent network is given as the range over ten initialisation seeds; it is the
 only model whose result depends on one.}
 \label{tab:accuracy}
 \footnotesize
-\input{tables/accuracy}
+\resizebox{\textwidth}{!}{\input{tables/accuracy}}
 \end{table}
 
 \begin{figure}[htbp]
@@ -1230,7 +1232,7 @@ improvement. The network's weather row is given as its own absolute range
 over ten seeds, to be read against its row in Table~\ref{tab:accuracy}.}
 \label{tab:weather}
 \footnotesize
-\input{tables/weather}
+\resizebox{\textwidth}{!}{\input{tables/weather}}
 \end{table}
 
 Table~\ref{tab:weather} answers it unevenly across models, and the unevenness
@@ -1394,7 +1396,7 @@ arm throughout rather than on the classifiers.
 event fixed at the health threshold and only the decision threshold varying.}
 \label{tab:budget}
 \footnotesize
-\input{tables/budget}
+\resizebox{\textwidth}{!}{\input{tables/budget}}
 \end{table}
 
 Table~\ref{tab:budget} contains the principal result of this project. Moving the
