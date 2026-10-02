@@ -122,6 +122,24 @@ most accurate model in the whole suite.
       small (median 0.010, max 0.054 hit rate), concentrated at the
       tighter alarm budgets. Results Chapter Summary updated to give RQ2
       the same one-sentence treatment RQ1/RQ3 get. 42 pages now.
+- [x] **Discussion/Conclusion diagnostic, offered after the Results fix,
+      user said go ahead.** Found two real gaps, not just general
+      shortness: (1) Discussion §5.2 asserted "several gaps... are of
+      that order" (the measured noise floors) without naming one —
+      checked `tables/accuracy.tex` by hand and found concrete instances
+      (gradient-boosting-change vs.\ random-forest-level differ by exactly
+      0.004 at both h=1 and h=3; at h=3 the GRU's worst seed sits a
+      thousandth from gradient boosting's change-target result while its
+      best seed ties ARIMA to within 0.0003 — one architecture's seed
+      spread alone produces both "beats everything" and "indistinguishable
+      from the weakest model" as honest descriptions of the same run).
+      Caught and fixed two arithmetic errors in my own first draft before
+      they shipped (wrong model pair named for the h=3 0.004 gap; wrong
+      row-count claim) by re-verifying against the table before leaving
+      them in. (2) Conclusion's Main Conclusions never mentioned RQ2 even
+      after it got a real answer — added a paragraph. No new tables
+      needed, both fixes are prose-level arithmetic on numbers already in
+      `tables/accuracy.tex` and `threshold_sweep.csv`. 42 pages, unchanged.
 
 ---
 

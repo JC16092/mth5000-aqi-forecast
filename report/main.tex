@@ -1439,8 +1439,32 @@ relative error, because histogram gradient boosting parallelises with OpenMP and
 floating point summation order depends on the thread count. Changing only the
 random initialisation of the recurrent network moved it by 0.013 to 0.047.
 
+Table~\ref{tab:accuracy} contains several gaps at or below those two floors, and
+naming them is more convincing than asserting that they exist. At one day ahead,
+gradient boosting on the change target scores 0.981 and the random forest on the
+level target scores 0.985, a gap of exactly 0.004; the same gap, 0.004, separates
+gradient boosting's change target from the random forest's level target at
+three days as well, 0.878 against 0.882. Neither pair can be ordered with any
+confidence given a floor measured at that same size on a different model
+entirely; the measurement was never repeated for every pair in the table, so
+the honest reading is that it might apply more broadly than the one architecture
+it was taken on, not that it is known to be absent elsewhere.
+
+The sharpest instance involves the recurrent network directly, because its own
+reported range is wide enough to supply the comparison by itself. At three days
+ahead, the network's worst seed scores 0.879, a thousandth away from gradient
+boosting's change-target result of 0.878, several rows lower in the same
+table. Nothing about the data or the method changed between those
+two numbers; a different random seed for the one architecture that has one was
+enough to move it from a result indistinguishable from the classical benchmark,
+at that same horizon the network's best seed ties ARIMA to within 0.0003, to one
+indistinguishable from the weakest-looking machine learning regressor in the
+table. A table that printed only one of those two seeds would have told a reader
+something true about that run and nothing reliable about the architecture.
+
 Several of the gaps between adjacent models in Table~\ref{tab:accuracy} are of
-that order. Any claim that one of those models is better than another, made
+that order even where no seed or machine-level floor was measured directly for
+that pair. Any claim that one of those models is better than another, made
 without stating the run to run variation, is not supported by the evidence.
 
 \section{Limitations}
@@ -1562,7 +1586,21 @@ through the decision threshold, that accuracy gain buys at most a few
 points of hit rate at a fixed alarm budget and nothing at all at several of
 them, which is this report's central finding recurring at a more demanding
 test: even a materially more accurate forecaster does not escape the
-ceiling the alarm budget imposes. The
+ceiling the alarm budget imposes.
+
+On the second research question, forecasting the concentration and then
+thresholding it beats training a classifier directly on the exceedance
+label, but only modestly: matched by algorithm rather than by whichever
+model happens to be best, it wins 23 of 36 comparisons to 12, with one tie,
+a real lean rather than the coin flip a single qualitative judgement would
+suggest, yet still small enough in each individual case, a median of one
+point of hit rate, that either arm is defensible. The forecast-then-threshold
+arm is used throughout this report's own warning-system results for a
+reason beyond that narrow margin: it yields a concentration that can be
+rethresholded for any future health policy without refitting, while a
+classifier is welded to the threshold it was trained on.
+
+The
 supervisor's instruction to try several methods rather
 than defaulting to ARIMA was the right one: it is what makes the negative
 result at two and three days credible, and what surfaces the one day ahead

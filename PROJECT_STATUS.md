@@ -1173,22 +1173,63 @@ do it). Results Chapter Summary updated to give RQ2 the same one-sentence
 treatment RQ1 and RQ3 already get. Recompiled clean, 42 pages. Committed
 and pushed.
 
+### Same day, an eighth pass: the Discussion/Conclusion diagnostic, offered and taken
+
+After the Results fix, flagged to the user that Discussion (3 pages) and
+Conclusion (2 pages) were also short next to Methodology's 11, and asked
+whether that was worth the same treatment. User said to go ahead.
+
+**Found two genuine, fixable gaps, not just general shortness.**
+
+1. Discussion §5.2 "How Large Is a Difference Between Models?" asserted
+   "several of the gaps between adjacent models... are of that order"
+   (the 0.004 machine-noise / 0.013-0.047 seed-variation floors from the
+   paragraph above) without naming a single one. Checked `tables/accuracy.tex`
+   by hand and found concrete, nameable instances: gradient boosting
+   (change target) and the random forest (level target) differ by exactly
+   0.004 at both h=1 (0.981 vs 0.985) and h=3 (0.878 vs 0.882) — the same
+   size as the one measured cross-machine floor, on different models
+   entirely. The sharpest instance: at h=3, the GRU's *worst* seed (0.879)
+   sits a thousandth from gradient boosting's change-target result
+   (0.878), while its *best* seed ties ARIMA to within 0.0003 — one
+   architecture's own seed-to-seed spread is wide enough to single-handedly
+   produce both "beats every ML model" and "indistinguishable from the
+   weakest one" as honest descriptions of the same run.
+
+   **Caught and fixed two arithmetic errors in my own first draft before
+   they shipped:** wrote the h=3 "exactly 0.004" pair as random-forest-level
+   vs gradient-boosting-level (actually only 0.001 apart) when the real
+   0.004 pair is gradient-boosting-change vs random-forest-level; also
+   claimed gradient boosting sat "four rows below" the GRU in the table
+   when it's three. Re-verified both by hand against the actual table
+   values before leaving them in, not just trusting the first pass — the
+   same "an audit, not a compile-and-look check" lesson this project
+   learned about itself back in September, applied this time to prose
+   computed from a table rather than to the table itself.
+
+2. Conclusion's "Main Conclusions" section covered RQ1 and RQ3 in detail
+   but never mentioned RQ2 at all, even after RQ2 got a real answer two
+   passes ago. Added a paragraph: forecast-then-threshold wins 23 of 36
+   matched comparisons, a real but modest lean, plus the non-numeric
+   reason (rethresholdable without refitting) it's used throughout the
+   report's own results regardless of that narrow margin.
+
+No new tables needed — both fixes are arithmetic on numbers already in
+`tables/accuracy.tex` and `threshold_sweep.csv` via the existing
+`table_arms()`, written as prose the same way the report's own existing
+text already does this kind of by-hand table arithmetic (e.g. "a tie in
+any language that would survive examination"). Recompiled clean, 42 pages
+(unchanged — the additions fit in existing slack). Committed and pushed.
+
 **What is still genuinely open, in priority order:**
 
 1. Decide when to send the complete draft to Dr Tian — unchanged, still the
-   main open item. Every citation-reading and depth pass run so far has
-   found and fixed something real, which argues for one more full pass
-   before sending rather than assuming the draft is clean, but also means
-   the draft keeps getting more defensible each time, not less.
-2. Discussion and Conclusion are still comparatively short (3 and 2 pages)
-   next to Methodology's 11 — worth asking the user directly whether that
-   reflects genuine thinness worth fixing the way Results just was, or is
-   simply what those chapters should be (a results-heavy report's
-   Discussion is often rightly shorter than its Methodology).
-3. The 29 references from four passes ago, and the four citations named
-   in the stale Week 3 `TODO.md` item if that turns out to be a different
-   set than what was already read — worth clarifying with the user
-   directly rather than guessing again.
+   main open item, and after eight passes each finding and fixing
+   something real, there is a real argument that one more structural pass
+   (this one) was the last one needed before sending.
+2. The 29 references from five passes ago, and the four citations named in
+   the stale Week 3 `TODO.md` item if that's a different set than what was
+   already read — worth clarifying directly rather than guessing again.
 
 Positron as the editor, Python 3.13.15 in a `.venv` inside the project folder.
 The system `python3` is a 3.14 alpha and must not be used. Activate with
