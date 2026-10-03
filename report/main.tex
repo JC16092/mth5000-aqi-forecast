@@ -1381,6 +1381,19 @@ studies actually have, so this report uses the small-sample correction of
 referred to a $t_{n-1}$ distribution rather than the standard normal, which
 is uniformly more conservative and is what every statistic and $p$-value
 attributed to this test in Chapter~\ref{chap:results} actually uses.
+That correction addresses the sample size directly, but the asymptotic
+justification behind both the uncorrected and the corrected statistic
+still rests on a central limit theorem applying to $\bar d$, and this
+report has shown PM2.5 itself to be strongly right skewed with
+occasional extreme episodes: a loss differential built from absolute
+errors on that scale can inherit some of the same heavy-tailedness, which
+is exactly the condition under which a normal approximation converges
+more slowly. Nothing in Chapter~\ref{chap:results} checks this directly,
+for instance by bootstrapping the statistic's own sampling distribution
+rather than relying on the asymptotic one; the correction applied here
+addresses a known and specific failure mode of the test, not every way
+its normal approximation could be imprecise on a series with this one's
+particular shape.
 
 This is applied to exactly the comparison Section~\ref{sec:results-rq1}
 already makes by counting seed signs against the empirical noise floor: the
@@ -1922,6 +1935,21 @@ where the Diebold-Mariano variance estimate in Equation~\ref{eq:dm-var} is
 necessarily a model of the error process rather than a direct measurement
 of it; a result that failed either bound on its own would be the one
 actually worth re-examining.
+
+One more layer of uncertainty sits on top of both readings: the seed
+counts themselves are small-sample proportions, not settled facts. Four
+of ten seeds reaching significance at one day ahead is itself a point
+estimate with a wide interval; a Wilson score interval on that proportion
+runs from 0.17 to 0.69 at the conventional 95\% level, and the
+all-or-nothing counts at two and three days, 0 of 10 and 1 of 10, carry
+intervals of their own, up to 0.28 and 0.40 respectively. A different
+batch of ten seeds could plausibly have produced a noticeably different
+count at any horizon without the underlying comparison having changed at
+all. This is not a reason to distrust the direction of any of the three
+findings, which the formal test, the noise floor and the point estimates
+all agree on, but it is a reason not to treat the exact fraction reported
+at each horizon as more precise than the sample it was counted from
+allows.
 
 \section{Limitations}
 \label{sec:limitations}

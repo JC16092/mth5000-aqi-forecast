@@ -1912,6 +1912,48 @@ declaration remains the one item not touched by any of the last five
 passes and the one the user has been told, every time, outranks all of
 them.
 
+**That claim was wrong, and the user caught it.** Asked directly to list
+all seven items from the review by number; two of them, bundled together
+in the original review as "two secondary statistical caveats worth a
+sentence each," were never actually on the priority-ranked action list
+and had quietly never come up. Corrected rather than left standing.
+
+### Same day, an eighteenth pass: the two secondary statistical caveats, finally
+
+Both were originally scoped as "worth a sentence each," no new
+computation. Computed one real number first rather than writing the
+sentence from a vague impression of it: a Wilson score 95\% confidence
+interval on each "$n$ of 10 seeds significant" proportion already
+reported in the text (via `statsmodels.stats.proportion.proportion_confint`),
+since "worth a sentence" still means the sentence should say something
+checked, not asserted.
+
+- Four of ten at $h=1$: Wilson interval $[0.17, 0.69]$.
+- Zero of ten at $h=2$: $[0.00, 0.28]$.
+- One of ten at $h=3$: $[0.02, 0.40]$.
+
+**Report changes**, both in `main.tex`, recompiled clean (same three
+pre-existing warnings), page count unchanged at 61: a new paragraph in
+Discussion's noise-floor section (`sec:noise-floor`), right after the
+paragraph reconciling the noise-floor and formal-test readings, stating
+these intervals and that a different batch of ten seeds could plausibly
+have produced a noticeably different count without the underlying
+comparison changing; a new paragraph in Methodology's significance-test
+section (`sec:dmtest`), right after the HLN small-sample correction is
+introduced, stating that the correction addresses finite-sample size
+directly but not the separate concern that a loss differential built
+from absolute errors on a series already shown to be strongly right
+skewed can inherit some of that heavy-tailedness, which is exactly the
+condition under which the test's underlying normal approximation
+converges more slowly, and that nothing in the report checks this
+directly, for instance via a bootstrap of the statistic's own sampling
+distribution.
+
+Every one of the seven items the user listed is now genuinely closed,
+checked against the actual numbered list this time rather than against
+memory of what the review covered. The AI-tool-use declaration is the
+one thing standing.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required
