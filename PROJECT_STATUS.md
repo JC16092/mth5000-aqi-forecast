@@ -1954,6 +1954,69 @@ checked against the actual numbered list this time rather than against
 memory of what the review covered. The AI-tool-use declaration is the
 one thing standing.
 
+### Same day, a nineteenth pass: the five "smaller things" from the review, checked one by one rather than assumed
+
+The user listed all five "worth fixing but not urgent" items from the
+review by number and asked to fix all of them. Checked each against the
+current file before touching anything, same discipline as the seven
+numbered items got, and it paid off twice: one was already done, one
+needed real new content rather than a one-line edit.
+
+1. **Abstract length.** No stated limit found anywhere in the project's
+   own files (`SUPERVISOR_PROMPT.md`, the proposal PDFs, `TODO.md`); 303
+   words confirmed by direct count. Tightened the weather-result sentence,
+   the densest candidate identified in the review, without dropping any
+   of its four claims (narrows the one-day gap, ties at two and three,
+   small effect on hit rate, reinforces the central finding). Recount:
+   276 words.
+2. **Heading inconsistency.** `main.tex`'s `sec:ml-methods` section was
+   titled "Machine Learning Methods"; Literature Review's matching
+   section is "Classical and Machine Learning Methods for Time Series
+   Forecasting." Renamed to match. One line.
+3. **No List of Symbols**, despite the notation density Dr Tian asked
+   for. This one needed real work, not a one-line fix: read every
+   labelled equation in the report (29 of them) and built a complete,
+   section-grouped symbol table, `\usepackage{longtable}` and
+   `\usepackage{array}` added for a clean multi-page render with
+   repeating headers. Grouping by section rather than alphabetically was
+   a deliberate choice: auditing every symbol surfaced real,
+   previously-unflagged notation reuse across method families ($h$ as
+   horizon versus the GRU's $h_t$ as hidden state, easily the most
+   consequential; $H$ as hidden size versus the Kruskal-Wallis statistic;
+   $B$ as the backshift operator versus the random forest's tree count;
+   $d$ as ARIMA's differencing order versus the GRU's channel count; $k$
+   doing three different jobs across the AIC, Fourier and
+   autocovariance formulas; $F$ as the ANOVA statistic versus the
+   boosting ensemble function; $\sigma$ as the sigmoid versus variance).
+   An alphabetical list would have scattered these and needed constant
+   cross-referencing; grouping by section and naming each collision
+   inline turns a real notational hazard into something the table itself
+   resolves. Hit a real rendering snag on the first compile: three
+   underfull-hbox warnings from narrow table columns trying to justify
+   text with nothing to stretch; fixed with `\raggedright` column
+   modifiers via the `array` package, confirmed gone on the next compile.
+4. **GRU's $K=2$ vs.\ ARIMA's $K=4$, disclosed but never justified.**
+   Answered directly in `sec:gru`, now that pass seventeen's ablation
+   exists to answer it with: not deliberate, inherited from an earlier
+   draft, and a direct check already in Limitations shows $K=4$ helps at
+   every horizon. The question this item asked turned out to already
+   have evidence sitting one section away; it just hadn't been stated in
+   the place the question was first raised.
+5. **`breiman1984cart`'s citation year.** Checked before touching
+   anything: already fixed, in commit `bb7449a`, by the background
+   session the user ran independently and whose result got merged in via
+   `git push` early in this conversation. Confirmed the fix is still
+   intact and nothing since has touched it. No action needed.
+
+**Report changes**, all in `main.tex`, recompiled clean (same three
+pre-existing warnings, the three new ones from the symbol table fixed
+before calling it done): a new List of Symbols as roman-numbered front
+matter after List of Tables; one renamed section heading; one tightened
+Abstract paragraph; one extended sentence in `sec:gru`. 61 → 65 pages,
+almost all of it the new table.
+
+Not yet committed.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required

@@ -18,7 +18,9 @@
 \usepackage{mathptmx}                 % Times for text and mathematics
 \usepackage{microtype}                 % micro-typographic adjustments to avoid overfull lines
 \usepackage[margin=25mm]{geometry}
+\usepackage{array}
 \usepackage{booktabs}
+\usepackage{longtable}
 \usepackage{graphicx}
 \usepackage{amsmath,amssymb}
 \usepackage{caption}
@@ -66,13 +68,10 @@ every machine learning regressor at every horizon, a result strengthened
 rather than weakened by a sensitivity analysis on the cleaning threshold, and
 the one model that does win, a recurrent network, wins only at one day ahead,
 reported as a range across ten seeds rather than a single favourable one.
-Adding observed wind speed and temperature narrows that gap further at one
-day ahead, but across ten random initialisations it leaves the two- and
-three-day comparisons a statistical tie rather than a clear win for either
-model, and when that extra accuracy is carried through the decision
-threshold the achievable hit rate at a fixed alarm budget moves by at most
-a little over a point, reinforcing rather than overturning the central
-finding above. Two
+Adding observed wind speed and temperature narrows the one-day gap further
+but leaves two and three days a statistical tie, and the extra accuracy
+moves the achievable hit rate at a fixed alarm budget by at most a point,
+reinforcing rather than overturning the central finding above. Two
 real defects in the source monitor, a clipped instrument ceiling and a
 miscalculated coverage statistic, were diagnosed and corrected before
 modelling began. The recommendation is to design a warning system around its
@@ -81,6 +80,109 @@ alarm budget, treating the forecasting model as a secondary refinement.
 \tableofcontents
 \listoffigures
 \listoftables
+
+\chapter*{List of Symbols}
+\addcontentsline{toc}{chapter}{List of Symbols}
+\noindent
+Grouped by the section each symbol is first used in, rather than
+alphabetically, since the report moves between several method families
+each with its own standard notation, and a handful of letters are reused
+for genuinely different quantities across them. Where that happens, the
+other meaning is named rather than left for the reader to notice.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.3cm}>{\raggedright\arraybackslash}p{9.6cm}>{\raggedright\arraybackslash}p{1.6cm}}
+\toprule
+Symbol & Meaning & Section \\
+\midrule
+\endfirsthead
+\multicolumn{3}{l}{\small\itshape (List of Symbols, continued)} \\
+\toprule
+Symbol & Meaning & Section \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\small\itshape continued on next page} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\multicolumn{3}{@{}l}{\textbf{General notation, used throughout}} \\
+$n$ & number of observations or scored rows in the quantity at hand & \\
+$y_t$ & the series value at time $t$; on the log scale unless stated otherwise & \\
+$e_i$, $e_t$ & a forecast error, $\hat y - y$ & \\
+$h$ & forecast horizon, 1, 2 or 3 days; distinct from the GRU's hidden state $h_t$ below & \ref{sec:gru} \\[2pt]
+
+\multicolumn{3}{@{}l}{\textbf{Seasonality Analysis}} \\
+$\omega_j$ & Fourier frequency, $2\pi j/n$ & \ref{sec:weekly} \\
+$I(\omega_j)$ & periodogram value at frequency $\omega_j$ & \ref{sec:weekly} \\
+$\hat\rho_k$ & sample autocorrelation at lag $k$ & \ref{sec:weekly} \\
+$\bar y$ & sample mean & \ref{sec:weekly} \\
+$F$ & one-way ANOVA test statistic; distinct from the boosting ensemble $F_m$ below & \ref{sec:weekly} \\
+$n_g$, $\bar y_g$ & size and mean of day-of-week group $g$ & \ref{sec:weekly} \\
+$H$ & Kruskal-Wallis test statistic; distinct from the GRU's hidden size $H$ below & \ref{sec:weekly} \\
+$R_g$ & sum of ranks in group $g$ & \ref{sec:weekly} \\[2pt]
+
+\multicolumn{3}{@{}l}{\textbf{ARIMA with Fourier Terms}} \\
+$B$ & backshift operator, $By_t = y_{t-1}$; distinct from the random forest's tree count $B$ below & \ref{sec:arima} \\
+$\phi(B)$, $\theta(B)$ & autoregressive and moving-average polynomials & \ref{sec:arima} \\
+$\phi_1,\ldots,\phi_p$; $\theta_1,\ldots,\theta_q$ & AR and MA coefficients & \ref{sec:arima} \\
+$p,d,q$ & ARIMA order; $d$ here is the differencing order, distinct from the GRU's channel count $d$ below & \ref{sec:arima} \\
+$c$ & constant term & \ref{sec:arima} \\
+$\varepsilon_t$ & white-noise innovation & \ref{sec:arima} \\
+$x_t$ & exogenous regressor vector at time $t$ (the Fourier terms) & \ref{sec:arima} \\
+$k$ & here, the number of free parameters in the AIC formula; reused immediately below as the Fourier harmonic index, and again in the ACF and Diebold-Mariano sections as a lag index & \ref{sec:arima} \\
+$\hat L$ & maximised likelihood & \ref{sec:arima} \\
+$K$ & number of Fourier harmonic pairs (order), 4 for ARIMA and the tree/ridge feature table, 2 for the GRU & \ref{sec:arima} \\
+$\alpha_k,\beta_k$ & sine and cosine coefficients at harmonic $k$; $\beta_k$ is unrelated to ridge's coefficient vector $\beta$ below & \ref{sec:arima} \\
+$m$, $s^2$ & forecast mean and variance on the log scale, used in the back-transform & \ref{sec:arima} \\[2pt]
+
+\multicolumn{3}{@{}l}{\textbf{Ridge Regression}} \\
+$X$ & feature matrix & \ref{sec:ml-methods} \\
+$\beta$ & coefficient vector; distinct from the Fourier coefficients $\beta_k$ above & \ref{sec:ml-methods} \\
+$\lambda$ & ridge penalty parameter & \ref{sec:ml-methods} \\
+$I$ & identity matrix & \ref{sec:ml-methods} \\
+$J(\beta)$ & the penalised least-squares objective & \ref{sec:ml-methods} \\[2pt]
+
+\multicolumn{3}{@{}l}{\textbf{Random Forest}} \\
+$B$ & number of trees; distinct from ARIMA's backshift operator $B$ above & \ref{sec:ml-methods} \\
+$T_b(x)$ & prediction of the $b$-th tree & \ref{sec:ml-methods} \\
+$\hat f(x)$ & forest prediction, the average of $T_1,\ldots,T_B$ & \ref{sec:ml-methods} \\
+$\rho$, $\sigma^2$ & pairwise correlation and variance of the individual trees & \ref{sec:ml-methods} \\
+$j,s$ & a candidate split's feature and threshold & \ref{sec:ml-methods} \\
+$R_1,R_2$ & the two regions either side of a split & \ref{sec:ml-methods} \\[2pt]
+
+\multicolumn{3}{@{}l}{\textbf{Gradient Boosting}} \\
+$F_m(x)$ & the ensemble after $m$ boosting rounds; distinct from the ANOVA statistic $F$ above & \ref{sec:ml-methods} \\
+$h_m(x)$ & the tree fitted at round $m$ & \ref{sec:ml-methods} \\
+$L(y,F)$ & loss function; reused with a different signature, $L(e)$, in the Diebold-Mariano test below & \ref{sec:ml-methods} \\
+$r_{im}$ & pseudo-residual for row $i$ at round $m$ & \ref{sec:ml-methods} \\
+$\nu$ & shrinkage (learning rate) & \ref{sec:ml-methods} \\
+$M$ & number of boosting rounds & \ref{sec:ml-methods} \\
+$\gamma$ & the ensemble's constant initial prediction & \ref{sec:ml-methods} \\[2pt]
+
+\multicolumn{3}{@{}l}{\textbf{The Gated Recurrent Unit}} \\
+$h_t$ & hidden state at time $t$; distinct from the forecast horizon $h$ used everywhere else in this report, the one notational collision in it worth flagging on its own & \ref{sec:gru} \\
+$z_t$, $r_t$ & update and reset gates & \ref{sec:gru} \\
+$\tilde h_t$ & candidate hidden state & \ref{sec:gru} \\
+$W_z,W_r,W_h$; $U_z,U_r,U_h$ & input-to-hidden and hidden-to-hidden gate weight matrices & \ref{sec:gru} \\
+$b_z,b_r,b_h$ & gate biases (each trained as two halves in the implementation used; Section~\ref{sec:gru} explains why) & \ref{sec:gru} \\
+$\sigma$ & logistic sigmoid; distinct from the variance $\sigma^2$ used in the random forest and ARIMA sections above & \ref{sec:gru} \\
+$\odot$ & elementwise (Hadamard) product & \ref{sec:gru} \\
+$H$ & number of hidden units, 24 throughout; distinct from the Kruskal-Wallis statistic $H$ above & \ref{sec:gru} \\
+$d$ & number of input channels, 6 (plain) or 10 (with weather); distinct from ARIMA's differencing order $d$ above & \ref{sec:gru} \\[2pt]
+
+\multicolumn{3}{@{}l}{\textbf{Evaluation Measures}} \\
+TP, FP, FN, TN & true/false positive/negative counts at a given decision threshold & \ref{sec:evalmeasures} \\
+$n_{\mathrm{train}}$ & number of training observations & \ref{sec:evalmeasures} \\[2pt]
+
+\multicolumn{3}{@{}l}{\textbf{Statistical Comparison of Forecasts (Diebold-Mariano Test)}} \\
+$e_{1,t},e_{2,t}$ & forecast errors of the two models being compared, at origin $t$ & \ref{sec:dmtest} \\
+$L(e)$ & loss applied to a forecast error; $|e|$ throughout this report & \ref{sec:dmtest} \\
+$d_t$ & loss differential, $L(e_{1,t})-L(e_{2,t})$; unrelated to ARIMA's differencing order $d$ above & \ref{sec:dmtest} \\
+$\bar d$ & mean loss differential & \ref{sec:dmtest} \\
+$\mathrm{DM}$, $\mathrm{DM}^{*}$ & the Diebold-Mariano statistic and its Harvey-Leybourne-Newbold small-sample correction & \ref{sec:dmtest} \\
+$\hat\gamma_k$ & sample autocovariance of $d_t$ at lag $k$ & \ref{sec:dmtest} \\
+\end{longtable}
 
 \clearpage
 \pagenumbering{arabic}
@@ -850,7 +952,7 @@ for the recurrent network, and once restricted to origins that fall entirely
 inside the window where weather is genuinely observed. The two give the same
 answer, which is what makes the first trustworthy.
 
-\section{Machine Learning Methods}
+\section{Classical and Machine Learning Methods}
 \label{sec:ml-methods}
 
 Six of the ten specifications fitted in this project belong to the machine
@@ -1143,7 +1245,12 @@ $H=24$ hidden units, reading a sequence of the last 30 days
 ($t-29,\dots,t$), each day carrying six channels: the logarithm of
 concentration, a missingness flag, and two pairs of annual Fourier terms
 ($K=2$), a smaller harmonic set than the $K=4$ used for the ARIMA
-specification in Section~\ref{sec:arima} rather than a reuse of it. A
+specification in Section~\ref{sec:arima}, inherited from an earlier draft
+of the architecture rather than a deliberately tested choice.
+Section~\ref{sec:limitations} reports a direct check of $K=4$ for the
+network as well, which improves it at every horizon and substantially so
+at three days ahead, so the smaller set is better read as an unexamined
+default than a justified one. A
 linear output layer maps the final hidden state
 $h_t$ to a single predicted value, the change in log concentration from the
 forecast origin, with the origin value added back afterwards; modelling the
