@@ -1194,7 +1194,11 @@ machine reproduced every classical and tree-based model's score exactly but
 moved the network's by nearly as much as the gap between two genuinely
 different seeds, evidence that its training is not bit-reproducible even
 with \texttt{--seed} fixed; Section~\ref{sec:limitations} returns to what
-that means for the results that follow.
+that means for the results that follow. The architecture itself, $H=24$ and
+a 30-day window, was fixed by inspection rather than by the held-out search
+used for the tree models' capacity in Section~\ref{sec:ml-methods};
+Section~\ref{sec:limitations} also reports a bounded check of that choice,
+run after the fact.
 
 \section{Rolling-Origin Evaluation}
 \label{sec:rolling}
@@ -1902,6 +1906,25 @@ grid search fixed that specific problem, but a small grid can still miss a
 configuration that a wider search would find. The machine learning results in
 Table~\ref{tab:accuracy} should therefore be read as a lower bound on what
 those model classes could achieve with more computation, not as their ceiling.
+
+The recurrent network's own architecture, 24 hidden units and a 30-day
+input window, was fixed by inspection, with no search equivalent to the
+tree models' grid. A bounded check run after the fact, fitting once on
+the original training/validation split used before the rolling-origin
+harness existed rather than refitting the full ten-seed evaluation, varied
+hidden size and window length one at a time across six settings and three
+of the ten seeds used elsewhere. At one day ahead the default is within
+0.2 points of relative error of the best setting tried, a longer window;
+at two days it is the best of the six outright. At three days, the
+horizon where the classical benchmark already has the clearest edge, the
+default is the worst of the six: a 45-day window scored 2.2 points better
+on this check. Whether that gap would survive the full rolling-origin
+evaluation across all ten seeds is untested, and nothing in
+Table~\ref{tab:accuracy} has been changed on the strength of a
+single-split, three-seed result. The honest reading is that the three-day
+comparison in this report rests on a configuration this check found a
+clearly better alternative to, while the one- and two-day comparisons
+rest on a configuration at or near the best of those tried.
 
 A full rerun of this project's pipeline, performed late in the writing
 process specifically to refresh every result from scratch, surfaced a

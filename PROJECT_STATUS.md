@@ -1594,6 +1594,152 @@ Rebuilt `mth5000_code_submission.zip` with the new `main.pdf`,
 previous zip — `significance.py` itself and the stacked Monash logo PNG.
 Committed and pushed.
 
+### Same day, a twelfth pass: a PhD-scholar-level critical review, requested the previous day and deliberately deferred until now
+
+No code or report edits in this pass. The user asked explicitly the day
+before for a thorough, critical review of the whole report "as a PhD
+scholar," with an equally explicit instruction not to start it until they
+came back and confirmed; they confirmed today, so this pass is the review
+itself: read `main.tex` end to end, `PROJECT_STATUS.md` end to end, and
+checked the Methodology chapter's formulas and claims directly against
+`significance.py`, `step04_arima.py`, and `step08_gru.py` rather than
+trusting the prose. Every formula checked by hand came out correct (the
+HLN correction, the random forest variance bound, ridge's normal
+equations, the GRU parameter count for both $d=6$ and $d=10$).
+
+**Findings judged highest-value, given to the user in full in that
+session, not reproduced in full here:**
+
+1. The AI-tool-use declaration (open since the tenth pass) is a bigger
+   risk than any report-quality issue below it and doesn't get easier to
+   resolve closer to the deadline.
+2. The GRU's hyperparameters ($H=24$, sequence length 30, `epochs`,
+   `patience`, `lr`) are fixed constructor defaults in `step08_gru.py`
+   with no stated selection procedure, unlike every other model family in
+   the suite, which each get an explicit tuning account — and the GRU is
+   the model that wins at h=1. The existing Limitations caveat about
+   untuned hyperparameters ([main.tex:1896-1904](report/main.tex:1896))
+   is scoped to the tree models only and should cover the GRU too.
+3. `significance.py`'s Diebold-Mariano test is only ever run GRU-vs-ARIMA,
+   never ARIMA-vs-ridge/random-forest/gradient-boosting, even though those
+   are the comparisons behind the report's actual headline claim ("ARIMA
+   beats every ML model at every horizon"). `dm_test`/`paired_errors`
+   generalise to any model pair already; extending `table_significance()`
+   to the other three pairs is the single highest value-for-effort open
+   item from this review.
+4. The reported $\hat\phi_1=0.581$, $\hat\theta_1=-0.987$ and AIC-gap
+   values trace to a single one-time fit in `step04_arima.py`
+   (`select_order`/`walk_forward`), not to the rolling-origin harness that
+   actually produces the reported results and which re-estimates
+   parameters periodically; whether these are stable across those refits
+   is not stated either way. Separately, `step08_gru.py`'s own
+   `--refit-every` default is 180 days ("slower than the other models"),
+   which may not match the Methodology's blanket "every model...
+   parameters re-estimated every 90 days" — worth checking against
+   whatever command actually produced the final GRU numbers.
+5. The Results/Discussion mechanism for why ARIMA wins at h=2/h=3 (ARIMA
+   carries the seasonal cycle explicitly, the GRU has to learn it) doesn't
+   fully square with Methodology's own statement that the GRU also
+   receives explicit Fourier terms, just $K=2$ against ARIMA's $K=4$
+   ([main.tex:1126-1128](report/main.tex:1126)). A cheap, concrete
+   follow-up: refit the GRU with $K=4$ and see whether the gap narrows.
+
+Secondary points raised: counting "N of 10 seeds significant" carries its
+own unquantified sampling uncertainty; the DM test's normality-flavoured
+asymptotics are an assumption worth one caveat sentence given how
+heavy-tailed this series has been shown to be; persistence's outright win
+at h=3/budget 40 is explainable by the report's own Figure 1 observation
+about multi-day episodes and currently reads as an unexplained curiosity;
+the Abstract has grown to 303 words by accretion across many passes;
+Methodology §3.3's heading doesn't match Literature Review §2.2's naming
+for the same grouping; no List of Symbols despite the notation density
+Dr Tian asked for. The still-open `breiman1984cart` citation-year item
+from the eleventh pass was resurfaced, not newly found.
+
+**What's still genuinely open, in priority order, folding in this
+review's findings:**
+
+1. The AI-tool-use declaration — now the clear top item, independent of
+   report content.
+2. Decide which of this review's findings to act on before sending the
+   draft to Dr Tian; the user was given a value-for-effort ranking ending
+   with: extend the DM test to the other model pairs, caveat the GRU's
+   hyperparameters in Limitations, check the ARIMA refit-cadence claim,
+   add the persistence/multi-day-episode paragraph, and, time permitting,
+   the $K=4$ GRU ablation.
+3. Plan and build the oral presentation (30–40 minutes, first week of
+   November, 30% of the grade) — not started.
+4. The citation-set ambiguity and the Kolmogorov-Arnold Network decision —
+   both still explicitly deferred by the user.
+5. The 29-plus references not read full-text — still open, lowest
+   priority.
+
+### Same day, a thirteenth pass: acted on one finding from the review — the GRU hyperparameter gap
+
+The user asked to act on review finding #2 specifically (the GRU's
+$H=24$/30-day-window architecture has no stated tuning procedure, unlike
+every other model family) and chose, when asked, to do both the cheap fix
+and a real ablation rather than just the caveat.
+
+**New file**: `gru_hyperparam_sensitivity.py`, a one-off bounded check, not
+a numbered pipeline step. Fits once on the original training/validation
+split from `step03_benchmarks.chronological_split` (the split used before
+the rolling-origin harness existed) rather than redoing the full ten-seed,
+2,303-origin evaluation, which would have been a much larger undertaking.
+Varies hidden size (12, 24, 48) and sequence length (15, 30, 45, 60) one
+at a time around the report's defaults, three seeds each (0-2, a subset
+of the ten used elsewhere), base GRU only (no weather). Reuses
+`GRUForecaster`, `rolling_origin` and `evaluation.py` directly; no parallel
+scoring logic written. Ran in under 80 seconds total (each fit-and-score
+cycle took about 5 seconds on this machine, far faster than the 30-90
+minutes estimated when scoping the task). Output:
+`gru_hyperparam_sensitivity.csv` (54 rows), `gru_hyperparam_sensitivity.log`.
+
+**The finding is more interesting than "untuned, needs fixing."** It
+partly vindicates the existing default and partly doesn't, by horizon:
+
+- h=1: default mean rMAE 0.9139, within 0.2 points of the best of six
+  settings tried (0.9116, a 45- or 60-day window). Close to optimal.
+- h=2: default mean rMAE 0.8862 — the best of all six settings tested
+  outright. Longer windows are actively worse here (seq\_len=60: 0.9311).
+- h=3: default mean rMAE 0.8583 — the **worst** of all six settings
+  tested. A 45-day window scored 0.8358, 2.2 points better.
+
+So at the horizon the report's own result most favours the network (h=1),
+the architecture holds up well under this check. At the horizon the
+classical benchmark already wins most clearly (h=3), the untuned default
+is demonstrably not the best nearby choice, raising a real question —
+not answered here, and not overclaimed in the report — about how much of
+the h=3 gap to ARIMA is architectural versus an artefact of an unsearched
+hyperparameter. Whether a retuned GRU would narrow that gap under the
+full ten-seed rolling-origin evaluation is untested; this check used one
+split and three seeds, deliberately bounded, and nothing in
+`tables/accuracy.tex` or Table 4.1 was changed on the strength of it.
+
+**Report changes**, both in `main.tex`, recompiled clean (same three
+pre-existing warnings as every prior pass), 58 → 59 pages:
+
+- `sec:gru` gained one forward-referencing sentence noting the
+  architecture was fixed by inspection, not search, pointing to
+  Limitations for the check.
+- Limitations (`sec:limitations`) gained a new paragraph immediately
+  after the existing tree-hyperparameter caveat, stating the three
+  findings above with their exact numbers and the explicit scope caveat
+  (single split, three seeds, untested against the full evaluation).
+
+Not yet committed to git. Not yet rebuilt into
+`mth5000_code_submission.zip`, since that is normally a deliberate
+end-of-session step and the new script is small enough to add whenever
+the zip is next rebuilt.
+
+**What's still genuinely open**, folding this pass in: the other four
+items from the review's priority list (extend the DM test to the other
+model pairs; check the ARIMA refit-cadence claim; the persistence/
+multi-day-episode paragraph; the $K=4$ GRU ablation, now with slightly
+more motivation given the h=3 window-length sensitivity found here) are
+all still undone, plus everything already listed after the twelfth pass
+above (the AI-declaration question remains the top item regardless).
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required
