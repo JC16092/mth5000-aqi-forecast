@@ -1861,12 +1861,56 @@ right after the existing persistence/climatology comparison. Recompiled
 clean (same three pre-existing warnings), page count unchanged at 61 (fit
 in existing slack).
 
-Not yet committed.
+Committed (`836155d`) and pushed.
 
-**What's still genuinely open**: one item from the review's priority list
-remains, the $K=4$ GRU ablation, plus everything already listed after the
-twelfth pass above (the AI-declaration question remains the top item
-regardless).
+### Same day, a seventeenth pass: the K=4 GRU ablation, the last item from the review, and it found something real
+
+The user asked for the last item on the review's list: whether giving the
+recurrent network the same four Fourier harmonics ARIMA uses, rather than
+the two it has used throughout this report, narrows the gap at the
+horizons ARIMA wins. New file `gru_fourier_ablation.py`, same bounded
+single-split design as the hyperparameter check (fit once on train, score
+once on validation, three seeds, base GRU only), holding hidden size and
+window length at the report's own defaults and varying only
+`seq_fourier`, 2 against 4, with both refit fresh under identical code
+rather than reusing an older run.
+
+**The result is larger than the hyperparameter check's, and in one
+direction throughout.** Four harmonics improve the mean rMAE at every
+horizon: negligibly at h=1 (0.07 points), modestly at h=2 (0.55 points),
+and substantially at h=3 (3.96 points) — enough that the four-harmonic
+mean on this check sits numerically below ARIMA's reported rolling-origin
+figure at that horizon, not above it. This is a bigger number than
+anything the hyperparameter check turned up, and it lands on exactly the
+sentence in Results that explains the GRU's loss at longer horizons as
+"the network has to learn seasonality a classical model is simply
+handed" — which turns out to be imprecise: the network already receives
+an explicit seasonal signal, just a coarser one, and a meaningful share
+of the horizon-three gap may be attributable to that alone rather than to
+any deeper representational limit.
+
+**Same discipline as both earlier ablations: reported plainly, nothing
+in Table 4.1 touched.** This was one validation split and three seeds,
+not the ten-seed rolling-origin evaluation the actual reported numbers
+rest on, so the finding is written up as a reason to question the
+existing mechanism explanation and a strong candidate for a real rerun,
+not as grounds to rewrite Table 4.1 on the spot.
+
+**Report changes**, all in `main.tex`, recompiled clean (same three
+pre-existing warnings), page count unchanged at 61: the Results mechanism
+paragraph in §4.1 (`sec:results-rq1`) corrected from implying the network
+has no explicit seasonal input to stating it has a coarser one; a new
+paragraph in Limitations (`sec:limitations`) with the full numbers,
+directly after the existing GRU-hyperparameter paragraph; Future Work
+gained a fourth, specific, well-motivated extension (rerun with four
+harmonics under the full ten-seed evaluation) ahead of the pre-existing
+second-station item, renumbered fifth.
+
+**Every item from the original PhD-scholar review has now either been
+acted on or is a named, specific Future Work item.** The AI-tool-use
+declaration remains the one item not touched by any of the last five
+passes and the one the user has been told, every time, outranks all of
+them.
 
 ## Data sources
 
