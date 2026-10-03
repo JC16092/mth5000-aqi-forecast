@@ -1778,13 +1778,72 @@ every comparison, not point estimates alone. Visually spot-checked the
 new table's rendered page via `pdftotext -layout` rather than a full
 image render; numbers and labels match what the script printed.
 
+Committed (`ee8b89f`) and pushed.
+
+### Same day, a fifteenth pass: acted on a third review finding — checked the ARIMA refit-cadence claim, and found more than expected
+
+The user asked to check Methodology's claim that "every model... parameters
+re-estimated every 90 days." Grepped every `--refit-every` default across
+the pipeline (`step05_rolling.py`, `step06_ml.py`, `step07_warning.py`: 90;
+`step08_gru.py`: 180) and checked `README.md`'s documented reproduction
+commands for any override — there is none, for any script, so the
+documented (and actual) commands run every model at its own script's
+default. **The claim is true for the benchmarks, ARIMA, ridge, random
+forest and gradient boosting, and false for the recurrent network**, which
+refits every 180 days, exactly half as often, for the reason already
+given in `step08_gru.py`'s own `--help` text: each of its refits trains a
+network from scratch, unlike every other model's refit.
+
+**Tracing which file actually feeds Table 4.1 confirmed the ARIMA number
+pairs with the 90-day cadence, not the 180-day one.** `table_accuracy()`
+reads `forecasts_with_gru.csv`, which is `gru_seed0.csv`, which is
+`forecasts_all.csv` (step06\_ml.py's output, ARIMA included via the same
+`Arima` class and the same `rolling_origin` call as ridge/random
+forest/gradient boosting, all at `--refit-every 90`) with the GRU's own
+forecasts concatenated on top. So the Table 4.1 ARIMA row is genuinely a
+90-day-cadence model; only the blanket sentence describing the whole
+suite was wrong.
+
+**Checking this surfaced a second, more substantive question, which the
+user had bundled with this one in the original review: is the single
+$\hat\phi_1=0.581$, $\hat\theta_1=-0.987$ pair reported in Methodology
+representative of the actual rolling evaluation, which refits the same
+fixed order 28 times as the window expands?** New file
+`arima_coefficient_stability.py` subclasses `Arima` to log its fitted
+coefficients at every refit and reruns the exact configuration behind
+`forecasts_all.csv` (burn-in 1095, expanding window, refit every 90
+days, order $(1,1,1)$ fixed throughout, never re-searched after the
+original one-time AIC grid in `step04_arima.py`). 28 refits, all
+converged. **$\hat\phi_1$ drifts from 0.520 to 0.591 as the window
+expands, always comfortably stationary. $\hat\theta_1$ is the real
+finding: it settles to within 0.012-0.014 of the invertibility boundary
+from 2023 onward, matching the reported value, but at three of the
+twenty-eight refits, all with fewer than 1,700 training days
+(2019-11-09, 2020-11-03, 2022-01-27), the fitted value crosses the
+boundary outright: $-1.006$, $-1.011$, $-1.013$.** Because
+`enforce_invertibility=False`, the optimiser is not constrained to avoid
+this and a forecast is still produced and scored at those refits like
+any other. This is a genuinely new finding, not something the original
+one-time fit could have shown, and it sharpens rather than contradicts
+the report's own existing invertibility discussion, which already
+correctly warned the fit "sits only 0.013 inside its boundary" and that
+nothing guarantees this by construction.
+
+**Report changes**, both in `main.tex`, recompiled clean (same three
+pre-existing warnings), 60 → 61 pages: the Rolling-Origin Evaluation
+section's blanket "every model... 90 days" sentence now carves out the
+recurrent network's 180-day cadence and states why; a new paragraph after
+the existing ARIMA invertibility discussion (`sec:arima`) states the
+28-refit $\hat\phi_1$/$\hat\theta_1$ range and the three invertibility
+breaches with their exact values and dates.
+
 Not yet committed.
 
-**What's still genuinely open**, folding this pass in: three items from
-the review's priority list remain (check the ARIMA refit-cadence claim;
-the persistence/multi-day-episode paragraph; the $K=4$ GRU ablation),
-plus everything already listed after the twelfth pass above (the
-AI-declaration question remains the top item regardless).
+**What's still genuinely open**, folding this pass in: two items from the
+review's priority list remain (the persistence/multi-day-episode
+paragraph; the $K=4$ GRU ablation), plus everything already listed after
+the twelfth pass above (the AI-declaration question remains the top item
+regardless).
 
 ## Data sources
 

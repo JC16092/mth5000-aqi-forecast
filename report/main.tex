@@ -915,6 +915,24 @@ implementation used here does not constrain the optimiser to this region,
 \texttt{enforce\_stationarity=False} and \texttt{enforce\_invertibility=False}
 in the SARIMAX call, so satisfying both conditions is a property of the
 fitted optimum on this data rather than one guaranteed by construction.
+
+That pair of values is a snapshot rather than a constant. The
+rolling-origin evaluation behind every number in
+Chapter~\ref{chap:results} re-estimates this same fixed order twenty-eight
+times as the training window expands, every 90 days from 2019 to 2026,
+and the coefficients move over that span rather than settling
+immediately. $\hat\phi_1$ ranges from 0.520 at the first refit to 0.591
+near the last, comfortably inside the stationarity boundary throughout.
+$\hat\theta_1$ is less comfortable: from 2023 onward it stays within
+0.012 to 0.014 of the invertibility boundary, matching the value reported
+above, but at three of the twenty-eight refits, every one with fewer than
+1{,}700 training days, the fitted value crosses the boundary outright,
+$-1.006$, $-1.011$ and $-1.013$. The optimiser is not constrained to avoid
+this, so a forecast is still produced and still scored at those refits
+exactly as at any other; the single pair reported above describes the
+model this evaluation settles into for most of its span, not a property
+holding at every refit within it.
+
 Using trigonometric
 regressors at a fixed set of frequencies to carry a seasonal pattern inside
 an otherwise standard model, rather than through a seasonal differencing
@@ -1204,8 +1222,13 @@ run after the fact.
 \label{sec:rolling}
 
 Every model was evaluated over 2{,}303 origins from 9 November 2019 to 24 August
-2026, spanning 6.8 years, with a three year burn-in, parameters re-estimated
-every 90 days and model state advanced daily in between.
+2026, spanning 6.8 years, with a three year burn-in and model state advanced
+daily between refits. Parameters are re-estimated every 90 days for every
+specification except the recurrent network, which refits every 180 days:
+each of its refits trains a network from scratch rather than solving a
+closed form or appending one more observation to an already-converged
+filter, so halving its refit frequency is the practical cost of including
+it in the suite at all rather than an oversight.
 
 This is not a refinement of a single train-test split; it replaces one, for the
 reason standard cross-validation is inappropriate for dependent data in the
