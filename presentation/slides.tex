@@ -1,0 +1,142 @@
+% MTH5000 Masters Research Project -- oral presentation (first week of November)
+% Jaykumar Vinodbhai Chauhan, 34710280
+%
+% Skeleton only: one placeholder frame per chapter, mirroring report/main.tex's
+% six chapters. Fill each frame from the report section(s) named in its italic
+% note -- every number quoted on a slide should trace back to the same
+% scripts/tables the report uses, never be retyped by hand.
+% Figures are not copied here: this reuses report/figures and the root-level
+% fig*.png directly via \graphicspath below.
+%   tectonic slides.tex
+
+\documentclass[12pt,aspectratio=169]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+
+\usetheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\setbeamercolor{title}{fg=black}
+\setbeamercolor{frametitle}{fg=black}
+\setbeamercolor{structure}{fg=black}
+
+\graphicspath{{../report/figures/}{../}}
+
+\title{Machine Learning for Forecasting Hazardous Air Quality Days in Indian Cities}
+\author{Jaykumar Vinodbhai Chauhan \\ \small Student ID: 34710280 \\ Supervisor: Dr Tianhai Tian}
+\institute{School of Mathematics, Monash University \\ MTH5000 Masters Research Project}
+\date{\today}
+
+\AtBeginSection[]{
+  \begin{frame}{Outline}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+\section{Introduction}
+\begin{frame}{Introduction}
+  \textit{Placeholder -- see report \S1.1--1.6.}
+  \begin{itemize}
+    \item Motivation: hazardous PM2.5 days in Indian cities, and why a
+      forecast is only useful if it arrives before the hazardous day does
+    \item Research problem, objectives and questions
+    \item Research significance
+  \end{itemize}
+\end{frame}
+
+\section{Literature Review}
+\begin{frame}{Literature Review}
+  \textit{Placeholder -- see report \S2.1--2.7.}
+  \begin{itemize}
+    \item Classical and machine learning methods for time series forecasting
+    \item Deep learning: RNNs, vanishing gradients, the GRU
+    \item Prior work on Delhi / Indian air quality
+    \item Forecast verification as a warning system; data quality in
+      reference monitors
+    \item The research gap this project fills
+  \end{itemize}
+\end{frame}
+
+\section{Methodology}
+\begin{frame}{Methodology -- Data}
+  \textit{Placeholder -- see report \S3.1--3.3.}
+  \begin{itemize}
+    \item Data collection and station selection
+    \item Preprocessing: two defects fixed in the source data
+    \item Seasonality analysis and feature construction
+    \item Weather covariates
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Methodology -- Models}
+  \textit{Placeholder -- see report \S3.4--3.5.}
+  \begin{itemize}
+    \item Classical benchmark: ARIMA with Fourier terms
+    \item Penalised linear regression, random forest, histogram gradient
+      boosting
+    \item The GRU: architecture and training
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Methodology -- Evaluation}
+  \textit{Placeholder -- see report \S3.6--3.9.}
+  \begin{itemize}
+    \item Rolling-origin evaluation harness
+    \item Evaluation measures
+    \item Statistical comparison of forecasts (Diebold--Mariano)
+    \item Reproducibility
+  \end{itemize}
+\end{frame}
+
+\section{Results}
+\begin{frame}{Results}
+  \textit{Placeholder -- see report \S4.1--4.3.}
+  \begin{itemize}
+    \item Forecast accuracy across horizons (Table 4.1)
+    \item Does weather change the answer?
+    \item Two arms of the same question: regression vs.\ classification
+    \item The decision threshold
+  \end{itemize}
+\end{frame}
+
+\section{Discussion}
+\begin{frame}{Discussion}
+  \textit{Placeholder -- see report \S5.1--5.3.}
+  \begin{itemize}
+    \item The operational question dominates the modelling question
+    \item How large is a difference between models?
+    \item Limitations
+  \end{itemize}
+\end{frame}
+
+\section{Conclusion}
+\begin{frame}{Conclusion}
+  \textit{Placeholder -- see report \S6.1--6.3.}
+  \begin{itemize}
+    \item Summary of the study
+    \item Main conclusions
+    \item Future work
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \centering
+  \Large Questions?
+\end{frame}
+
+\end{document}

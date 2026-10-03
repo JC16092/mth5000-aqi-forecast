@@ -2077,7 +2077,40 @@ than left in): the two significance-table sentences, the Abstract, both
 Conclusion sections, Future Work's opening and two body paragraphs, and
 one List of Symbols row. Page count unchanged at 65.
 
-Not yet committed.
+Committed and pushed as `37a5dbb`.
+
+### Same day, a twenty-first pass: a `presentation/` folder scaffolded for the oral, and the two-chat workflow that needed it
+
+The report is now being worked in this chat specifically; the user wants a
+second, separate chat for the oral presentation (30-40 minutes, first week
+of November, not started) that can read and write the same project files
+rather than starting from nothing. Explained the actual mechanism in plain
+terms: both chats get read/write access to every file the moment they are
+pointed at this same folder, but a chat's own understanding only updates
+when it actually re-reads a file — there is no silent push between chats.
+This project's own `PROJECT_STATUS.md` habit already solves that: each
+chat reads it first and catches up. Also noted that Claude Code sessions
+on the same machine can message each other directly on request, as a
+faster alternative to waiting for a re-read.
+
+Then scaffolded the presentation itself, as a sibling of `report/`:
+
+- `presentation/slides.tex` — Beamer, plain style (no colour, matching the
+  report's own house style), one placeholder frame per chapter of
+  `main.tex` (Introduction, Literature Review, Methodology split into
+  Data/Models/Evaluation, Results, Discussion, Conclusion), each frame's
+  italic note naming the exact report section numbers to pull from
+  (checked against the real `\section`/`\chapter` list in `main.tex`,
+  not guessed). Reuses `report/figures/` and the root-level `fig*.png`
+  directly via `\graphicspath` instead of duplicating image files.
+- `presentation/README.md` — build command, status, and the conventions
+  carried over from the report (no hand-typed numbers, no colour, no
+  duplicated figures).
+- Compiled with `tectonic slides.tex`: clean, 17 pages, confirming the
+  skeleton actually builds before handing it to the next chat.
+
+No content or numbers have been written yet, only structure and pointers
+back to the report. Not yet committed — a new, untracked folder.
 
 ## Data sources
 
