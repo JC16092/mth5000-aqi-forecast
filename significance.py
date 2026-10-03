@@ -116,6 +116,25 @@ def dm_over_seeds(seed_paths, seed_model, other_model, horizon, loss="absolute")
     return pd.DataFrame(rows)
 
 
+def dm_pairwise(df, model_a, model_b, horizons, loss="absolute"):
+    """Run the DM test at each horizon for two models that carry no seed.
+
+    dm_over_seeds exists only because the recurrent network's forecast
+    depends on a random initialisation; ARIMA, ridge, the random forest and
+    gradient boosting do not, so one run against one competitor is the
+    whole comparison, read from the same single forecast table as every
+    other number in Table~\\ref{tab:accuracy} rather than from a seed file.
+    Returns one row per horizon.
+    """
+    rows = []
+    for h in horizons:
+        e_a, e_b = paired_errors(df, model_a, model_b, h)
+        r = dm_test(e_a, e_b, h=h, loss=loss)
+        r["horizon"] = h
+        rows.append(r)
+    return pd.DataFrame(rows)
+
+
 # ----------------------------------------------------------------------------
 # Tests
 # ----------------------------------------------------------------------------
@@ -196,6 +215,31 @@ def test_significance(verbose=True):
         check(False, "mismatched origins between models should raise")
     except ValueError:
         pass
+
+    # dm_pairwise must agree exactly with calling paired_errors and dm_test
+    # by hand: it is a loop over horizons, nothing more, and should not
+    # silently compute anything differently. paired_errors reads y_true
+    # from model_a's rows only, since in real use it is the same observed
+    # outcome for every model being compared; y_true is held at zero here
+    # (shared by construction) and y_pred set to minus the desired error,
+    # so y_true - y_pred reproduces e_bad/e_good/e1_auto/e2_auto exactly.
+    origins = pd.date_range("2024-01-01", periods=n, freq="D")
+    zeros = np.zeros(n)
+    toy = pd.concat([
+        pd.DataFrame({"origin": origins, "horizon": 1, "model": "x",
+                      "y_pred": -e_bad, "y_true": zeros}),
+        pd.DataFrame({"origin": origins, "horizon": 1, "model": "y",
+                      "y_pred": -e_good, "y_true": zeros}),
+        pd.DataFrame({"origin": origins, "horizon": 3, "model": "x",
+                      "y_pred": -e1_auto, "y_true": zeros}),
+        pd.DataFrame({"origin": origins, "horizon": 3, "model": "y",
+                      "y_pred": -e2_auto, "y_true": zeros}),
+    ], ignore_index=True)
+    pw = dm_pairwise(toy, "x", "y", horizons=(1, 3)).set_index("horizon")
+    check(np.isclose(pw.loc[1, "dm_hln"], r["dm_hln"]),
+          "dm_pairwise at h=1 must match a direct dm_test call")
+    check(np.isclose(pw.loc[3, "dm_hln"], dm_test(e1_auto, e2_auto, h=3)["dm_hln"]),
+          "dm_pairwise at h=3 must match a direct dm_test call")
 
     if verbose:
         print("  Significance checks:", "PASSED" if ok else "FAILED")

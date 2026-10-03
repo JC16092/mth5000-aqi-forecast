@@ -321,6 +321,46 @@ def table_significance(plain_pattern="gru_seed*.csv",
     return pd.DataFrame(rows)
 
 
+def table_significance_ml(forecast_path, other_model="arima_fourier",
+                          ml_models=("ridge", "random_forest", "random_forest_delta",
+                                     "hist_gbm", "hist_gbm_delta"),
+                          horizons=(1, 2, 3)):
+    """Diebold-Mariano test of ARIMA against each point-forecast ML regressor.
+
+    Table~\\ref{tab:accuracy}'s own claim, that the classical benchmark beats
+    every machine learning regressor at every horizon, has until now rested
+    on point rMAE values and the informal noise floor in
+    Section~\\ref{sec:noise-floor}, never on the same formal test already
+    applied to the one comparison with a seed to range over. None of ridge,
+    the random forest or gradient boosting carries one, so one run against
+    ARIMA is the whole comparison, read from the same single forecast table
+    `table_accuracy` already uses rather than from a seed file. A negative
+    statistic favours the machine learning model; a positive one favours
+    ARIMA.
+    """
+    d = pd.read_csv(forecast_path, parse_dates=["origin"])
+    rows = []
+    for name in ml_models:
+        pw = sig.dm_pairwise(d, name, other_model, horizons)
+        for _, r in pw.iterrows():
+            rows.append({"model": name, "h": int(r["horizon"]),
+                        "dm": r["dm_hln"], "pvalue": r["pvalue"]})
+            print(f"  DM {PRETTY.get(name, name)} vs.\\ ARIMA, h={int(r['horizon'])}: "
+                  f"statistic {r['dm_hln']:.2f}, p {r['pvalue']:.4f}"
+                  f"{'  *' if r['pvalue'] < 0.05 else ''}")
+
+    body = ["\\begin{tabular}{lccc}", "\\toprule",
+            "Comparison & $h$ & DM statistic & $p$-value \\\\", "\\midrule"]
+    for r in rows:
+        p = "$<$0.001" if r["pvalue"] < 0.001 else f"{r['pvalue']:.3f}"
+        star = "$^{*}$" if r["pvalue"] < 0.05 else ""
+        body.append(f"{esc(PRETTY.get(r['model'], r['model']))} vs.\\ ARIMA & "
+                    f"{r['h']} & {r['dm']:.2f} & {p}{star} \\\\")
+    body += ["\\bottomrule", "\\end{tabular}"]
+    write("significance_ml.tex", "\n".join(body) + "\n")
+    return pd.DataFrame(rows)
+
+
 def table_weather_budget(pattern, budgets=(40, 60, 80, 100)):
     """Does adding the weather models widen the achievable hit rate at a
     fixed alarm budget, or does the five-point ceiling in Table~\\ref{tab:budget}
@@ -473,6 +513,7 @@ def main():
     table_warning(fc)
     table_cleaning()
     table_significance()
+    table_significance_ml(fc)
     if os.path.exists(sweep):
         table_budget(sweep)
         table_arms(sweep)

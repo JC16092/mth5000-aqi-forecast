@@ -1493,6 +1493,35 @@ from the origin rather than the level improves
 both tree models, because a tree cannot extrapolate beyond the targets it was
 trained on and this series drifts downward across the decade.
 
+Table~\ref{tab:significance} tests only the one comparison in this report
+with a seed to range over. The same test applies just as directly to the
+other four machine learning regressors against ARIMA: each is reported as
+a single fit rather than a range, so one Diebold-Mariano statistic per
+horizon is the whole comparison, not an average over several.
+
+\begin{table}[htbp]
+\centering
+\caption{Diebold-Mariano test of ARIMA against each point-forecast machine
+learning regressor (Section~\ref{sec:dmtest}). A negative statistic favours
+the machine learning model; a positive one favours ARIMA. An asterisk marks
+$p<0.05$, two-sided.}
+\label{tab:significance-ml}
+\footnotesize
+\input{tables/significance_ml}
+\end{table}
+
+Table~\ref{tab:significance-ml} backs the chapter's other central claim,
+that the classical benchmark beats every machine learning regressor at
+every horizon, with the same kind of formal test already given to the
+network comparison, rather than leaving it to point estimates and the
+informal noise floor alone. The statistic favours ARIMA in all fifteen
+model-horizon pairings, and fourteen reach $p<0.05$; the one exception,
+the change-target random forest at two days, falls just short at
+$p=0.054$. This is, if anything, a stronger formal result than the
+network comparison can supply for its own horizons, precisely because
+none of these four regressors carries a seed's worth of sampling
+uncertainty on top of the test's own.
+
 \subsection{Does Weather Change the Answer?}
 \label{sec:results-weather}
 
@@ -2013,8 +2042,10 @@ caught than the choice a modeller makes among the specifications fitted
 here.
 
 Machine learning earned its place only partially. ARIMA with annual Fourier
-terms beats every machine learning regressor at every horizon, a result that
-strengthens rather than weakens under the sensitivity analysis in
+terms beats every machine learning regressor at every horizon, now backed by
+a Diebold-Mariano test at every one of those comparisons rather than point
+estimates alone (Section~\ref{sec:results-rq1}), a result that strengthens
+rather than weakens under the sensitivity analysis in
 Section~\ref{sec:limitations}. Among models using the series' own history
 alone, the recurrent network is the one that wins, and only at one day ahead,
 reported honestly as a range across ten random initialisations rather than

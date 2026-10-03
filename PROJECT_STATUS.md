@@ -1727,18 +1727,64 @@ pre-existing warnings as every prior pass), 58 → 59 pages:
   findings above with their exact numbers and the explicit scope caveat
   (single split, three seeds, untested against the full evaluation).
 
-Not yet committed to git. Not yet rebuilt into
+Committed (`53136b2`) and pushed, alongside a separate CART-citation fix
+(`bb7449a`) that had been sitting locally unpushed from an earlier,
+independently-run session. Not yet rebuilt into
 `mth5000_code_submission.zip`, since that is normally a deliberate
-end-of-session step and the new script is small enough to add whenever
-the zip is next rebuilt.
+end-of-session step; the new script is small enough to add whenever the
+zip is next rebuilt.
 
-**What's still genuinely open**, folding this pass in: the other four
-items from the review's priority list (extend the DM test to the other
-model pairs; check the ARIMA refit-cadence claim; the persistence/
-multi-day-episode paragraph; the $K=4$ GRU ablation, now with slightly
-more motivation given the h=3 window-length sensitivity found here) are
-all still undone, plus everything already listed after the twelfth pass
-above (the AI-declaration question remains the top item regardless).
+### Same day, a fourteenth pass: acted on a second review finding — extended the Diebold-Mariano test to the other four machine learning regressors
+
+The user asked to act on review finding #3: the DM test backed only the
+GRU-vs-ARIMA comparison, never the ridge/random-forest/gradient-boosting
+comparisons that the report's other central claim ("ARIMA beats every
+machine learning regressor at every horizon") actually rests on, even
+though `dm_test`/`paired_errors` already generalise to any pair.
+
+**New code, both reused rather than duplicated.** `significance.py`
+gained `dm_pairwise(df, model_a, model_b, horizons)`, a thin loop over
+horizons for two models with no seed dimension (`dm_over_seeds` exists
+only because the network has one). Caught a real bug in its own unit
+test, not in the function itself, before trusting it: the first version
+of the test fixture gave the two toy models *different* `y_true` columns,
+but `paired_errors` deliberately reads `y_true` from `model_a`'s rows
+only, since in real use it is the same observed outcome for every model
+being compared — the fixture broke that assumption rather than the
+function having a bug. Fixed the fixture (shared `y_true`, `y_pred` set
+to minus the desired error) and the test passes, matching a direct
+`dm_test` call exactly at two horizons. `make_tables.py` gained
+`table_significance_ml()`, reading the same `forecasts_with_gru.csv`
+`table_accuracy()` already uses, no seed files needed since none of
+ridge/random forest/gradient boosting are reported as a range.
+
+**The result is close to unanimous.** All fifteen model-horizon pairings
+(ridge, the random forest and gradient boosting's level and change
+targets, at each of three horizons) favour ARIMA, and fourteen of the
+fifteen reach $p<0.05$; the one exception, the change-target random
+forest at two days, misses at $p=0.054$. This is a stronger formal
+result than the network comparison supplies for its own horizons,
+precisely because none of these four regressors carries a seed's worth
+of sampling uncertainty on top of the test's own — each is a single
+fit, not a range.
+
+**Report changes**, all in `main.tex`, recompiled clean (same three
+pre-existing warnings), 59 → 60 pages: a new Table 4.3
+(`tables/significance_ml.tex`) and its introducing/discussing paragraphs,
+inserted in §4.1 right after the existing Fourier-ablation paragraph and
+before the weather subsection; one clause added to the Conclusion's Main
+Conclusions paragraph noting the claim is now backed by this test at
+every comparison, not point estimates alone. Visually spot-checked the
+new table's rendered page via `pdftotext -layout` rather than a full
+image render; numbers and labels match what the script printed.
+
+Not yet committed.
+
+**What's still genuinely open**, folding this pass in: three items from
+the review's priority list remain (check the ARIMA refit-cadence claim;
+the persistence/multi-day-episode paragraph; the $K=4$ GRU ablation),
+plus everything already listed after the twelfth pass above (the
+AI-declaration question remains the top item regardless).
 
 ## Data sources
 
