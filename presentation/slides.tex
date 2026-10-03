@@ -1,12 +1,11 @@
 % MTH5000 Masters Research Project -- oral presentation (first week of November)
 % Jaykumar Vinodbhai Chauhan, 34710280
 %
-% Skeleton only: one placeholder frame per chapter, mirroring report/main.tex's
-% six chapters. Fill each frame from the report section(s) named in its italic
-% note -- every number quoted on a slide should trace back to the same
-% scripts/tables the report uses, never be retyped by hand.
-% Figures are not copied here: this reuses report/figures and the root-level
-% fig*.png directly via \graphicspath below.
+% Filled in from report/main.tex. Every number on these slides is copied from
+% the same table or script result the report itself uses (report/tables/*.tex,
+% as \input or quoted directly) -- never a figure recomputed or guessed for
+% the slide. Figures are not copied here: this reuses report/figures and the
+% root-level fig*.png directly via \graphicspath below.
 %   tectonic slides.tex
 
 \documentclass[12pt,aspectratio=169]{beamer}
@@ -24,6 +23,7 @@
 \setbeamercolor{title}{fg=black}
 \setbeamercolor{frametitle}{fg=black}
 \setbeamercolor{structure}{fg=black}
+\setbeamertemplate{itemize items}[circle]
 
 \graphicspath{{../report/figures/}{../}}
 
@@ -48,90 +48,419 @@
   \tableofcontents
 \end{frame}
 
+% ============================================================================
 \section{Introduction}
-\begin{frame}{Introduction}
-  \textit{Placeholder -- see report \S1.1--1.6.}
+
+\begin{frame}{Motivation}
   \begin{itemize}
-    \item Motivation: hazardous PM2.5 days in Indian cities, and why a
-      forecast is only useful if it arrives before the hazardous day does
-    \item Research problem, objectives and questions
-    \item Research significance
+    \item PM2.5 in Indian cities regularly reaches hazardous levels;
+      sustained exposure raises cardiopulmonary and all-cause mortality
+    \item A forecast only helps if it arrives \emph{before} the hazardous
+      day -- same-day warnings are of limited use
+    \item Daily PM2.5 has exploitable structure: day-to-day persistence, a
+      strong annual cycle, dependence on recent conditions
+    \item My own motivation: growing up in India, seasonal smog was
+      ordinary life, not an abstract statistic
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Research Problem and Significance}
+  \begin{itemize}
+    \item Existing ML studies of Indian air quality report average error
+      only -- not decomposed by the operating point a warning uses
+    \item Good average error can still mean a poor warning system, and
+      the reverse also holds
+    \item The approved proposal assumed a weekly cycle alongside the
+      annual one -- tested directly here, not carried over
+    \item \textbf{Significance:} if the decision threshold dominates the
+      model, the alarm budget is the more consequential design choice
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Objectives and Research Questions}
+  \textbf{Objectives}
+  \begin{enumerate}
+    \item Evaluate classical, ML and deep learning models 1--3 days ahead,
+      under a leakage-tested protocol
+    \item Compare forecast-then-threshold against direct classification
+    \item Quantify skill as a warning system under a varying threshold
+  \end{enumerate}
+  \textbf{Research questions}
+  \begin{enumerate}
+    \item How accurately can PM2.5 be forecast 1--3 days ahead?
+    \item Threshold a forecast, or classify the exceedance directly?
+    \item What hit rate / false alarm rate trade-off does each give?
+  \end{enumerate}
+  \centering\textit{Q3's answer turns out to dominate Q1 and Q2.}
+\end{frame}
+
+% ============================================================================
 \section{Literature Review}
-\begin{frame}{Literature Review}
-  \textit{Placeholder -- see report \S2.1--2.7.}
+
+\begin{frame}{Classical and Machine Learning Methods}
   \begin{itemize}
-    \item Classical and machine learning methods for time series forecasting
-    \item Deep learning: RNNs, vanishing gradients, the GRU
-    \item Prior work on Delhi / Indian air quality
-    \item Forecast verification as a warning system; data quality in
-      reference monitors
-    \item The research gap this project fills
+    \item \textbf{ARIMA} (Box--Jenkins): differenced series, own past
+      values/errors; order by an AIC grid (Hyndman \& Khandakar, 2008);
+      Fourier terms for complex seasonality (De Livera et al., 2011)
+    \item \textbf{ML lineage:} ridge (Hoerl \& Kennard, 1970); random
+      forest = bagging (Breiman, 1996) + trees (Breiman et al., 2017) +
+      decorrelation (Breiman, 2001); gradient boosting, additive and
+      stagewise (Friedman, 2001)
+    \item \textbf{Competition evidence:} flexible learners need not beat
+      ARIMA on short series (M3/M4: Makridakis et al., 2018/2020); an
+      LSTM lost to ARIMA head-to-head (Siami-Namini et al., 2018) -- but
+      gradient boosting won M5, where genuine exogenous structure existed
+      (Makridakis et al., 2022)
+    \item \textbf{Takeaway:} the deciding factor is exploitable
+      structure, not ``ML vs.\ classical'' in the abstract -- this
+      project's single series sits closer to M4 than M5
+    \item A single train-test split understates variability (Tashman,
+      2000; Hewamalage et al., 2023) -- the motivation for rolling-origin
+      evaluation
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Deep Learning: Why a GRU}
+  \begin{itemize}
+    \item \textbf{MLP} (Hornik et al., 1989): no sense of sequence order
+      -- needs the same hand-built lag table as the regression and tree
+      models
+    \item \textbf{CNN} (LeCun et al., 1998): fixed receptive field,
+      ill-suited to an annual cycle already handed to every model as
+      Fourier terms
+    \item \textbf{Transformer / TFT} (Lim et al., 2021): large parameter
+      counts tuned for datasets orders of magnitude bigger than
+      $\sim$3{,}000 observations
+    \item \textbf{Plain RNN:} vanishing/exploding gradients over long
+      sequences (Bengio et al., 1994)
+    \item \textbf{LSTM} fixes this with 3 gates and a memory cell --
+      more parameters than this dataset needs (Hochreiter \& Schmidhuber,
+      1997)
+    \item \textbf{GRU} (Cho et al., 2014): 2 gates, no memory cell, same
+      gradient-flow property, smaller parameter count -- the assumptions
+      that best match this project's data
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Delhi Air Quality and the Research Gap}
+  \begin{itemize}
+    \item Delhi's emissions: traffic, industry, seasonal stubble burning
+      (Guttikunda et al., 2014; Cusworth et al., 2018; Jethva et al.,
+      2019)
+    \item Prior Delhi PM2.5 ML studies (Masood \& Ahmad, 2020; Singh \&
+      Srivastava, 2025) score accuracy only -- \textbf{none} evaluates forecasts
+      as a warning system with an explicit alarm budget
+    \item \textbf{Verification framework} (Jolliffe \& Stephenson, 2012):
+      match measures to the decision -- CSI (Schaefer, 1990); plain
+      accuracy misleads on imbalanced events (He \& Garcia, 2009; Saito
+      \& Rehmsmeier, 2015)
+    \item \textbf{Data quality literature} on negative readings (Jiang et
+      al., 2023) and missingness mirrors the two defects found here
+    \item \textbf{The gap:} evaluate against an explicit alarm budget --
+      Chapter 4 shows this changes which model wins
+  \end{itemize}
+\end{frame}
+
+% ============================================================================
 \section{Methodology}
-\begin{frame}{Methodology -- Data}
-  \textit{Placeholder -- see report \S3.1--3.3.}
+
+\begin{frame}{Data and Two Defects in the Source}
+  \begin{columns}
+    \column{0.58\textwidth}
+    \begin{itemize}
+      \item OpenAQ. Every CPCB station returns only $\sim$18 months;
+        only location 8118 (AirNow, a US diplomatic post) has the full
+        decade -- selected, with the limitation stated plainly
+      \item \textbf{Clipped ceiling:} 1990\,\textmu g\,m$^{-3}$ repeats
+        identically on 3 unrelated dates -- an instrument ceiling, not a
+        reading
+      \item \textbf{Wrong coverage denominator:} assumed 24 hourly
+        readings, sensor was half-hourly 2016--2024. Recomputed: 1{,}085
+        of 3{,}467 days are below 75\% true coverage, vs.\ 268 with no
+        value at all
+    \end{itemize}
+    \column{0.42\textwidth}
+    \centering\footnotesize
+    Period: 2016--2026\\
+    Usable days: 3{,}093 (86.4\%)\\
+    Longest gap: 34 days\\
+    Days above threshold: 920 (29.7\%)\\[4pt]
+    \includegraphics[width=\textwidth]{fig2_coverage}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Seasonality: Testing, Not Assuming, a Weekly Cycle}
+  \begin{columns}
+    \column{0.55\textwidth}
+    \begin{itemize}
+      \item Proposal assumed a weekly cycle alongside the annual one --
+        tested directly, three independent ways
+      \item \textbf{Periodogram:} dominant periods near 358, 179, 61 days
+        -- the annual cycle and harmonics, nothing near 7
+      \item \textbf{ACF:} lag 7 is 0.173, lag 6 is 0.179 -- on the decay
+        curve, not above it
+      \item \textbf{Day-of-week:} ANOVA $p=0.34$; Kruskal-Wallis $p=0.77$
+      \item \textbf{No weekly cycle} -- consistent with a diplomatic
+        enclave, not a roadside site. ARIMA carries annual Fourier terms
+        only
+    \end{itemize}
+    \column{0.45\textwidth}
+    \centering
+    \includegraphics[width=0.95\textwidth]{fig3_weekly}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Features and Weather Covariates}
   \begin{itemize}
-    \item Data collection and station selection
-    \item Preprocessing: two defects fixed in the source data
-    \item Seasonality analysis and feature construction
-    \item Weather covariates
+    \item One row per origin $t$, using only data up to day $t$: lags,
+      rolling mean/SD/max, anomalies, exceedance frequency, calendar and
+      annual Fourier terms, missingness flags
+    \item Missing values are never imputed, except for the GRU, shown
+      next
+    \item \textbf{Weather} (\texttt{meteostat}): temperature, wind speed,
+      pressure, precipitation, each with a lag and a 3-day rolling mean
+    \item \textbf{Third data defect:} the weather archive ends 202 days
+      before the PM2.5 series -- a hard cutoff. Precipitation is only
+      54\% complete and excluded from the GRU
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Methodology -- Models}
-  \textit{Placeholder -- see report \S3.4--3.5.}
+\begin{frame}{Classical Benchmark and Machine Learning Regressors}
+  \textbf{ARIMA(1,1,1)} with four pairs of annual Fourier terms, order by
+  AIC (1892.5):
+  \[
+  (1-\phi_1 B)(1-B)y_t = c + (1+\theta_1 B)\varepsilon_t +
+  \sum_{k=1}^{4}\big[\alpha_k\sin(\tfrac{2\pi kt}{365.25}) +
+  \beta_k\cos(\tfrac{2\pi kt}{365.25})\big]
+  \]
+  fitted on $\log(\text{PM2.5})$; $\hat\phi_1=0.581$, $\hat\theta_1=-0.987$.
+
+  \textbf{Three ML regressors}, each fitted to level and change from
+  origin:
   \begin{itemize}
-    \item Classical benchmark: ARIMA with Fourier terms
-    \item Penalised linear regression, random forest, histogram gradient
-      boosting
-    \item The GRU: architecture and training
+    \item \textbf{Ridge:} closed-form $\hat\beta=(X^\top X+\lambda I)^{-1}X^\top y$
+    \item \textbf{Random forest:} bagged trees + random feature subset,
+      which decorrelates trees and lowers the variance floor
+    \item \textbf{Gradient boosting:} additive, tree per round corrects
+      the residual; accepts missing values natively
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Methodology -- Evaluation}
-  \textit{Placeholder -- see report \S3.6--3.9.}
+\begin{frame}{The Gated Recurrent Unit}
+  \begin{columns}
+    \column{0.5\textwidth}
+    \footnotesize
+    \begin{align*}
+      z_t &= \sigma(W_z x_t + U_z h_{t-1} + b_z)\\
+      r_t &= \sigma(W_r x_t + U_r h_{t-1} + b_r)\\
+      \tilde h_t &= \tanh(W_h x_t + U_h(r_t\odot h_{t-1}) + b_h)\\
+      h_t &= (1-z_t)\odot h_{t-1} + z_t\odot \tilde h_t
+    \end{align*}
+    \column{0.5\textwidth}
+    \footnotesize
+    \begin{itemize}
+      \item $H=24$ hidden units, 30-day window
+      \item 6 channels (10 with weather): log-concentration, missingness
+        flag, Fourier pairs ($K=2$ vs.\ ARIMA's $K=4$)
+      \item Gaps forward-filled, missingness flagged
+      \item Adam, MAE loss, early stopping
+      \item \textbf{10 seeds} -- not bit-reproducible at a fixed seed;
+        every result is a range
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Rolling-Origin Evaluation and Warning-System Measures}
   \begin{itemize}
-    \item Rolling-origin evaluation harness
-    \item Evaluation measures
-    \item Statistical comparison of forecasts (Diebold--Mariano)
-    \item Reproducibility
+    \item \textbf{2{,}303 origins}, Nov 2019--Aug 2026, refit every 90
+      days (180 for the GRU). At origin $t$, only data up to day $t$ is
+      used -- enforced by construction, verified by a corruption test
+    \item \textbf{Accuracy:} rMAE against persistence (1.000 =
+      persistence) and MASE, per horizon
+    \item \textbf{Warning system:} hit rate, false alarm rate, precision,
+      CSI, alarms per year -- plain accuracy is never reported
+    \item \textbf{Diebold-Mariano test} (HLN small-sample correction):
+      GRU vs.\ ARIMA per seed, and ARIMA vs.\ each ML regressor
   \end{itemize}
 \end{frame}
 
+% ============================================================================
 \section{Results}
-\begin{frame}{Results}
-  \textit{Placeholder -- see report \S4.1--4.3.}
+
+\begin{frame}{Forecast Accuracy (RQ1)}
+  \centering\footnotesize
+  \begin{tabular}{lccc}
+    \toprule
+    Model & $h=1$ & $h=2$ & $h=3$ \\
+    \midrule
+    GRU, range over 10 seeds & 0.910--0.939 & 0.878--0.906 & 0.831--0.879 \\
+    ARIMA(1,1,1) + Fourier & \textbf{0.940} & \textbf{0.883} & \textbf{0.832} \\
+    Best ML regressor (GBM, change) & 0.983 & 0.937 & 0.878 \\
+    Persistence & 1.000 & 1.000 & 1.000 \\
+    \bottomrule
+  \end{tabular}
+
+  \includegraphics[width=0.46\textwidth]{fig6_accuracy}
+
+  \raggedright\small
+  GRU wins clearly at $h=1$; ARIMA wins or ties beyond it ($h=3$: 0.831
+  vs.\ 0.832). ARIMA beats every ML regressor at every horizon: 15 of 15
+  DM pairings favour it, 14 at $p<0.05$.
+\end{frame}
+
+\begin{frame}{Does Weather Change the Answer?}
   \begin{itemize}
-    \item Forecast accuracy across horizons (Table 4.1)
-    \item Does weather change the answer?
-    \item Two arms of the same question: regression vs.\ classification
-    \item The decision threshold
+    \item Gradient boosting improves at every horizon (by 8.2 / 2.0 / 2.9
+      points of rMAE); the random forest worsens 5.3 points at $h=3$ --
+      no single story for every model
+    \item \textbf{GRU + weather:} wins clearly at $h=1$ (7/10 seeds now
+      significant, up from 4/10); $h=2$ becomes a genuine 3-way split;
+      $h=3$ is more often a loss than a win (5 of 10)
+    \item Doubling the seed count (5$\to$10) is what surfaced this --
+      under five seeds alone, $h=2$ and $h=3$ had looked like wins
+    \item \textbf{Carried through the threshold:} at most 1.2 points of
+      extra hit rate at any budget -- a materially more accurate
+      forecaster still does not escape the alarm-budget ceiling
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Two Arms of the Same Question (RQ2)}
+  \begin{columns}
+    \column{0.56\textwidth}
+    \begin{itemize}
+      \item Forecast-then-threshold vs.\ direct classification, matched
+        by base algorithm
+      \item 36 comparisons (3 pairs $\times$ 3 horizons $\times$ 4
+        budgets): \textbf{threshold wins 21, classifier 11, 4 ties}
+      \item Median gap 0.011 hit rate, max 0.056 -- real but modest
+      \item Edge narrows as budget loosens: 8/9 at budget 40, but the
+        classifier overtakes it (6/9) at budget 100
+      \item Preferred anyway: a forecast can be rethresholded for any
+        future policy; a classifier is welded to its training threshold
+    \end{itemize}
+    \column{0.44\textwidth}
+    \includegraphics[width=\textwidth]{fig7_arms}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{The Decision Threshold (RQ3) -- the Central Result}
+  \centering\footnotesize
+  \begin{tabular}{lrrrr}
+    \toprule
+    Alarms per year & 40 & 60 & 80 & 100 \\
+    \midrule
+    Best hit rate, $h=1$ & 0.379 & 0.567 & 0.735 & 0.881 \\
+    Best hit rate, $h=2$ & 0.366 & 0.538 & 0.700 & 0.840 \\
+    Best hit rate, $h=3$ & 0.359 & 0.533 & 0.685 & 0.827 \\
+    \bottomrule
+  \end{tabular}
+
+  \includegraphics[width=0.38\textwidth]{fig5_warning}
+
+  \raggedright\small
+  Budget 40$\to$100 moves $h=1$ hit rate 0.379$\to$0.881: \textbf{50
+  points}. Switching the model instead moves it \textbf{$\sim$5 points}.
+  At $h=3$, budget 40, plain persistence is the best model in the study.
+\end{frame}
+
+% ============================================================================
 \section{Discussion}
-\begin{frame}{Discussion}
-  \textit{Placeholder -- see report \S5.1--5.3.}
+
+\begin{frame}{The Operational Question Dominates the Modelling Question}
   \begin{itemize}
-    \item The operational question dominates the modelling question
-    \item How large is a difference between models?
-    \item Limitations
+    \item Alarm budget moves the hit rate $\sim$50 points; switching the
+      model at fixed budget moves it $\sim$5
+    \item At $h=3$, loosest budget: climatology alone (0.816) comes
+      within a hundredth of the best fitted model (0.827)
+    \item \textbf{Not} an argument against modelling -- ARIMA and the GRU
+      both beat persistence, and a better forecast narrows the useful
+      range of thresholds
+    \item The leverage sits with the policy instrument, the alarm budget,
+      not the model behind it. Recommendation: fix the budget with the
+      health authority first; treat the model as a secondary refinement
   \end{itemize}
 \end{frame}
 
-\section{Conclusion}
-\begin{frame}{Conclusion}
-  \textit{Placeholder -- see report \S6.1--6.3.}
+\begin{frame}{How Large Is a Difference Between Models?}
   \begin{itemize}
-    \item Summary of the study
-    \item Main conclusions
-    \item Future work
+    \item \textbf{Noise floor:} identical pipeline, two machines, moves
+      tree models up to 0.004; the GRU moves 0.028--0.048 across seeds --
+      almost as much when the \emph{same} seed is simply rerun
+    \item Several table gaps sit at or below that floor (e.g.\ 0.878
+      vs.\ 0.879 at $h=3$) and cannot be confidently ordered
+    \item \textbf{Diebold-Mariano is more conservative still:} only 4/10
+      GRU seeds reach $p<0.05$ at $h=1$ (the noise floor credits 8/10);
+      0/10 at $h=2$; 1/10 at $h=3$
+    \item Those seed counts are themselves small-sample proportions: a
+      95\% Wilson interval on ``4 of 10'' at $h=1$ runs 0.17 to 0.69
   \end{itemize}
+\end{frame}
+
+\begin{frame}{Limitations I: Scope and Sensitivity}
+  \begin{itemize}
+    \item \textbf{Single station, single city:} an AirNow diplomatic-post
+      monitor, not the CPCB network; Delhi only, chosen for data history
+    \item \textbf{Cleaning threshold} (1000\,\textmu g\,m$^{-3}$) checked
+      directly: restoring capped days barely moves ARIMA (0.940$\to$0.935
+      at $h=1$) but hurts the ML suite more (ridge: 0.997$\to$1.118) --
+      the central finding \emph{strengthens}
+    \item Tree hyperparameters from a small grid, not an exhaustive
+      search -- a lower bound on what those models could achieve
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Limitations II: The GRU and Reproducibility}
+  \begin{itemize}
+    \item GRU architecture ($H=24$, 30-day window) fixed by inspection --
+      a bounded check found a 45-day window scored 2.2 points better at
+      $h=3$, untested at full ten-seed scale
+    \item \textbf{Fourier ablation:} giving the GRU ARIMA's $K=4$
+      harmonics helps at every horizon, substantially at $h=3$ (3.96
+      points) -- the network already gets a seasonal signal, just a
+      coarser one
+    \item GRU training is \textbf{not bit-reproducible} at a fixed seed
+      -- why the seed count was doubled from 5 to 10
+    \item Weather is observed only, never forecast; boundary layer
+      height is unavailable without a reanalysis product
+  \end{itemize}
+\end{frame}
+
+% ============================================================================
+\section{Conclusion}
+
+\begin{frame}{Summary and Main Conclusions}
+  \begin{itemize}
+    \item Forecast hazardous PM2.5 1--3 days ahead at one Delhi monitor;
+      two real data defects corrected; the weekly-cycle assumption tested
+      and rejected
+    \item Spread across models at fixed budget: $\sim$5 points. Spread
+      across budgets, model fixed: $\sim$50 points
+    \item ARIMA beats every ML regressor at every horizon (DM-backed);
+      the GRU is the one model that wins, only at $h=1$, reported as a
+      range over ten seeds
+    \item Weather narrows $h=1$ further but leaves $h=2$/$h=3$ a tie or
+      more-often-loss; its gain buys little once thresholded
+    \item Forecast-then-threshold beats direct classification 21 of 36 --
+      real but modest, preferred also for rethresholdability
+    \item Trying several methods, not defaulting to ARIMA, is what
+      surfaced the $h=1$ GRU win and made the negative result credible
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Future Work}
+  \begin{enumerate}
+    \item A genuine weather \emph{forecast}, not the conditions already
+      observed at the forecast origin
+    \item Boundary layer height via a reanalysis product (e.g.\ ERA5)
+    \item Refit the GRU with four Fourier harmonics under the full
+      ten-seed rolling-origin evaluation
+    \item A second, independent station -- ideally CPCB -- once its
+      record lengthens
+  \end{enumerate}
+  \vspace{6pt}
+  \centering
+  \textit{Design the warning system around its alarm budget; treat the
+  forecasting model as a secondary refinement.}
 \end{frame}
 
 \begin{frame}

@@ -2112,6 +2112,105 @@ Then scaffolded the presentation itself, as a sibling of `report/`:
 No content or numbers have been written yet, only structure and pointers
 back to the report. Not yet committed — a new, untracked folder.
 
+### Same day, a twenty-second pass: the presentation chat fills in every slide from `report/main.tex`
+
+This is the first pass from the second, presentation-specific chat
+described in the pass above. Read this changelog's most recent entries
+and `presentation/README.md` first, per the project's own habit, then
+filled in all fourteen placeholder frames of `slides.tex` from the
+report's six chapters, following the skeleton's own rule: no number
+typed by hand that doesn't trace to the same table or script the report
+itself uses. Every figure is the report's own, via the existing
+`\graphicspath`; every table number is copied from the committed
+`report/tables/*.tex` files read directly rather than retyped from
+memory of the report's prose.
+
+Expanded well beyond the one-frame-per-chapter skeleton, since a
+30-40 minute oral needs more structure than fourteen frames give it:
+Literature Review split into three frames (classical/ML methods, deep
+learning and the GRU's rationale, Delhi studies and the research gap),
+Methodology into six (data and defects, seasonality, features and
+weather, classical and ML models, the GRU, evaluation), Results into
+five (accuracy, weather, the two arms, the decision threshold), and
+Limitations into two. 31 pages total, up from the skeleton's 17.
+
+**Hit a real layout problem on the first compile and fixed it properly
+rather than suppressing the warning.** The first full draft, written at
+report-prose density, produced thirteen `Overfull \vbox` warnings from
+`tectonic`, several of 40-100pt, meaning content was genuinely
+overflowing the slide frame and would have rendered clipped or
+overlapping the footline. Rather than shrink fonts to hide it, rewrote
+the dense frames at actual slide density: short phrases instead of full
+sentences, one idea per bullet, split the most overloaded frames
+(Literature Review's Delhi-and-gap frame, Limitations) rather than
+cramming them. Verified by rendering every page to PNG with `pdftoppm`
+and reading each one rather than trusting a clean compile log alone,
+which is what caught a second, different bug: a `\ref{sec:gru}` left
+over from drafting against the report's own section labels, which don't
+exist in this standalone document, rendering as a literal "Section ??"
+on the Features slide. Fixed to plain text. Final compile: clean, only
+four sub-4pt `Overfull \vbox` warnings remain (under 1.3mm, not visible
+on a rendered slide), confirmed against the rendered PNGs directly.
+
+Not yet committed.
+
+### Same day, a twenty-third pass: "make sure it sounds like me" turns out to mean checking every citation by hand, not just tone
+
+The user's actual request was five words, but the right reading of it
+for this project specifically is not a tone pass: this project's one
+hard-coded style rule is "every citation verified against CrossRef
+before use, never inferred," and the slides' Literature Review content
+was typed from memory of the report's prose rather than copied from the
+report's own rendered citations. Checked that assumption rather than
+trusting it, by compiling `report/main.pdf` to text with `pdftotext` and
+grepping every bracketed citation it actually renders, then diffing that
+against every citation typed into `slides.tex`. It was not a clean diff.
+
+**Three real errors, caught only by checking the rendered PDF, not by
+re-reading my own slide text:**
+1. `(Breiman, 1984/1996/2001)` for the CART/bagging/random-forest
+   lineage. The CART book's \texttt{breiman1984cart} key renders in the
+   actual report as **[Breiman et al., 2017]** -- the verified CrossRef
+   entry is the 2017 Routledge reissue, not the 1984 original, and this
+   exact citation's year was already the subject of its own fix earlier
+   in this project's history (the nineteenth pass, item 5). Reusing
+   "1984" on the slide from memory silently reintroduced the thing that
+   earlier pass had fixed.
+2. `(Guttikunda \& Jawahar, 2014)` for Delhi's emission inventory. There
+   is no "Jawahar" in this project's bibliography at all; the real
+   authors are Guttikunda, Goel and Pant, and the report renders this as
+   "Guttikunda et al. [2014]." A fabricated co-author name, typed
+   confidently and wrong.
+3. `Singh et al., 2025` for the stubble-burning study. Two authors,
+   Singh and Srivastava; the report renders "Singh and Srivastava
+   [2025]," not "et al." Also fixed `Siaminamini` to the correctly
+   hyphenated `Siami-Namini`, and added the three citations
+   (Hornik et al. 1989; LeCun et al. 1998; Lim et al. 2021) that had been
+   dropped from the MLP/CNN/Transformer bullets for space, leaving them
+   the only unattributed claims next to a frame otherwise citing
+   everything.
+
+Beyond citations, two wording choices were tightened to the report's own
+phrasing once checked directly with `grep`: "the best fit for this
+project's data" to "the assumptions that best match this project's
+data" (the report's literal clause), and "Through the threshold:" to
+"Carried through the threshold:" (a phrase the report uses twice,
+verbatim, for this exact move from an accuracy gain to a hit-rate gain).
+The Motivation frame's personal-story bullet was also changed from
+third-person ("Personal motivation: growing up in India...") to first
+person ("My own motivation: growing up in India..."), matching the
+report's own Introduction, which makes this same point as "My interest
+in this question is also personal" -- the one place in the deck where
+the presenter is speaking as themselves, not summarising a chapter.
+
+No em dash check also rerun directly rather than assumed clean: grepped
+the file for the literal em dash character and found none, confirming
+the deck's "--" throughout renders as the project's established en-dash
+convention rather than a house-style violation.
+
+Recompiled clean after every fix; same four negligible sub-4pt overflow
+warnings as before, nothing new introduced. Not yet committed.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required
