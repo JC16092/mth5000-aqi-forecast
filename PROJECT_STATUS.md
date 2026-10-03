@@ -1837,12 +1837,35 @@ the existing ARIMA invertibility discussion (`sec:arima`) states the
 28-refit $\hat\phi_1$/$\hat\theta_1$ range and the three invertibility
 breaches with their exact values and dates.
 
+Committed (`aec2d4a`) and pushed.
+
+### Same day, a sixteenth pass: the persistence/multi-day-episode paragraph, the cheapest item on the review list
+
+No new computation, as scoped in the original review: the explanation
+was already available from two facts already in the report, just never
+connected. §4.3's existing finding that persistence is outright the best
+model in the whole study at $h=3$, budget 40 (0.359, ahead of every
+machine learning regressor, ARIMA, and every GRU seed) now has a
+mechanism paragraph tying it to Figure~\ref{fig:series}'s own caption,
+written in week 7, that exceedances arrive as multi-day episodes rather
+than isolated days: persistence (carry today's value forward unchanged)
+is exactly the right forecast for a day already deep inside an ongoing
+episode, which is the safest kind of day to flag when a budget is tight
+enough that only the highest-ranked forty days in the whole evaluation
+get an alarm at all, and the more elaborate models' attempt to fit the
+actual seasonal/autoregressive trajectory is precisely what can cost them
+that top spot at the margin.
+
+**Report changes**: one paragraph added in `main.tex` §4.3 (`sec:threshold`),
+right after the existing persistence/climatology comparison. Recompiled
+clean (same three pre-existing warnings), page count unchanged at 61 (fit
+in existing slack).
+
 Not yet committed.
 
-**What's still genuinely open**, folding this pass in: two items from the
-review's priority list remain (the persistence/multi-day-episode
-paragraph; the $K=4$ GRU ablation), plus everything already listed after
-the twelfth pass above (the AI-declaration question remains the top item
+**What's still genuinely open**: one item from the review's priority list
+remains, the $K=4$ GRU ablation, plus everything already listed after the
+twelfth pass above (the AI-declaration question remains the top item
 regardless).
 
 ## Data sources

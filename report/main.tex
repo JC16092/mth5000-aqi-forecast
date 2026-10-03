@@ -1768,6 +1768,23 @@ model, 0.816 against 0.827.
 Figure~\ref{fig:warning} shows the same result as curves; they very nearly
 coincide, and they have deliberately not been separated for legibility.
 
+The mechanism behind the first of those two comparisons is already visible
+in Figure~\ref{fig:series}: exceedances arrive as multi-day episodes, not
+isolated days, so the most informative fact about whether day $t+3$ is
+hazardous is often simply that day $t$ already is. Persistence is exactly
+the forecast that encodes this and nothing else, carrying today's reading
+forward unchanged to every horizon. At a budget this tight, a model may
+only raise the alarm on the days its own forecast ranks highest, and the
+safest such day to flag is not the onset of a new episode, which nothing in
+this suite predicts reliably three days out, but a day already deep inside
+one, where persistence's assumption of no change is closest to true. The
+more elaborate models are not wrong to forecast a trajectory rather than a
+constant; at three days ahead that trajectory is carried mainly by the same
+seasonal and autoregressive structure persistence ignores entirely, and
+fitting it introduces exactly the small deviations that can cost a model
+its place once only the forty most confident days in the whole study are
+allowed to count.
+
 The reading is not that modelling is pointless. It is that the quantity a
 decision maker controls, namely how many alarms per year can be justified,
 dominates the quantity a modeller controls. A report that presents a model
