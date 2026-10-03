@@ -59,7 +59,7 @@ This project forecasts daily PM2.5 one to three days ahead at a Delhi monitor
 and evaluates the forecasts as a warning system rather than by average error
 alone. The central finding is that the alarm budget a decision maker accepts
 dominates the choice of model. Across ten specifications, from simple
-benchmarks and a classical ARIMA model with annual Fourier terms to four
+benchmarks and a classical ARIMA model with annual Fourier terms to three
 machine learning regressors and a recurrent network, the spread in hit rate
 at a fixed alarm budget is about five percentage points, while moving the
 budget from forty to one hundred alarms a year moves the hit rate by fifty.
@@ -115,7 +115,7 @@ $h$ & forecast horizon, 1, 2 or 3 days; distinct from the GRU's hidden state $h_
 \multicolumn{3}{@{}l}{\textbf{Seasonality Analysis}} \\
 $\omega_j$ & Fourier frequency, $2\pi j/n$ & \ref{sec:weekly} \\
 $I(\omega_j)$ & periodogram value at frequency $\omega_j$ & \ref{sec:weekly} \\
-$\hat\rho_k$ & sample autocorrelation at lag $k$ & \ref{sec:weekly} \\
+$\hat\rho_k$ & sample autocorrelation at lag $k$; $k$ here is reused later as the AIC parameter count, the Fourier harmonic index, and the Diebold-Mariano lag index, each unrelated to this one & \ref{sec:weekly} \\
 $\bar y$ & sample mean & \ref{sec:weekly} \\
 $F$ & one-way ANOVA test statistic; distinct from the boosting ensemble $F_m$ below & \ref{sec:weekly} \\
 $n_g$, $\bar y_g$ & size and mean of day-of-week group $g$ & \ref{sec:weekly} \\
@@ -1641,9 +1641,11 @@ trained on and this series drifts downward across the decade.
 
 Table~\ref{tab:significance} tests only the one comparison in this report
 with a seed to range over. The same test applies just as directly to the
-other four machine learning regressors against ARIMA: each is reported as
-a single fit rather than a range, so one Diebold-Mariano statistic per
-horizon is the whole comparison, not an average over several.
+other five machine learning rows against ARIMA (ridge, and the random
+forest and gradient boosting's level and change-target variants): each is
+reported as a single fit rather than a range, so one Diebold-Mariano
+statistic per horizon is the whole comparison, not an average over
+several.
 
 \begin{table}[htbp]
 \centering
@@ -1665,7 +1667,7 @@ model-horizon pairings, and fourteen reach $p<0.05$; the one exception,
 the change-target random forest at two days, falls just short at
 $p=0.054$. This is, if anything, a stronger formal result than the
 network comparison can supply for its own horizons, precisely because
-none of these four regressors carries a seed's worth of sampling
+none of these five rows carries a seed's worth of sampling
 uncertainty on top of the test's own.
 
 \subsection{Does Weather Change the Answer?}
@@ -2232,7 +2234,7 @@ directly and found false.
 \section{Main Conclusions}
 
 Across ten models spanning simple benchmarks, a classical time series model,
-four machine learning regressors, and a recurrent network, the spread in
+three machine learning regressors, and a recurrent network, the spread in
 achievable hit rate at a fixed alarm budget is about five percentage points;
 the spread across alarm budgets, holding the model fixed, is about fifty. The
 choice a decision maker makes about how many alarms per year can be
@@ -2272,8 +2274,8 @@ thresholding it beats training a classifier directly on the exceedance
 label, but only modestly: matched by algorithm rather than by whichever
 model happens to be best, it wins 21 of 36 comparisons to 11, with four
 ties, a real lean rather than the coin flip a single qualitative judgement
-would suggest, yet still small enough in each individual case, a little
-over one point of hit rate on average, that either arm is defensible. The forecast-then-threshold
+would suggest, yet still small enough in each individual case, typically a
+little over one point of hit rate, that either arm is defensible. The forecast-then-threshold
 arm is used throughout this report's own warning-system results for a
 reason beyond that narrow margin: it yields a concentration that can be
 rethresholded for any future health policy without refitting, while a
@@ -2288,10 +2290,10 @@ result that a project restricted to classical methods would never have found.
 \section{Future Work}
 \label{sec:future}
 
-Three extensions follow: two from where this report's own weather work
-stopped, and a third from the single-station limitation in
-Section~\ref{sec:limitations}; a fourth, unrelated to either, follows from
-the Fourier-harmonic check in that same section.
+Four extensions follow: two from where this report's own weather work
+stopped, a third from the Fourier-harmonic check in
+Section~\ref{sec:limitations}, and a fourth from the single-station
+limitation.
 The threshold sweep has already been put through the weather-augmented
 models (Section~\ref{sec:results-weather}), so the open thread is not
 whether that comparison happened but what would change its answer: a real
@@ -2305,7 +2307,7 @@ a particulate episode rather than a correlate of it; whether it would move
 the threshold-sweep result more than wind speed and temperature did is an
 open question precisely because the gain so far has been small.
 
-A fourth, separate from either of those, follows directly from
+A third, separate from either of those, follows directly from
 Section~\ref{sec:limitations}'s Fourier-harmonic check: refitting the
 recurrent network with four harmonics rather than two under the full
 ten-seed rolling-origin evaluation, rather than the single validation
@@ -2314,7 +2316,7 @@ days ahead is substantially a consequence of that one previously
 undocumented difference in Methodology's own specification, or whether
 the bounded check's result does not survive a more demanding evaluation.
 
-A fifth extension is independent of weather: repeating the analysis at a
+A fourth extension is independent of weather: repeating the analysis at a
 second, independent station, ideally one inside the Central Pollution
 Control Board network once its record lengthens, would test whether the
 findings here are a property of Delhi air quality or an artefact of the one

@@ -2015,6 +2015,68 @@ matter after List of Tables; one renamed section heading; one tightened
 Abstract paragraph; one extended sentence in `sec:gru`. 61 → 65 pages,
 almost all of it the new table.
 
+Committed (`93e886f`) and pushed.
+
+### Same day, a twentieth pass: a second full PhD-scholar review, this time of the report's own recent edits
+
+The user asked for the review to be redone, "100% accuracy," after seven
+passes had added substantial new prose since the first one. The right
+target for a second pass wasn't re-finding the same seven things; it was
+treating the last week of self-authored edits with the same scrutiny a
+fresh reviewer would, since self-review of one's own recent work is
+exactly where blind spots hide. Read the entire current `main.tex` start
+to end rather than relying on memory of having written it.
+
+**Found four real, previously-undetected issues, three of them this
+session's own:**
+
+1. A counting error in the new Table 4.3 paragraph (pass fourteen): "the
+   other four machine learning regressors" against ARIMA, when the table
+   actually tests five distinct model rows (ridge, random forest and
+   gradient boosting's level and change-target variants) — contradicted
+   by the very next sentence's correct "all fifteen model-horizon
+   pairings" (5×3=15, not 4×3=12), and by an existing, correct "five
+   machine learning rows" phrase already sitting in the weather section
+   three pages later. Fixed to "five."
+2. The same miscount, pre-existing and not from this session, in the
+   Abstract and in the Conclusion's Main Conclusions: both said "four
+   machine learning regressors," contradicting Methodology's own Chapter
+   Summary ("three regressors, ridge, random forest, and gradient
+   boosting") for the identical referent. Three regressors is the
+   correct, structurally-grounded count (three named subsections); fixed
+   both to "three," consistent with Methodology and distinct from the
+   row-level "five" used where the text is specifically about table rows
+   rather than algorithm families.
+3. A genuine arithmetic bug in Future Work, introduced in pass seventeen:
+   the opening sentence said "Three extensions follow" while the body
+   went on to describe a "fourth" and a "fifth" — four distinct
+   extensions in total, each one numbered one higher than it should have
+   been, with no "third" ever appearing. Caught, then nearly made worse
+   on the first attempted fix (wrote "Five extensions" and invented a
+   nonexistent "hyperparameter check" item that doesn't exist anywhere in
+   Future Work's actual body) before recounting properly and fixing the
+   opening sentence and both body paragraph numbers to the correct "four:
+   two, a third, a fourth."
+4. Imprecise language in the Conclusion: "a little over one point of hit
+   rate on average" for the RQ2 arms comparison, when the actual signed
+   mean difference across all 36 comparisons is 0.64 points, not "a
+   little over one" — the figure being described is the median absolute
+   difference (1.06 points), which Results itself correctly calls a
+   "median difference." Fixed "on average" to "typically" so the
+   Conclusion's language matches what is actually being reported.
+
+Also closed one minor completeness gap, not an error: the List of
+Symbols flagged $k$'s reuse (AIC, Fourier, Diebold-Mariano) only at its
+last appearance, not at its first (the ACF entry in Seasonality
+Analysis); added the same cross-reference there for symmetry.
+
+**Report changes**, all in `main.tex`, recompiled clean (same three
+pre-existing warnings — one new overfull-hbox warning appeared from the
+first Future Work edit and was fixed by trimming a parenthetical rather
+than left in): the two significance-table sentences, the Abstract, both
+Conclusion sections, Future Work's opening and two body paragraphs, and
+one List of Symbols row. Page count unchanged at 65.
+
 Not yet committed.
 
 ## Data sources
