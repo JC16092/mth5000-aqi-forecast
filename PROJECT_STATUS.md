@@ -2209,7 +2209,477 @@ the deck's "--" throughout renders as the project's established en-dash
 convention rather than a house-style violation.
 
 Recompiled clean after every fix; same four negligible sub-4pt overflow
-warnings as before, nothing new introduced. Not yet committed.
+warnings as before, nothing new introduced. Committed (`575ae22`) and
+pushed shortly after this pass, on direct request.
+
+### Same day, a twenty-fourth pass: the user wants PowerPoint, not Beamer, and a real pptxgenjs bug surfaces along the way
+
+The user pushed back hard ("thats the whole point for this chat") after
+the last two turns drifted into git housekeeping rather than the
+presentation itself, and clarified on request that "the ppt" meant an
+actual editable `.pptx`, not the Beamer PDF already built. Sent the
+current `slides.pdf` immediately so there was something concrete in
+front of them while deciding, then rebuilt the entire deck as PowerPoint
+via the `pptx` skill's `pptxgenjs` workflow, carrying over every number,
+citation and structural decision from the now-verified `slides.tex`
+rather than re-deriving content from the report a third time.
+
+**Kept the house style deliberately, flagged explicitly rather than
+silently overridden.** The `pptx` skill's own design guidance pushes
+hard toward bold color palettes, icons and visual motifs ("plain bullets
+on white won't impress anyone"), which is sound generic advice and
+exactly wrong for this specific deck: the project's own documented style
+preference is "Times serif, black only, no colour, no decorative rules,"
+set deliberately for an academic defense in front of a supervisor who
+has been rigorous about exactly this kind of restraint throughout the
+report. Built the theme (`pptx_src/build_deck.js`) as Times New Roman
+throughout, grayscale only, no accent color, no icons, no decorative
+bars — and said so in the handoff message rather than assuming it was
+wanted without comment.
+
+**Three structural choices, each to preserve something the Beamer
+version already had right:** the three multi-line equations (the fitted
+ARIMA+Fourier specification, ridge's closed form, the GRU's four gate
+equations) are typeset from LaTeX (`mathptmx`, the same math font the
+report itself uses) to standalone-class PDFs and rasterised to PNG at
+400dpi, rather than retyped as PowerPoint text with Unicode
+sub/superscripts, because PowerPoint has no equation editor that matches
+LaTeX output and a mismatch would have been immediately visible next to
+the report. Every chart/figure slide reuses the report's own PNGs
+directly (`report/figures/`), never a chart rebuilt natively in
+pptxgenjs, for the same traceability reason the Beamer version already
+established: a figure the report didn't produce doesn't belong on a
+slide claiming to summarise that report. A `\AtBeginSection`-equivalent
+was hand-built (`addOutlineSlide`) since pptxgenjs has no auto-outline
+feature, graying every chapter but the current one, matching Beamer's
+own default `\tableofcontents[currentsection]` look.
+
+**A real, undocumented pptxgenjs bug, found by checking the rendered
+output rather than trusting a clean `validate.py` pass.** The first full
+build passed schema validation and `markitdown` content checks cleanly,
+but a page-by-page visual render (required by the skill's own QA
+checklist, and good practice regardless of what automated checks say)
+showed one bullet on the very first content slide rendering with no dot
+and no indent — the one bullet written with an inline italic word
+("arrives *before* the hazardous day"), mixing two text runs under one
+bullet point. Traced it to the actual OOXML by unzipping the `.pptx` and
+reading `ppt/slides/slide4.xml` directly rather than guessing: a run
+with `options.bullet` set always opens a new `<a:p>`, and any other run
+sharing what should be the same paragraph still gets its own default,
+bullet-less `<a:pPr>` emitted regardless, so a paragraph built from more
+than one run ends up with multiple paragraph-properties blocks and the
+bullet is lost. Confirmed the mechanism with four isolated minimal
+reproductions (`minitest.js` through `minitest4.js`) varying where the
+`bullet` option was set — on the first run, on every run, in the
+shape-level options instead of per-run — before concluding there is no
+way to get a single bulleted paragraph containing multiple
+differently-styled runs out of pptxgenjs's `addText()` array API. This
+is not documented in the skill's own gotcha list. The fix: every
+bulleted line in the deck is now exactly one run (`bulletParagraphs()`
+rewritten accordingly); a whole bullet may still be bold or italic, just
+never mixed with plain text in the same line. This affected nearly every
+content slide, since the bold-lead-in-label pattern ("**ARIMA:** ...")
+used throughout was exactly the broken shape. Re-rendered and
+individually inspected all 31 slides after the fix; none of the
+remaining bullets lost their dot or indent.
+
+**Reproducibility fixed before calling it done, not after.** The first
+working build depended on two paths outside the project: the equation
+PNGs lived in session scratch space (deleted at session end), and
+`apply_theme.js` was required from this session's own skill-plugin
+cache directory (a path tied to this specific session, not guaranteed
+to exist in a later one). Both would have made `node build_deck.js`
+unrunnable the next time anyone tried it. Copied the three equations'
+`.tex` sources and rendered `.png`s into `presentation/pptx_src/eq/`,
+vendored `apply_theme.js` into `presentation/pptx_src/` directly instead
+of requiring it from the skill, and added a minimal `package.json`
+(`pptxgenjs` only) so `npm install && node build_deck.js` is a complete,
+self-contained build from a clean checkout — verified directly by
+running exactly that sequence and confirming the output `.pptx`
+byte-identical in substance (same validate.py pass, same slide images)
+to the one built against the temporary paths.
+
+**Final state**: `presentation/slides.pptx`, 31 slides, validated
+(`scripts/office/validate.py`: clean), content-checked (`markitdown`:
+no placeholder text, one harmless false-positive substring match on
+"domi**nan**t"), and visually inspected slide-by-slide. `slides.tex` /
+`slides.pdf` (Beamer) are left in place, not deleted, but `.pptx` is now
+the primary deliverable per the user's explicit choice; `presentation/README.md`
+documents both build paths and states that explicitly. Not yet
+committed.
+
+### Same day, a twenty-fifth pass: "i dont like it its so simple looking" -- the plain-academic style was the wrong call for this deliverable
+
+The user's reaction to the finished pptx was immediate and blunt. The
+instinct from the twenty-fourth pass, carrying the report's own "Times
+serif, black only, no decorative rules" house style into the slides, was
+reasoned (documented explicitly in that pass and flagged to the user in
+the handoff) but wrong for what the user actually wanted from a
+PowerPoint specifically: a report and a slide deck are different objects
+with different audiences even when one summarises the other, and "matches
+the document's house style" is not the same question as "looks good as a
+deck." Asked a direct, structured question rather than guessing a
+second time blind -- three concrete options (polished academic, bold and
+modern, dark throughout) rather than an open-ended "what do you want,"
+since the user's feedback style all session has been short and blunt and
+a vague question would likely get a vague answer. They picked "Bold and
+modern."
+
+**Rebuilt the deck's entire visual layer, keeping every number, citation
+and piece of content exactly as already verified.** Content and design
+are genuinely separable in a generator script, and nothing about the
+content needed re-deriving a third time; only `pptx_src/build_deck.js`'s
+theme, layouts and helper functions changed. New palette, chosen to be
+content-informed rather than generic (the skill's own stated test for a
+good palette) rather than defaulting to a safe blue: deep slate navy
+(`#1B2430`) as the dominant color plus a hazard-amber accent (`#E07A1F`)
+evoking the AQI warning-system subject the talk is actually about. Dark
+title, section-divider and closing slides sandwich light content slides.
+Six icon badges (`react-icons` rendered to SVG, composited onto a colour
+circle via `sharp`, one per report chapter -- a warning triangle for
+Introduction, a book for Literature Review, gears for Methodology, a
+chart for Results, scales for Discussion, a checkered flag for
+Conclusion) give the deck a single repeated visual motif across the
+agenda and each divider, replacing the plain gray-on-gray
+repeated-table-of-contents list the Beamer-style first pass used. Added
+big stat callouts (50 pts vs. ~5 pts; 15/15; 21 vs. 11) on exactly the
+slides carrying the report's own headline numbers, not decoratively
+everywhere. Report figures stay monochrome and un-recolored, on their own
+white card with a soft shadow -- deliberately not restyled to match the
+new palette, since matching the report's actual output remains more
+important than palette consistency for the one element on each slide
+that is itself the evidence, and this is stated explicitly in the
+updated README so it reads as a choice, not an inconsistency.
+
+**Avoided the skill's own named anti-patterns deliberately, not by
+accident**: no accent lines under titles, no decorative stripes or edge
+borders, no cream/beige default background -- all specifically called
+out in the `pptx` skill's "Avoid" list, and easy to drift into by default
+when reaching for "bold."
+
+**A second real, previously-undiscovered layout bug, caught by the same
+discipline as the earlier bullet bug: look at the rendered output, not
+just the validator.** `scripts/office/validate.py` passed clean, but a
+full page-by-page visual re-render showed the Forecast Accuracy and
+Decision Threshold slides with a stray white rectangle sliver where a
+table's background card and the figure card below it visibly collided.
+Root-caused directly rather than patched around: the table's background
+card was sized from a guessed `rows.length * 0.42in`, with no way to know
+in advance whether any cell would wrap and inflate the real row height
+beyond that guess -- and separately, one table's `colW` array summed to
+13.333in while the box it was drawn in (`CONTENT_W`) was 12.233in, so the
+table was silently rendering wider than its own intended column, an
+independent latent bug that happened to compound the first. Fixed by
+removing the background card from tables entirely (the per-cell fill
+already gives a clean surface without needing a shape to track its size)
+and by giving every table's `colW` values that actually sum to its `w`.
+Image cards were never at risk of this: their size comes from the real
+image's pixel dimensions via PIL, not a guess. Documented both
+pptxgenjs gotchas (the bullet one from the previous pass, this table one
+new) in `presentation/README.md` under a shared heading, since both are
+the same underlying lesson -- don't let a shape's size depend on a
+guess about another element's rendered size when the real size can be
+measured or controlled directly instead.
+
+Re-validated, re-rendered, and visually inspected all 31 slides again
+after the fix; no further collisions, no overflow, no leftover
+placeholder text. `package.json` picked up `react-icons`, `react`,
+`react-dom` and `sharp` automatically via `npm install`. Not yet
+committed.
+
+### Same day, a twenty-sixth pass: "change the theme" -- navy/amber swapped for teal/coral
+
+Two words, no direction. Rather than guess a third time (the navy/amber
+palette from the previous pass was itself a considered, content-informed
+choice, not a careless one, and still got rejected), asked a short,
+concrete question: three named alternatives (deep teal + coral, charcoal
++ crimson, indigo + gold) plus an open "something else" option, so the
+answer could be a single click rather than the user having to articulate
+a color preference in words a second time. They picked deep teal + coral.
+
+Re-themed `presentation/pptx_src/build_deck.js` and
+`presentation/pptx_src/generate_icons.js` together: dominant color from
+`#1B2430` (slate navy) to `#16343A` (atmospheric teal-charcoal), accent
+from `#E07A1F` (amber) to `#E35D45` (coral), every derived shade
+(secondary text, hairlines, canvas tint, progress-dot inactive state,
+title-slide subtitle/footer, slide numbers on dark backgrounds)
+recomputed from the new pair rather than left mismatched. Found every
+color by grepping the file for raw hex literals rather than trusting that
+the named constants covered everything -- they didn't: the title slide's
+subtitle and footer text, the section-divider progress dots' inactive
+state, and the slide-number color on dark backgrounds were all hardcoded
+hex values outside the theme constants, left over from writing those
+specific lines inline during the first design pass rather than reaching
+for the palette constants already in scope. All six chapter-badge icons
+regenerated from the same `generate_icons.js` script with its `ACCENT`
+constant updated to match, confirmed pixel-exact (`227, 93, 69` =
+`#E35D45`) before rebuilding the deck around them.
+
+Re-validated, re-rendered and visually re-inspected the title slide, the
+agenda, a section divider, and both of the two slides the previous pass's
+table-overlap bug had touched, specifically to confirm that fix held
+under the new palette rather than assuming a color-only change couldn't
+have disturbed it. Clean. Not yet committed.
+
+### Same day, a twenty-seventh pass: the connectors get their shot, the watermark kills it, and the design is rebuilt locally
+
+"still not satisfied ... I had connected various connectors for the
+powerpoints in this claude so use them I want something unique that can
+impress my proffs." Two connectors were available, and both were tried
+properly rather than dismissed on a guess.
+
+**PowerPoint by Anthropic** turned out to be the wrong tool for this
+particular ask, and the reason is structural, not a matter of effort: its
+tools (`create_presentation`, `add_slide`, `add_text_to_slide`,
+`insert_image`, `set_slide_title`) expose no parameter for colour, font,
+shape, background or chart. It builds correct, plain decks. It cannot
+express the thing the user was asking for, which was specifically a look.
+Recorded here so a future pass does not re-try it for a design problem.
+
+**Moda** could express it, and did. A full 31-slide design was built on
+its canvas (`cvs_3TF5V09YDY8Q2SMH85Y38ZNM64`): a "threshold line" concept
+where the cover is an actual data visual, not decoration -- 365 bars of
+peak daily PM2.5 read straight from `data/delhi_clean.csv`, drawn on a
+square-root scale with the 121 ug/m3 health threshold as a live rule
+across them, bars above it coral and below it teal. Two of its own limits
+needed working around: `<tspan>` is unsupported in its markup dialect
+(patched via `htmlContent`), and its font stack has no glyph for a
+combining circumflex, so the ridge equation was rewritten without one
+rather than shipped as a broken box.
+
+Then the export came back with a `moda.app` watermark on all 31 slides,
+because the account is on the free plan. Two shortcuts were available and
+both were declined: stripping the watermark out of the OOXML, and
+reassembling the deck from clean `canvas_screenshot` images to bypass the
+paid export. Either one takes a paid feature without paying for it, and
+the second also silently converts an editable deck into pictures of a
+deck, which is not what the user asked for and would be discovered at the
+worst possible moment.
+
+So the design was rebuilt locally instead, in `pptx_src/build_deck_v2.js`
+-- same concept, every pixel controlled here, nothing rented. The port
+needed three things pptxgenjs does not provide: radial gradient
+backgrounds (pre-rendered with PIL in `gen_bg.py`, since pptxgenjs has no
+gradient support), a white Monash logo (recoloured with PIL preserving
+alpha, since there is no `tint` option), and a coordinate mapping from the
+1920x1080 design space (`IN(px) = px/144`, `PT(px) = px/2`).
+
+The deck is typeset in Calibri, not the Inter the design was drawn in,
+because Inter is not installed on this machine and pptxgenjs cannot embed
+a font -- naming a missing font would have silently substituted something
+different on the user's machine and on the presentation-room computer.
+Calibri runs taller per line than Inter, which broke six text blocks that
+had been positioned on Inter's metrics. All six were found the only way
+they can be found, by rendering all 31 slides to images and looking at
+every one: a stat card overflowing, a "03" pill wrapping its own two
+characters (fixed with `margin: 0`), dot-plot labels sitting off their
+rows, two section dividers highlighting the same slice of the progress
+rule, the GRU horizon rows on slide 20 with dividers cutting through
+wrapped lines, the three answer cards on slide 29 overrunning their
+bottoms, the closing author block sitting on top of the skyline bars, and
+the GRU equation caption on slide 16 clipped at its card edge. Fixed,
+rebuilt, re-validated, re-rendered and re-inspected slide by slide.
+
+`slides_v2.pptx` is the result: 31 slides, watermark-free, fully
+editable, validating clean. Kept under that name rather than overwriting
+`slides.pptx`, which the user has open in PowerPoint (`~$slides.pptx`
+exists). Not yet committed.
+
+### Same day, a twenty-eighth pass (report chat): a development-timeline
+### document for Dr Tian, built from git history rather than asserted
+
+The user's concern, stated directly: the report went from 14 to 65 pages
+"in just 2 days," and Tian seeing that without context could read it as a
+sudden conversion rather than steady work. Two separate things were worth
+doing about it -- a true account of the timeline, and the standing
+AI-tool-use conversation with Tian -- and the user asked for the first.
+
+Pulled the real numbers rather than reconstructing them from memory:
+`git log` on `report/main.pdf` lists every commit that changed the
+compiled report, and `git show <commit>:report/main.pdf | pdfinfo` gives
+that commit's exact page count. The actual shape, verified this way: 10
+pages on 4 September (the first scaffold), flat for 26 days, 15 pages by
+30 September (first complete draft, sent to Dr Tian that day), 58 pages
+by 2 October, 65 by 3 October, unchanged since. The 2 October jump is not
+self-directed scope growth -- it is traceable to his own recorded meeting
+feedback that same day: the 14-page draft judged "far too short" for a
+24-point capstone against a previous student's 71-page report shown as a
+depth benchmark, with four specific, numbered requests, against a
+newly-confirmed 31 October deadline. That record already existed in this
+file ("Week 7, meeting with Dr Tian, 2 October"); this pass is the first
+time it was pulled together with the page-count evidence into one
+document meant for Tian to actually read.
+
+Built `MTH5000_Development_Timeline.pdf` via a new
+`build_development_timeline.py`, reusing `build_meeting_brief.py`'s
+ReportLab house style (Times, black, no colour) rather than introducing a
+different look. One deliberate scope limit: the document states *when*
+and *what* changed, never *how* -- it does not characterise who or what
+produced the 2-3 October writing, because that question belongs to the
+AI-tool-use conversation specifically, not to a timeline document that
+would otherwise be smuggling a partial answer into the wrong venue. Also
+caught and stated its own small inconsistency rather than hiding it: Dr
+Tian's meeting notes describe the draft he reviewed as 14 pages, while the
+git-measured end-of-day state for 30 September is 15 -- a few edits made
+that same evening, after the draft was sent. Two pages, compiled clean,
+visually checked by rendering both to images rather than trusting the
+build log alone. Not yet committed.
+
+Still outstanding, and still the thing that actually resolves the
+underlying concern rather than just contextualising it: the AI-tool-use
+declaration with Dr Tian. This document is deliberately not a substitute
+for that conversation.
+
+### Same day, a twenty-ninth pass: "all major questions that we faced in
+### this project," and a self-caught house-style violation
+
+The user set the AI-tool-use drafting aside for now and asked for
+something different: every major question the project actually faced,
+start to finish, not just the formal RQ1 to RQ3. Read back through this
+entire file, start to end, rather than relying on this session's own
+memory of it, since most of the early history (Weeks 1 through 11)
+predates this session. Pulled out roughly thirty genuine decision points
+or findings, not routine tasks, grouped into six phases: data and scope,
+modelling, evaluation design (the project's actual spine, the alarm-
+budget-dominates finding), statistical rigor from the critical-review
+phase, report integrity, and what is still open. Delivered first as a
+direct chat answer; the user then asked for it as a document.
+
+Built `MTH5000_Major_Questions.pdf` via a new `build_major_questions.py`,
+reusing the same ReportLab house style as the other two PDFs. **Caught a
+real mistake before the user had to**: the first version used em dashes
+throughout, roughly two dozen of them, structurally useful for the
+aside-heavy phrasing this kind of summary tends to invite. This project's
+own "Style preferences for documents" section, lower in this same file,
+states plainly: "No em dashes anywhere." That rule was written for this
+project's documents in general, not only `main.tex` — the three other
+house-style PDFs (meeting brief, development timeline) already follow it
+without needing to be told twice. Caught by rereading this file's own
+standing instructions before calling the document finished, not by the
+user flagging it. Rewrote every instance using colons, parentheses, or a
+plain comma instead, matching what the sentence actually needed rather
+than defaulting to one punctuation mark throughout. Re-verified at zero
+em dashes by direct search, not by a visual skim, and re-rendered all
+three pages to images to confirm nothing else broke. The irony is worth
+naming directly: a document meant partly to demonstrate careful, human
+scrutiny of the project's own output had, on the first pass, exactly the
+kind of tic that makes writing read as machine-generated. Caught and
+fixed before it reached the user a second time.
+
+Three pages, compiled clean. Not yet committed.
+
+### Same day, a thirtieth pass: "did we solve all of them?", and a
+### mislabeled section caught by the question itself
+
+Direct follow-up on the document above: of the thirty-four questions, how
+many are actually resolved? Went back through all thirty-four rather than
+estimating. The true count is thirty-two resolved, two not, but the
+document's own "Still Open" section had quietly mixed two different
+things together: two items that were genuinely still open (the
+Kolmogorov-Arnold Network decision, the AI-tool-use declaration) and two
+that were already resolved by Dr Tian (the real deadline and grading
+split, the weather extension's after-the-fact sign-off) but had been
+grouped there only because they came from the same earlier batch of
+thirteen administrative questions, not because they were unresolved. That
+is a labelling imprecision in the document, not a finding about the
+project, and it would have left anyone reading the PDF alone, without
+this conversation, thinking four things were open rather than two.
+
+Also worth stating plainly, since the user's question conflated "solved"
+and "fixed" and the honest answer needed to pull them apart: most of the
+thirty-two are actual fixes, something was found wrong and is now
+correct. A real minority are not fixes at all but genuine findings about
+the models or the data, the GRU's lack of bit-reproducibility, the ARIMA
+model's three non-invertible refits, its own never-tuned
+hyperparameters, that cannot be "fixed" by further code, only discovered
+and stated honestly in Limitations. Both are legitimately "resolved," but
+conflating the two would overstate how much of this project was bug-
+fixing versus how much was genuine empirical discovery correctly
+reported.
+
+**Fixed in `build_major_questions.py`:** split the old four-item "Still
+Open" section into "Administrative Questions, Resolved Along the Way"
+(two items) and "Genuinely Still Open" (two items), and added a closing
+"Status" section stating the 32/2 split and the fix-versus-finding
+distinction directly in the document, so a reader does not need this
+conversation to get the same accurate picture. Four pages now, up from
+three. Rebuilt, re-rendered every page to an image and checked each one
+rather than trusting the build log, re-sent to the user. Not yet
+committed.
+
+### Same day, a thirty-first pass: asking Dr Tian the RQ3 question for
+### real, by email, without giving away the answer
+
+Picked the single most important item off the thirty-four, the
+accuracy-versus-warning-system question that is this project's own
+spine, and asked for two things built around it: an email asking Dr Tian
+for his view, and a one-page-plus PDF to attach to it, neither one
+stating what the project actually found.
+
+Wrote the email directly in chat (not sent, not drafted into Gmail,
+since only "write" was asked, not "send"): short, states the two
+evaluation philosophies, asks which he thinks should be primary for a
+mathematics capstone, invites his view before the report's structure is
+finalised. Stops well short of the Week 5 finding (the alarm-budget
+spread against the model-choice spread) or any number from the
+threshold sweep.
+
+Then built `MTH5000_Evaluation_Question.pdf` via a new
+`build_evaluation_question.py`, same house style, to attach. Four
+sections: the setup (what is being forecast, how it is evaluated), the
+two candidate criteria stated with deliberately matched length and
+weight so neither one is implicitly favoured, a paragraph on why they
+could disagree (framed structurally: one weighs every day equally, the
+other turns on a threshold choice the first does not have at all) with
+no result or number attached to it, and the question itself. Checked
+before writing a word that nothing said is actually false: the document
+does not claim the evaluation has not been explored yet, only that the
+report's structure around it is not yet finalised, which is true
+regardless of how much analysis already exists behind it. Two pages,
+compiled clean, both pages visually checked. Not yet committed.
+
+### Same day, a thirty-second pass: Dr Tian's actual reply, and the one
+### real gap it surfaced in the report itself
+
+Dr Tian replied (screenshot shared by the user): evaluate both criteria
+separately, weighted by the project's main objective, and do not treat a
+disagreement between them as a problem, it could be the interesting
+finding. That is close to a direct, independent endorsement of this
+project's actual central result, obtained without having seen it, which
+is the strongest validation this report's framing has had from him to
+date.
+
+He also raised a concrete methodological point: the alert threshold
+should be justified from literature or documentation, not chosen
+arbitrarily. Checked this against the report rather than assuming either
+way. The threshold the project actually uses, 121, is not arbitrary: it
+is the Central Pollution Control Board's own National Air Quality Index
+boundary for "Very Poor" (121 to 250 micrograms per cubic metre, 24-hour
+PM2.5). But the report never said so. Grepped all 65 pages: "121"
+appeared exactly once, bare, in a generated table, no unit, no
+explanation, no citation anywhere.
+
+Verified the CPCB standard directly from its own source rather than
+trusting a secondary summary: fetched the official CPCB document
+("National Air Quality Index," Control of Urban Pollution Series
+CUPS/82/2014-15) and read Table 3.6 (PM2.5 breakpoints) directly, which
+confirms 121 as the lower bound of "Very Poor," matching what
+`step01_data_check.py`'s own code comment already independently said.
+
+**Fixed:** added `cpcb2014aqi` to `refs.bib` as a `@techreport` entry,
+the bibliography's first non-DOI source, a deliberate exception to the
+usual CrossRef-only rule since a government standard document is the
+primary source itself, not supporting literature, the same category this
+project already treats OpenAQ and the CPCB bulletins as. Added one new
+paragraph in `main.tex`'s Data Collection section, immediately before
+Table 3.1, naming 121 micrograms per cubic metre and its CPCB "Very
+Poor" justification with the new citation, right where the table's own
+"Days above 121" row first appears. Recompiled clean: page count
+unchanged at 65, the only new warning is a cosmetic underfull hbox in
+the bibliography from the new entry's long URL, visually checked and not
+a real defect, the same three pre-existing warnings as before otherwise.
+Both the new paragraph's page and the new bibliography entry's page
+rendered to images and checked directly. Not yet committed.
 
 ## Data sources
 
