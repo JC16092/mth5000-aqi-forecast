@@ -2638,8 +2638,13 @@ report's structure around it is not yet finalised, which is true
 regardless of how much analysis already exists behind it. Two pages,
 compiled clean, both pages visually checked. Not yet committed.
 
-### Same day, a thirty-second pass: Dr Tian's actual reply, and the one
-### real gap it surfaced in the report itself
+### 12 October, a thirty-second pass: Dr Tian's actual reply, seven days
+### later, and the one real gap it surfaced in the report itself
+
+(Correction: this and everything below is dated 12 October, not "same
+day" as the passes above it. The gap between pass thirty-one and this one
+was real, not continuous work mislabelled; the heading above was wrong
+and is fixed here rather than silently.)
 
 Dr Tian replied (screenshot shared by the user): evaluate both criteria
 separately, weighted by the project's main objective, and do not treat a
@@ -2679,7 +2684,53 @@ unchanged at 65, the only new warning is a cosmetic underfull hbox in
 the bibliography from the new entry's long URL, visually checked and not
 a real defect, the same three pre-existing warnings as before otherwise.
 Both the new paragraph's page and the new bibliography entry's page
-rendered to images and checked directly. Not yet committed.
+rendered to images and checked directly. Committed and pushed as
+`254964d`.
+
+### Same day (12 October), a thirty-third pass: PDFs for the two
+### follow-up questions, with full detail rather than withheld answers
+
+The user picked two of the four candidate pre-submission questions
+offered after reviewing Dr Tian's reply: the GRU reproducibility finding
+(does the ten-seed, stated-limitation handling seem adequate to him), and
+the Kolmogorov-Arnold Network (attempt it at reduced scope, or drop it
+formally, given nineteen days to the deadline). Drafted the email
+covering both, then built a PDF to go with it.
+
+**This PDF is the deliberate opposite of the evaluation-criterion one
+from pass thirty-one.** That one withheld every result, since the point
+was an unprejudiced opinion before he saw any answer. This one exists
+specifically so Dr Tian can check a resolution that has already been
+made, so it needed the real detail, not a withheld one. Pulled the exact
+current seed-tally numbers directly from `main.tex` rather than from
+memory of the pass-nine finding, since the report's own prose has been
+re-verified since then: at two days ahead, 3 of 10 seeds beat ARIMA
+clearly, 6 are ties within the noise floor, 1 is a clear loss; at three
+days, 3 clear wins, 2 ties, 5 clear losses including one seed 0.041
+worse than ARIMA. Both match what Methodology and Limitations currently
+say, word for word in substance, not approximated.
+
+Built `MTH5000_Review_Items.pdf` via a new `build_review_items.py`, same
+house style. Two sections: the reproducibility finding (what was found,
+what it affected, the likely cause, how it was handled, then the actual
+question) and the Kolmogorov-Arnold Network (what it is, why it was never
+decided, what adding it properly would actually cost at nineteen days
+out, then the question). Two pages, compiled clean, both pages rendered
+to images and checked. Not yet committed.
+
+**Also caught and fixed a real dating error of this file's own, while
+appending this pass:** the previous pass was headed "Same day," written
+immediately after a "the date has changed... 12 October" system notice
+that this file did not act on at the time. Pass thirty-one was 5
+October; pass thirty-two was actually 12 October, seven days later, not
+a continuation of the same session. Corrected that heading above rather
+than leaving it wrong, and also corrected a second, smaller error found
+in the same pass: it had said pass thirty-two's PDF was "not yet
+committed" when it was in fact committed and pushed as `254964d` in a
+later turn of the same conversation. Both are exactly the kind of error
+this project's own standing lesson warns about, an unaudited status
+claim left to go stale, now caught on a routine re-read rather than left
+for someone else to notice.
 
 ## Data sources
 
