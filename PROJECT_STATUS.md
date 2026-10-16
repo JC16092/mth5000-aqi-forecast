@@ -2921,6 +2921,113 @@ clipped by its card, invisible in the build log and in validation, fixed
 by shortening all five bullets rather than by growing the card into the
 one below it. Not yet committed.
 
+### 17 October, a thirty-sixth pass: Dr Tian's reply to the response PDF,
+### and the transformer promoted from a bounded check to the full treatment
+
+Dr Tian replied to the `MTH5000_Response_to_Second_Review.pdf` from pass
+35 (screenshot, 16 October 22:34): progress looks great, the report is
+"good enough," but he pushed back specifically on the transformer's
+bounded-check treatment. His reasoning: the dataset (he said "4000 daily
+data," this project's actual figure is roughly 3,093 plain days or
+somewhat more counting every evaluation block) is large enough for a
+transformer, citing a rule of thumb from his own reading that puts the
+threshold around 200 observations. He also said not to worry about the
+results either way, that four to five methods is already an excellent
+comparison, and that the project is a good basis for a research paper
+given "more advanced methods" — read together as: stop treating the
+transformer as a bounded check and actually run it.
+
+**Built `step10_transformer.py`**, a mechanical port of `step09_lstm.py`'s
+full scaffolding (leak test, CLI, full burn-in-to-2026 rolling-origin
+harness, `--seed`) around the exact `TransformerForecaster` architecture
+already defined in `transformer_bounded_check.py` (d_model=16, 2 heads, 1
+encoder layer, sinusoidal positional encoding, lr=0.001) — the architecture
+itself was not redesigned, only the evaluation. Leak test passed first
+try. Seed 0 timed at 2:18 single-threaded; seeds 1-9 then ran in parallel
+in the background (10-core machine) and all finished within the same five
+minutes, so this was not the heavy compute lift it might have sounded
+like. `transformer_seed{0-9}.csv` written, `forecasts_with_transformer.csv`
+set to seed 0's merge as the new baseline file, matching the established
+convention (`forecasts_with_gru.csv` and `forecasts_with_lstm.csv` are
+each seed 0 of their own architecture, documented in pass 7's "second gap
+found" section).
+
+**The real, now-complete finding**, computed directly from all ten seeds
+rather than assumed from the bounded check: the transformer beats the GRU
+in 8 of 10 matched seeds at every horizon, and is within the LSTM's own
+seed-to-seed spread (beats it 5/10 at h=1, 7/10 at h=2, 5/10 at h=3).
+Against ARIMA specifically it wins 10/10 seeds at h=1 (mean rMAE 0.919,
+coincidentally identical to the LSTM's own h=1 mean), 8/10 at h=2, 3/10 at
+h=3, and by the Diebold-Mariano test it is the **strongest of the three
+networks against ARIMA at h=1**, significant in 7 of 10 seeds against the
+LSTM's 5 and the GRU's 4. Dr Tian's intuition was right and this project's
+own small-data argument against trying a transformer at all, stated in
+Literature Review and repeated in the original bounded-check script's own
+docstring, is not well supported by the full evaluation, the same kind of
+reversal already found once for the GRU-over-LSTM parameter-count
+argument.
+
+**Full report integration**, not left as a script and a result file:
+`make_tables.py` generalised further (`SEEDED_MODELS`, `ORDER`, `PRETTY`,
+and `table_significance`'s comparison list all took a `transformer` entry
+the same way they took `lstm` in pass 34; `table_warning`'s existing
+GRU-only guard excluded it from the threshold-sweep table automatically,
+no code change needed); `make_figures.py`'s `fig_accuracy` got a third
+range bar. In `main.tex`: a new Methodology subsection 3.5.3 gives the
+full transformer derivation (scaled dot-product attention, multi-head
+splitting, the pre-norm-free post-norm encoder layer, sinusoidal
+positional encoding, a parameter-count formula derived and verified
+against the real fitted model's 3,409 parameters, the largest of the
+three networks) citing `lim2021survey` throughout rather than the
+uncitable original attention paper, consistent with this project's
+standing CrossRef-only rule; a new List of Symbols block for $d_{model}$,
+$n_{head}$, $d_{ff}$, $PE$, $Q,K,V$ and the rest, matching the GRU and
+LSTM blocks' own format exactly, including the same discipline of flagging
+reused/colliding symbols. Literature Review's small-data argument against
+a transformer (the landscape subsection) and the "recurrent network suits
+a few thousand observations, unlike a Transformer" sentence both gained a
+forward-pointing correction, mirroring how the LSTM's parameter-count
+claim was corrected in pass 34. Results gained a full `\paragraph{}` for
+the transformer alongside the existing GRU and LSTM ones. Limitations was
+restructured rather than just extended: the transformer's bounded-check
+paragraph became a "here's what the bounded check found, here's what Dr
+Tian said, here's what the full run found instead" account, and the
+Kolmogorov-Arnold-LSTM hybrid is now the **only** architecture in the
+report still described as a bounded check (its own paragraph kept, with
+a small adjustment so its "tied with the transformer" comparison reads
+unambiguously as a comparison against the transformer's old bounded-check
+number, not its new full one). Abstract, both Conclusion sections, and
+Future Work (which dropped its old combined "transformer and KAN-LSTM"
+sixth extension, folding the transformer into the fifth extension
+alongside the LSTM's own still-open weather/threshold-sweep gap, and
+narrowing the sixth to the Kolmogorov-Arnold-LSTM hybrid alone) were all
+updated to match. Every place that said "the two recurrent networks, the
+GRU and the LSTM" as an exhaustive list was corrected to name three
+networks without calling the transformer "recurrent," since it isn't.
+
+Recompiled repeatedly through this pass. 70 to 74 pages. The only warnings
+are the same pre-existing, already-reviewed ones this report has carried
+for several passes (the cleaning-table underfull hbox, one section-title
+line wrap, the bibliography's long-URL underfull hbox) — confirmed by line
+number that neither is inside anything this pass touched. Rendered and
+visually inspected every changed page directly (the new Methodology
+subsection, Table 4.1 and Figure 4.1, the new significance table row, the
+new Results paragraph, both Limitations paragraphs, the Conclusion and
+Future Work changes, the Abstract, and the new symbols page), not just
+trusted a clean compile log, consistent with this project's own standing
+lesson about what "done" requires. Not yet committed: `step10_transformer.py`,
+`make_tables.py`, `make_figures.py`, `main.tex`, `main.pdf`,
+`transformer_seed{0-9}.csv`, `forecasts_with_transformer.csv`,
+`transformer_vs_arima_tenseed_summary.csv`, `fig6_accuracy.png`, and this
+file.
+
+**Still open from this pass**: the presentation deck (both `slides.pptx`
+and the Beamer source) still describes the transformer as a bounded check
+only, the same gap pass 34 left for the "twenty-eighth presentation pass"
+to close — a near-identical catch-up pass is now needed there too, in the
+presentation chat. No reply has been sent to Dr Tian yet; this pass
+produced the result his email asked for, not a drafted response to him.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required

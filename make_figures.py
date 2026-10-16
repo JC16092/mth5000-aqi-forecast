@@ -302,13 +302,14 @@ def fig_warning(sweep_path="threshold_sweep.csv"):
 
 
 # ---------------------------------------------------------------- figure 6
-def fig_accuracy(fc_path="forecasts_with_lstm.csv", series_path=CLEAN, burn_in=1095):
+def fig_accuracy(fc_path="forecasts_with_transformer.csv", series_path=CLEAN, burn_in=1095):
     """RQ1, the figure Table 3 never had. A Cleveland dot plot: one row per
     model, one panel per horizon, a dot at that model's rMAE relative to
-    persistence (the dashed line at 1.0). Both recurrent networks, the GRU
-    and the LSTM added after Dr Tian's suggestion, get a horizontal range
-    bar instead of a dot, across all ten seeds each, the same distinction
-    the report's own text insists on rather than a single favourable run.
+    persistence (the dashed line at 1.0). All three seeded networks, the GRU,
+    the LSTM and the transformer added after Dr Tian's suggestion, get a
+    horizontal range bar instead of a dot, across all ten seeds each, the
+    same distinction the report's own text insists on rather than a single
+    favourable run.
     Climatology and the seasonal-naive benchmark are left off: both sit far
     outside this range at one day ahead and would compress the competitive
     cluster that is actually the point of the figure; their numbers are in
@@ -321,10 +322,11 @@ def fig_accuracy(fc_path="forecasts_with_lstm.csv", series_path=CLEAN, burn_in=1
     common = ev.restrict_to_common(fc)
     metrics = ev.regression_metrics(common, scale, reference="naive_carry")
 
-    order = ["gru", "lstm", "arima_fourier", "hist_gbm_delta", "random_forest_delta",
-             "hist_gbm", "random_forest", "ridge", "naive_carry"]
+    order = ["gru", "lstm", "transformer", "arima_fourier", "hist_gbm_delta",
+             "random_forest_delta", "hist_gbm", "random_forest", "ridge", "naive_carry"]
     labels = {
         "gru": "GRU, range over 10 seeds", "lstm": "LSTM, range over 10 seeds",
+        "transformer": "Transformer, range over 10 seeds",
         "arima_fourier": "ARIMA",
         "hist_gbm_delta": "gradient boosting, change",
         "random_forest_delta": "random forest, change",
@@ -332,7 +334,8 @@ def fig_accuracy(fc_path="forecasts_with_lstm.csv", series_path=CLEAN, burn_in=1
         "random_forest": "random forest, level",
         "ridge": "ridge", "naive_carry": "persistence",
     }
-    SEEDED = {"gru": "gru_seed*.csv", "lstm": "lstm_seed*.csv"}
+    SEEDED = {"gru": "gru_seed*.csv", "lstm": "lstm_seed*.csv",
+              "transformer": "transformer_seed*.csv"}
 
     import glob
     seeded_by_h = {}

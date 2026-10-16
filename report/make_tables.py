@@ -31,6 +31,7 @@ OUT = os.path.join(HERE, "tables")
 PRETTY = {
     "gru": "GRU, 30 day sequence",
     "lstm": "LSTM, 30 day sequence",
+    "transformer": "Transformer, 30 day sequence",
     "arima_fourier": "ARIMA(1,1,1) with Fourier terms",
     "arima_fourier_mean": "ARIMA, bias corrected back-transform",
     "arima_no_fourier": "ARIMA(1,1,1), no Fourier terms",
@@ -48,14 +49,15 @@ PRETTY = {
     "hgb_clf": "Gradient boosting classifier",
 }
 
-ORDER = ["gru", "lstm", "arima_fourier", "random_forest_delta", "hist_gbm_delta",
-         "random_forest", "hist_gbm", "ridge", "naive_carry", "climatology",
-         "seasonal_naive_7"]
+ORDER = ["gru", "lstm", "transformer", "arima_fourier", "random_forest_delta",
+         "hist_gbm_delta", "random_forest", "hist_gbm", "ridge", "naive_carry",
+         "climatology", "seasonal_naive_7"]
 
 # Models reported as a range over independent random-initialisation seeds
 # rather than as a single point estimate, and the seed-file glob pattern
 # each one is found under.
-SEEDED_MODELS = {"gru": "gru_seed*.csv", "lstm": "lstm_seed*.csv"}
+SEEDED_MODELS = {"gru": "gru_seed*.csv", "lstm": "lstm_seed*.csv",
+                 "transformer": "transformer_seed*.csv"}
 
 
 def write(name, body):
@@ -293,6 +295,7 @@ def table_significance(comparisons=(
                            ("Plain GRU vs.\\ ARIMA", "gru_seed*.csv", "gru"),
                            ("GRU with weather vs.\\ ARIMA", "gru_weather_seed*.csv", "gru"),
                            ("LSTM vs.\\ ARIMA", "lstm_seed*.csv", "lstm"),
+                           ("Transformer vs.\\ ARIMA", "transformer_seed*.csv", "transformer"),
                        ),
                        other_model="arima_fourier", horizons=(1, 2, 3)):
     """Diebold-Mariano test of each seeded network against the ARIMA benchmark.
@@ -527,7 +530,9 @@ def table_cleaning():
 def main():
     os.makedirs(OUT, exist_ok=True)
     clean = os.path.join(ROOT, "data", "delhi_clean.csv")
-    fc = os.path.join(ROOT, "forecasts_with_lstm.csv")
+    fc = os.path.join(ROOT, "forecasts_with_transformer.csv")
+    if not os.path.exists(fc):
+        fc = os.path.join(ROOT, "forecasts_with_lstm.csv")
     if not os.path.exists(fc):
         fc = os.path.join(ROOT, "forecasts_with_gru.csv")
     if not os.path.exists(fc):

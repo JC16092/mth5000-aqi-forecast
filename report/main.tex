@@ -66,11 +66,15 @@ budget from forty to one hundred alarms a year moves the hit rate by fifty.
 Machine learning earns its place only partially. The classical model beats
 every machine learning regressor at every horizon, a result strengthened
 rather than weakened by a sensitivity analysis on the cleaning threshold, and
-the two models that do win, a GRU and an LSTM tested against it directly on
-supervisor feedback, both win only at one day ahead, each reported as a range
-across ten seeds rather than a single favourable one; the LSTM beats the GRU
-at every horizon despite carrying more parameters, the opposite of what
-motivated preferring the smaller network in the first place.
+the three deep learning models that do win, a GRU, an LSTM and a transformer
+each tested against it directly on supervisor feedback, win clearly only at
+one day ahead, each reported as a range across ten seeds rather than a single
+favourable one; the LSTM beats the GRU at every horizon despite carrying more
+parameters, the opposite of what motivated preferring the smaller network in
+the first place, and the transformer, added only after a second round of
+feedback questioned the small-data argument against it, matches or beats both
+recurrent networks at every horizon and carries the strongest formal
+significance against ARIMA of the three at one day ahead.
 Adding observed wind speed and temperature narrows the one-day gap further
 but leaves two and three days a statistical tie, and the extra accuracy
 moves the achievable hit rate at a fixed alarm budget by at most a point,
@@ -181,6 +185,18 @@ $W_{f,i,o,c}$ & input-to-hidden gate weight matrices, one quartet rather than th
 $U_{f,i,o,c}$ & hidden-to-hidden gate weight matrices, same quartet pattern & \ref{sec:lstm} \\
 $b_f,b_i,b_o,b_c$ & gate biases, same two-halves training convention as the GRU's & \ref{sec:lstm} \\
 \multicolumn{3}{@{}l}{\footnotesize $h_t$, $\sigma$, $\odot$, $H$ and $d$ are reused unchanged from the GRU block above.} \\[2pt]
+
+\multicolumn{3}{@{}l}{\textbf{The Transformer}} \\
+$d_{model}$ & embedding width, 16 throughout; distinct from the GRU and LSTM's hidden size $H$, since this is not a recurrent state & \ref{sec:transformer} \\
+$n_{head}$ & number of attention heads, 2 throughout & \ref{sec:transformer} \\
+$d_{ff}$ & feed-forward sublayer width, $4d_{model}=64$ throughout & \ref{sec:transformer} \\
+$pos$, $i$ & position index within the 30-day window and embedding-pair index in the positional encoding; $i$ here is unrelated to the row index $i$ used in the Gradient Boosting block above & \ref{sec:transformer} \\
+$PE$ & sinusoidal positional encoding, added to the input embedding before the first layer & \ref{sec:transformer} \\
+$Q,K,V$ & query, key and value matrices, each a learned projection of the embedded window & \ref{sec:transformer} \\
+$W^Q,W^K,W^V$ & the three projection matrices producing $Q$, $K$, $V$ & \ref{sec:transformer} \\
+$Z,Z',Z''$ & the embedded window and its state after each encoder sublayer & \ref{sec:transformer} \\
+$W_1,W_2,b_1,b_2$ & the feed-forward sublayer's two linear layers; unrelated to the GRU and LSTM's own gate weights above & \ref{sec:transformer} \\
+\multicolumn{3}{@{}l}{\footnotesize $d$ is reused unchanged from the GRU and LSTM blocks above, the number of input channels.} \\[2pt]
 
 \multicolumn{3}{@{}l}{\textbf{Evaluation Measures}} \\
 TP, FP, FN, TN & true/false positive/negative counts at a given decision threshold & \ref{sec:evalmeasures} \\
@@ -470,13 +486,25 @@ than the roughly three thousand daily observations available here. The
 same sample-size argument Section~\ref{sec:lit-ml} makes against flexible
 machine learning methods on a series this size applies with more force to
 an architecture built for sequences of many thousands of tokens.
+Section~\ref{sec:transformer} and Chapter~\ref{chap:results} test this
+reasoning directly rather than leaving it a citation-backed assumption,
+once a transformer was actually fitted under the identical protocol used
+for the two recurrent networks, a step taken only after Dr Tian questioned
+the premise directly: the series is some four thousand days long counting
+every evaluation block, which by his own reading of the literature clears
+the threshold at which a transformer is worth trying. The result does not
+support the argument above as stated: the fitted transformer beats the GRU
+at every horizon and is competitive with the LSTM, the same pattern already
+found below for the GRU-over-LSTM parameter-count argument.
 
 Weighed against all three, a recurrent network is the architecture whose
 assumptions best match this project's data: it reads the sequence directly,
 unlike an MLP; it is not limited to a fixed receptive field, unlike a CNN,
 though that limitation matters less here given the Fourier terms already
-carry the annual cycle; and it has a parameter count suited to a few
-thousand observations, unlike a Transformer. Within the recurrent family,
+carry the annual cycle; and, on the a priori parameter-count argument above,
+it was expected to suit a few thousand observations better than a
+Transformer would, an expectation Section~\ref{sec:transformer} tests
+directly rather than confirms. Within the recurrent family,
 the remaining choice is between a plain recurrent network and a gated one,
 which the next two subsections address.
 
@@ -983,7 +1011,7 @@ answer, which is what makes the first trustworthy.
 \section{Classical and Machine Learning Methods}
 \label{sec:ml-methods}
 
-Six of the eleven specifications fitted in this project belong to the machine
+Six of the twelve specifications fitted in this project belong to the machine
 learning family in the broad sense used in Section~\ref{sec:lit-ml}: the
 classical ARIMA benchmark, which is included here for comparison even though
 it predates the term, and the three explicitly machine learning regressors,
@@ -1412,14 +1440,116 @@ Section~\ref{sec:threshold} rerun with it, a scope boundary stated
 explicitly in Section~\ref{sec:limitations} rather than left for a reader
 to notice on their own.
 
+\subsection{The Transformer: Architecture and Training}
+\label{sec:transformer}
+
+Dr Tian's second review raised the transformer conditionally: try it only
+``if the size is large.'' Section~\ref{sec:lit-dl-landscape} judged that
+this project's roughly three thousand daily observations do not meet that
+condition, and the GRU was preferred on that basis. His reply to a bounded,
+single-split check of that argument (Section~\ref{sec:limitations}) was
+direct: counting every evaluation block the series is some four thousand
+days long, which by his own reading of the literature is well above the few
+hundred observations needed before a transformer is worth trying, and the
+small-data case should be tested properly rather than left to stand on a
+bounded check alone. This section gives the architecture that test fits;
+the full ten-seed rolling-origin result is in Section~\ref{sec:results-rq1}.
+
+A transformer encoder \citep{lim2021survey} replaces recurrence with
+self-attention: rather than propagating a hidden state step by step the way
+the GRU and LSTM above do, every timestep in the input window attends
+directly to every other one. Each input vector $x_t \in \mathbb{R}^d$ in the
+30-day window is first linearly projected to a $d_{model}$-dimensional
+embedding, $e_t = W_e x_t + b_e$, deliberately distinct notation from the
+hidden size $H$ used for the GRU and LSTM above since this is an embedding
+width, not a recurrent state. Self-attention has no inherent sense of
+position, unlike a recurrent cell whose state is built up one timestep at a
+time, so a fixed sinusoidal positional encoding is added elementwise before
+the first layer,
+\begin{align}
+PE_{(pos,2i)} &= \sin\!\Big(pos \,/\, 10000^{2i/d_{model}}\Big), \label{eq:pe-sin}\\
+PE_{(pos,2i+1)} &= \cos\!\Big(pos \,/\, 10000^{2i/d_{model}}\Big), \label{eq:pe-cos}
+\end{align}
+for position $pos \in \{0,\dots,29\}$ and embedding index $2i < d_{model}$,
+the construction \citet{lim2021survey} describe for attention-based
+forecasters generally, giving $z_t = e_t + PE_t$.
+
+Writing $Z \in \mathbb{R}^{30 \times d_{model}}$ for the whole window stacked
+as a matrix, three learned projections give queries, keys and values,
+$Q = ZW^Q$, $K = ZW^K$, $V = ZW^V$ with $W^Q, W^K, W^V \in
+\mathbb{R}^{d_{model}\times d_{model}}$, and attention output is a weighted
+average of the values, the weight on each position set by how well its key
+matches every query,
+\begin{equation}
+\mathrm{Attention}(Q,K,V) = \mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_{model}}}\right) V,
+\label{eq:attn}
+\end{equation}
+the scaling by $\sqrt{d_{model}}$ keeping the softmax's argument from growing
+with the embedding width and pushing gradients toward saturation.
+Multi-head attention runs $n_{head}$ independent copies of
+Equation~\ref{eq:attn} on $d_{model}/n_{head}$-dimensional subspaces of $Q$,
+$K$, $V$ in parallel, concatenates their outputs, and projects the result
+back to $d_{model}$ dimensions with one further learned matrix, letting the
+model represent more than one kind of relationship between positions at
+once rather than averaging them into a single attention pattern.
+
+Each encoder layer wraps this attention sublayer, and a position-wise
+feed-forward network applied identically to every position, in a residual
+connection and layer normalisation around each:
+\begin{align}
+Z' &= \mathrm{LayerNorm}\big(Z + \mathrm{MultiHead}(Z)\big), \label{eq:enc-attn}\\
+Z'' &= \mathrm{LayerNorm}\big(Z' + W_2\,\mathrm{ReLU}(W_1 Z' + b_1) + b_2\big), \label{eq:enc-ffn}
+\end{align}
+with $W_1 \in \mathbb{R}^{d_{ff}\times d_{model}}$, $W_2 \in
+\mathbb{R}^{d_{model}\times d_{ff}}$ expanding to a feed-forward width
+$d_{ff}$ and projecting back; each sublayer also applies dropout during
+training, PyTorch's default rate of 0.1, left unchanged and omitted from
+Equations~\ref{eq:enc-attn} and~\ref{eq:enc-ffn} since it is a regulariser
+rather than part of the architecture's input-output map at inference. A
+linear output layer maps the final position's representation, row 30 of
+$Z''$, to a single predicted value, the change in log concentration from
+the forecast origin, the same convention Equations~\ref{eq:gru-h}
+and~\ref{eq:lstm-h} use for the recurrent networks' final hidden state.
+
+The network fitted here is otherwise identical to the GRU and LSTM above:
+the same six channels (log concentration, missingness flag, two annual
+Fourier pairs), the same 30-day window, the same change-in-log target with
+the origin value added back, the same Adam optimiser with early stopping on
+the same chronological holdout, and the same treatment across ten random
+seeds, reported as a range for the same reason. Four settings are specific
+to this architecture and were not independently tuned: $d_{model}=16$,
+$n_{head}=2$ attention heads, a single encoder layer with feed-forward width
+$d_{ff}=4d_{model}=64$, and an Adam learning rate of 0.001 rather than the
+0.01 used for the GRU and LSTM, all inherited unchanged from the
+single-split bounded check (Section~\ref{sec:limitations}) that preceded
+the full evaluation. Section~\ref{sec:limitations} reports bounded
+sensitivity checks for the GRU's own hyperparameters; no equivalent check
+exists yet for the transformer's, which is stated here rather than left for
+a reader of Table~\ref{tab:accuracy} to assume.
+
+Summing the input projection, one encoder layer's self-attention and
+feed-forward sublayers with their two layer normalisations, and the output
+layer,
+\begin{equation}
+d_{model}\big(12\,d_{model} + d + 15\big) \;+\; 1
+\label{eq:transformer-params}
+\end{equation}
+trainable parameters in total, for a single encoder layer. For $d_{model}=16$
+and the six-channel network, $d=6$, Equation~\ref{eq:transformer-params}
+gives 3{,}409 parameters, confirmed directly by counting the fitted model
+object's own parameters: the largest of the three deep learning
+architectures in this project, ahead of the LSTM's 3{,}097 and the GRU's
+2{,}329, and independent of $n_{head}$, which only reshapes the existing
+query, key and value projections rather than adding new ones.
+
 \section{Rolling-Origin Evaluation}
 \label{sec:rolling}
 
 Every model was evaluated over 2{,}303 origins from 9 November 2019 to 24 August
 2026, spanning 6.8 years, with a three year burn-in and model state advanced
 daily between refits. Parameters are re-estimated every 90 days for every
-specification except the two recurrent networks, the GRU and the LSTM,
-which refit every 180 days: each of their refits trains a network from
+specification except the three networks, the GRU, the LSTM and the
+transformer, which refit every 180 days: each of their refits trains a network from
 scratch rather than solving a closed form or appending one more
 observation to an already-converged filter, so halving the refit
 frequency is the practical cost of including a trained network in the
@@ -1602,9 +1732,9 @@ differently.
 
 \section{Reproducibility}
 
-The analysis runs end to end from an empty directory via eleven numbered
-pipeline scripts, the LSTM of Section~\ref{sec:lstm} the most recent
-addition, ten of which carry an automated correctness test, run with
+The analysis runs end to end from an empty directory via twelve numbered
+pipeline scripts, the transformer of Section~\ref{sec:transformer} the most
+recent addition, eleven of which carry an automated correctness test, run with
 \texttt{--test}, that exits before producing any output if its own
 checks fail. The rolling origin harness verifies its own leakage
 invariant before every run. Every table in this report is generated directly
@@ -1627,12 +1757,15 @@ Section~\ref{sec:ml-methods}, comprises a classical ARIMA benchmark and three
 regressors, ridge, random forest, and gradient boosting, each controlling
 the bias-variance trade-off by a different mechanism: shrinkage, bagging, or
 additive stagewise correction. Deep learning, in Section~\ref{sec:dl-methods},
-comprises two gated recurrent networks, a GRU and an LSTM fitted under an
+comprises three networks: a GRU and an LSTM fitted under an
 otherwise identical protocol specifically to test the choice between them
 directly, each avoiding the vanishing-gradient failure of a plain
 recurrent network through a different gating mechanism, two gates and no
 separate memory cell for the GRU, three gates and an explicit cell state
-for the LSTM. Every model is evaluated under the same rolling-origin
+for the LSTM, and a transformer (Section~\ref{sec:transformer}) that
+replaces recurrence with self-attention altogether, added once Dr Tian's
+own feedback questioned whether this project's data was really too small
+for one. Every model is evaluated under the same rolling-origin
 protocol, specified in Section~\ref{sec:rolling}, and scored by the same
 measures, specified in Section~\ref{sec:evalmeasures}, so that the comparison
 in Chapter~\ref{chap:results} is a fair one; where that comparison involves
@@ -1650,7 +1783,8 @@ significance test, specified in Section~\ref{sec:dmtest}.
 \centering
 \caption{Relative mean absolute error against persistence, under rolling origin
 evaluation over 2{,}303 origins. Lower is better and 1.000 is persistence. The
-two recurrent networks, the GRU and the LSTM, are each given as the range over
+three networks, the GRU, the LSTM and the transformer, are each given as the
+range over
 ten initialisation seeds; they are the only models whose result depends on one.}
 \label{tab:accuracy}
 \footnotesize
@@ -1661,8 +1795,8 @@ ten initialisation seeds; they are the only models whose result depends on one.}
 \centering
 \includegraphics[width=\textwidth]{figures/fig6_accuracy}
 \caption{Table~\ref{tab:accuracy} as a dot plot, one row per model, one panel
-per horizon, the vertical line at 1.000 marking persistence. Neither
-recurrent network has a single dot: each one's ten seeds are shown as a
+per horizon, the vertical line at 1.000 marking persistence. None of the
+three seeded networks has a single dot: each one's ten seeds are shown as a
 horizontal range bar rather than a point estimate. Climatology and the
 seasonal-naive benchmark are omitted here, both well outside this axis range
 at one day ahead; their numbers are unchanged in Table~\ref{tab:accuracy}.}
@@ -1688,7 +1822,7 @@ seed, 0.879, is clearly the weaker of the two.
 
 \begin{table}[htbp]
 \centering
-\caption{Diebold-Mariano test of each recurrent network against the ARIMA
+\caption{Diebold-Mariano test of each network against the ARIMA
 benchmark (Section~\ref{sec:dmtest}), run once per seed and given as the
 range across all ten. A negative statistic favours the network at that
 seed; a positive one favours ARIMA. The last column counts seeds reaching
@@ -1745,6 +1879,32 @@ Section~\ref{sec:threshold}; Section~\ref{sec:limitations} states this
 scope boundary directly rather than leaving Table~\ref{tab:accuracy} to
 imply a fuller treatment than the one actually given.
 
+\paragraph{The transformer, promoted to the full treatment after Dr Tian's
+reply to the GRU-and-LSTM response (Section~\ref{sec:transformer}).}
+Table~\ref{tab:accuracy} shows it ahead of the GRU in eight of the ten
+matched seed pairs at every horizon, and essentially matching rather than
+losing to the LSTM: ahead in five of ten at one day, seven of ten at two,
+and five of ten at three. Against ARIMA specifically, the transformer is
+numerically ahead in all ten seeds at one day ahead (mean rMAE 0.919
+against ARIMA's 0.940, coincidentally the same mean the LSTM reaches
+above by a different route) and Table~\ref{tab:significance} reaches
+$p<0.05$ in seven of them, the strongest formal result of the three
+networks at this horizon, ahead of the LSTM's five and the GRU's four. At
+two days it is numerically ahead in eight of ten seeds, mean 0.879 against
+ARIMA's 0.883, but as with the GRU and LSTM no seed clears significance.
+At three days ARIMA remains ahead in most seeds, the transformer winning
+three of ten, mean 0.834 against ARIMA's 0.832, again with no seed on
+either side reaching significance. This result speaks directly to the
+small-data argument Section~\ref{sec:lit-dl-landscape} makes against an
+attention-based architecture on a series this size: Dr Tian's own reading,
+that roughly four thousand days clears the threshold at which a
+transformer is worth trying, is closer to what this project's own
+evidence shows than the argument it was tested against. Like the LSTM,
+the transformer was not carried through the weather extension of
+Section~\ref{sec:weather} or the decision-threshold sweep of
+Section~\ref{sec:threshold}; Section~\ref{sec:limitations} states this
+scope boundary directly for both networks together.
+
 Two subsidiary results support the specification choices. Removing the Fourier
 terms from the ARIMA degrades it by 3.3 points of relative error at one day and
 by 5.8 points at three, under the same rolling-origin harness, so the seasonal
@@ -1753,9 +1913,9 @@ from the origin rather than the level improves
 both tree models, because a tree cannot extrapolate beyond the targets it was
 trained on and this series drifts downward across the decade.
 
-Table~\ref{tab:significance} tests the three comparisons in this report
-with a seed to range over: the plain GRU, the weather-augmented GRU, and
-the LSTM, each against ARIMA. The same test applies just as directly to
+Table~\ref{tab:significance} tests the four comparisons in this report
+with a seed to range over: the plain GRU, the weather-augmented GRU, the
+LSTM, and the transformer, each against ARIMA. The same test applies just as directly to
 the other five machine learning rows against ARIMA (ridge, and the random
 forest and gradient boosting's level and change-target variants): each is
 reported as a single fit rather than a range, so one Diebold-Mariano
@@ -2072,7 +2232,7 @@ about five points, and at three days ahead, at the loosest budget this report
 considers, a climatology forecast that uses no recent information whatever
 comes within roughly a hundredth of the best fitted model, 0.816 against 0.827.
 
-This is not an argument against modelling. ARIMA and the recurrent networks
+This is not an argument against modelling. ARIMA and the fitted networks
 both earn real, if modest, gains over persistence in Table~\ref{tab:accuracy},
 and a better point forecast still narrows the range of thresholds worth
 considering. It is an argument about where the leverage in this problem
@@ -2313,49 +2473,60 @@ than a solution to it; a result reported as a range across seeds is a
 statement about the spread of outcomes this training procedure produces,
 not a bound on where its true performance lies.
 
-The LSTM of Section~\ref{sec:lstm} was held to the same ten-seed
-rolling-origin evaluation as the GRU for accuracy, but not carried
-further: it was not given a weather-augmented channel set
-(Section~\ref{sec:weather}), and it was not run through the
-decision-threshold sweep of Section~\ref{sec:threshold}, so it appears in
+The LSTM of Section~\ref{sec:lstm} and the transformer of
+Section~\ref{sec:transformer} were each held to the same ten-seed
+rolling-origin evaluation as the GRU for accuracy, but neither was carried
+further: neither was given a weather-augmented channel set
+(Section~\ref{sec:weather}), and neither was run through the
+decision-threshold sweep of Section~\ref{sec:threshold}, so both appear in
 Table~\ref{tab:accuracy} and Table~\ref{tab:significance} but nowhere in
 Chapter~\ref{chap:results}'s warning-system tables. Given the central
 finding of this report, that the alarm budget dominates which model is
 chosen far more than the model itself does, there is no particular reason
-to expect the LSTM would disturb that finding; it was not tested directly
+to expect either would disturb that finding; neither was tested directly
 because the marginal evidentiary value did not justify the computation
 with submission close, not because a result was anticipated and avoided.
 
-Two further architectures were tried, following Dr Tian's own suggestion
-directly, each as a bounded single-split check in the same spirit as the
-three above rather than a full rolling-origin evaluation: building either
-one properly would be comparable in effort to the GRU's or the LSTM's own
-treatment, and a bounded check is the way this project has consistently
-chosen to spend limited time on a question worth a first answer rather
-than committing to a full one blind.
-
-A small transformer encoder, sixteen-dimensional embeddings, two
-attention heads, one encoder layer, sinusoidal positional encoding, was
-fitted on the identical channel window. Section~\ref{sec:lit-dl-landscape}
-argues this project's roughly three thousand observations favour a
-recurrent architecture over one built for self-attention, and on the
-single split used throughout this section the transformer does not beat
-ARIMA's own single-split figures (0.903, 0.850 and 0.798 at one, two and
-three days, Section~\ref{sec:rolling}) at any horizon, consistent with
-that argument. It is, however, more competitive with the recurrent
-networks on this same comparison than the argument predicts: 0.903, 0.890
-and 0.818 against the GRU's single-split 0.914, 0.886 and 0.858 on
-identical data, ahead of the GRU at one and three days specifically. A
-small transformer on a short sequence was not the clear underperformer
-relative to a GRU that the small-data argument implies, even though it
-still does not close the gap to ARIMA.
+The transformer began, like the GRU's own hyperparameter and optimiser
+checks above, as a bounded single-split check: a small encoder, sixteen-
+dimensional embeddings, two attention heads, one encoder layer, sinusoidal
+positional encoding, fitted on the identical channel window.
+Section~\ref{sec:lit-dl-landscape} argues this project's roughly three
+thousand observations favour a recurrent architecture over one built for
+self-attention, and on that first single split the transformer did not
+beat ARIMA's own single-split figures (0.903, 0.850 and 0.798 at one, two
+and three days, Section~\ref{sec:rolling}) at any horizon, consistent with
+the argument, but was more competitive with the GRU on that same
+comparison than the argument predicted: 0.903, 0.890 and 0.818 against the
+GRU's single-split 0.914, 0.886 and 0.858, ahead of the GRU at one and
+three days specifically. Dr Tian's reply to a summary of that result,
+after the GRU-and-LSTM response was sent, questioned the small-data
+premise directly rather than accepting the bounded check as the last word:
+this project's series is roughly four thousand days long counting every
+evaluation block, which by his own reading of the literature is well above
+the few hundred observations needed to justify a transformer. The full
+ten-seed rolling-origin treatment reported in Section~\ref{sec:results-rq1}
+answers that question directly rather than leaving it to one validation
+split: the transformer beats the GRU in eight of ten matched seeds at
+every horizon and is within the LSTM's own seed-to-seed spread, the
+strongest of the three networks against ARIMA by the formal significance
+test at one day ahead. The small-data argument this project made for
+preferring a recurrent architecture over a transformer is, on this
+evidence, not well supported either, the same conclusion already reached
+above for the narrower GRU-over-LSTM parameter-count argument.
 
 A Kolmogorov-Arnold Network was tried as a hybrid specifically because Dr
-Tian named that combination directly: an LSTM backbone handling the
-sequence, its usual linear output layer replaced by a Kolmogorov-Arnold
+Tian named that combination directly, and remains a bounded check rather
+than a full evaluation: building it to the transformer's or the LSTM's own
+standard would be a comparable amount of work, and a bounded check is the
+way this project has consistently chosen to spend limited time on a
+question worth a first answer rather than committing to a full one blind.
+An LSTM backbone handles the sequence, its usual linear output layer
+replaced by a Kolmogorov-Arnold
 layer \citep{liu2025kan}, a learnable function on each input-output edge
 rather than a fixed weight. No established, maintained library exists for
-this the way one does for the GRU or LSTM, so the layer was implemented
+this the way one does for the GRU, the LSTM or a transformer encoder, so
+the layer was implemented
 here from the published construction (a base path plus a B-spline
 correction on a fixed grid) and checked in isolation before being fitted
 on real data: a single such layer recovers a held-out $\sin(3x)$ target to
@@ -2363,18 +2534,19 @@ within $10^{-4}$ mean squared error from a near-flat start. The practical
 risk, training a novel architecture with no library to lean on and no
 prior use in this project, was real and did not materialise: all three
 seeds trained stably, with no divergence or non-finite output at any
-point. On the same bounded single-split check the hybrid is competitive
+point. On the same bounded single-split check used for the transformer's
+own first look, the hybrid is competitive
 with, not dramatically better or worse than, the other three
 architectures: 0.924, 0.862 and 0.818 at one, two and three days, worst
 of the four at one day, best of the four at two days, and at three days
-essentially tied with the transformer, both well ahead of the GRU and
-LSTM on this specific check. A null result here, the hybrid simply
+essentially tied with the transformer's own bounded-check figure, both well ahead of the GRU and
+LSTM on that specific comparison. A null result here, the hybrid simply
 failing to train, would have been informative on its own; a working but
 unremarkable one is the result actually obtained, reported as exactly
-that rather than dismissed or oversold in either direction. None of these
-two architectures' bounded numbers has changed anything in
-Table~\ref{tab:accuracy}; both would need the full rolling-origin
-treatment before either could be.
+that rather than dismissed or oversold in either direction. None of this
+hybrid's bounded numbers has changed anything in
+Table~\ref{tab:accuracy}; it would need the full rolling-origin
+treatment, now given to the transformer, before they could.
 
 Wind speed and temperature were added, in Section~\ref{sec:weather}, but the
 treatment is narrower than a full meteorological extension in two specific
@@ -2421,7 +2593,7 @@ with the confidence it is.
 
 This project forecast hazardous PM2.5 days at a single Delhi monitor one to
 three days ahead, comparing a classical benchmark against three machine
-learning regressors and two deep recurrent networks, and evaluating every
+learning regressors and three deep learning networks, and evaluating every
 specification as a warning system rather than by average error alone. Two
 real defects in the source data, a clipped instrument ceiling and a
 mischaracterised coverage statistic, were found and corrected before any
@@ -2446,16 +2618,21 @@ a Diebold-Mariano test at every one of those comparisons rather than point
 estimates alone (Section~\ref{sec:results-rq1}), a result that strengthens
 rather than weakens under the sensitivity analysis in
 Section~\ref{sec:limitations}. Among models using the series' own history
-alone, the recurrent networks are the ones that win, and only at one day
+alone, the fitted networks are the ones that win, and only at one day
 ahead, each reported honestly as a range across ten random initialisations
-rather than as a single favourable seed. Of the two, the LSTM beats the
+rather than as a single favourable seed. Of the three, the LSTM beats the
 GRU at every horizon despite carrying roughly a third more parameters,
 directly against the parameter-count reasoning that motivated choosing
-the smaller architecture in the first place (Section~\ref{sec:lit-dl}); a
-small transformer and a Kolmogorov-Arnold-LSTM hybrid, tried afterward as
-bounded checks rather than full evaluations, were each more competitive
-with the recurrent networks than their own small-data arguments predicted,
-without closing the gap to ARIMA. Adding wind speed and temperature
+the smaller architecture in the first place (Section~\ref{sec:lit-dl}),
+and the transformer, added only after Dr Tian questioned the small-data
+argument against it directly, beats the GRU in eight of ten matched seeds
+at every horizon and matches the LSTM, carrying the strongest formal
+significance of the three against ARIMA at one day ahead
+(Section~\ref{sec:results-rq1}). A Kolmogorov-Arnold-LSTM hybrid, tried
+afterward as a bounded check rather than a full evaluation because no
+established library exists for it, was more competitive with the other
+three architectures on that bounded comparison than a novel, untried
+component might suggest, without closing the gap to ARIMA. Adding wind speed and temperature
 (Section~\ref{sec:results-weather}) does not move that boundary as cleanly
 as a first batch of five seeds suggested: across ten seeds the
 weather-enabled network still wins clearly at one day ahead, but at two
@@ -2498,8 +2675,9 @@ result that a project restricted to classical methods would never have found.
 Six extensions follow: two from where this report's own weather work
 stopped, a third from the Fourier-harmonic check in
 Section~\ref{sec:limitations}, a fourth from the single-station
-limitation, and a fifth and sixth from the LSTM and the two bounded
-architecture checks added after Dr Tian's own suggestion.
+limitation, a fifth from the scope boundary the LSTM and the transformer
+now share, and a sixth from the one architecture that remains a bounded
+check after Dr Tian's own suggestion.
 The threshold sweep has already been put through the weather-augmented
 models (Section~\ref{sec:results-weather}), so the open thread is not
 whether that comparison happened but what would change its answer: a real
@@ -2528,25 +2706,29 @@ Control Board network once its record lengthens, would test whether the
 findings here are a property of Delhi air quality or an artefact of the one
 diplomatic enclave monitor this project was restricted to.
 
-A fifth extension completes the LSTM's own treatment: fitting it with the
-weather channels of Section~\ref{sec:weather} and carrying it through the
-decision-threshold sweep of Section~\ref{sec:threshold}, the two steps
-Section~\ref{sec:limitations} states were not taken for it.
+A fifth extension completes the LSTM's and the transformer's own
+treatment: fitting each with the weather channels of
+Section~\ref{sec:weather} and carrying each through the decision-threshold
+sweep of Section~\ref{sec:threshold}, the two steps
+Section~\ref{sec:limitations} states were not taken for either.
 Given how narrowly the weather extension and the GRU-versus-LSTM
 comparison have each moved the central finding on their own, the honest
-expectation is that this would refine rather than overturn it. A stated
-expectation is not the same evidence as the run itself, though.
+expectation is that this would refine rather than overturn it for either
+network. A stated expectation is not the same evidence as the run itself,
+though.
 
-A sixth follows directly from the two bounded checks in
-Section~\ref{sec:limitations}: a full ten-seed rolling-origin evaluation
-of the small transformer and the Kolmogorov-Arnold-LSTM hybrid, in place
-of the single-split, three-seed check each was given here. Both were
-more competitive on that bounded check than this project's own
-small-data argument predicted, the transformer against the GRU
-specifically and the hybrid against all three other architectures at two
-and three days ahead; whether either result is a genuine property of the
-architecture or an artefact of one validation split neither check can
-settle on its own is precisely what the full evaluation would decide.
+A sixth follows directly from the one architecture that remains a bounded
+check in Section~\ref{sec:limitations}: a full ten-seed rolling-origin
+evaluation of the Kolmogorov-Arnold-LSTM hybrid, in place of the
+single-split, three-seed check it was given here, the same promotion the
+transformer itself was given in this report once its own bounded check
+and Dr Tian's challenge to the small-data reasoning behind it made a
+fuller treatment worth the computation. The hybrid was more competitive
+on its bounded check than a novel, library-free component might suggest,
+competitive with all three other architectures at two and three days
+ahead specifically; whether that holds under the full evaluation the
+transformer itself was just given is precisely what this extension would
+decide.
 
 Until any of these six is carried out, the central recommendation stands
 on its own: a hazardous air quality warning system should be designed
@@ -2557,10 +2739,12 @@ choice.
 \section{Chapter Summary}
 
 Three research questions were asked and three were answered. Machine
-learning earns a real but narrow place: only the two recurrent networks
+learning earns a real but narrow place: only the fitted networks
 beat the classical benchmark, and only one day ahead, with the LSTM ahead
 of the GRU despite more parameters, directly against the reasoning that
-motivated choosing the smaller one. Forecasting the
+motivated choosing the smaller one, and the transformer, tested only
+after that same kind of reasoning was challenged directly, competitive
+with both. Forecasting the
 concentration and then thresholding it has a modest, genuine edge over
 classifying the exceedance directly, not a decisive one. And the decision
 threshold, not the model, is what principally determines how many
