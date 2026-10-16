@@ -2863,6 +2863,64 @@ own four points in order, plus a closing "What Changed in the Report"
 paragraph. Two pages, compiled clean, both rendered to images and
 checked. Not yet committed.
 
+### 16 October, a twenty-eighth presentation pass: the deck caught up with the second review's four new architectures
+
+The report chat's passes 34 and 35 changed what the deck was describing,
+so this pass re-derived every affected claim from `report/tables/*.tex`
+and `report/main.tex` directly rather than from the handover summary.
+Doing so caught one thing the summary had flattened: the project now has
+**eleven** fitted specifications but the threshold sweep still covers
+**ten**, and the report is deliberately precise about which count goes
+where. The deck's "ten models" in the Methodology agenda line and chapter
+divider became eleven; the "ten specifications" on the central-result and
+Q3 slides correctly stayed at ten, because those are the threshold-sweep
+claim. Changing all of them to match would have introduced an error the
+handover note would have appeared to authorise.
+
+What changed, slide by slide:
+
+- **Slide 9** ("why a GRU") was the worst offender. It presented the LSTM
+  as ruled out for having more parameters than the dataset needs -- the
+  exact reasoning the report has now corrected, because the LSTM was
+  fitted and beat the GRU at every horizon. The slide is now an explicit
+  *a priori* screen: MLP, CNN and plain RNN keep their crosses, while the
+  LSTM and the transformer get a coral arrow marking that each was later
+  fitted anyway, and the GRU's own card now ends "Chapter 4 tests that
+  last reason directly -- and does not support it."
+- **Slide 16** became "The two recurrent networks": the GRU equations
+  stay, and the right-hand card now covers both, noting the LSTM swaps
+  the recurrent cell only (3,097 parameters against 2,329). A separate
+  LSTM-equations slide was considered and rejected as redundant for a
+  twenty-minute oral when the architecture is identical but for the cell;
+  the finding, not the gate algebra, is what carries.
+- **Slide 19** gained an LSTM range bar (0.913-0.932, drawn on the same
+  `x = 589 + (v - 0.85)/0.05 * 283` mapping the axis labels use, so the
+  bar is positioned by the number rather than by eye) and an LSTM table
+  row. Nine dot-plot rows rather than eight meant retightening the row
+  pitch and shortening the table rows to keep both on the slide.
+- **Slides 14, 16, 17** had singular "the recurrent network" references
+  swept the same way the report's own pass swept them, each checked
+  individually: the imputation exception and the 180-day refit cadence
+  are now plural, the precipitation exclusion correctly stayed singular
+  (it belongs to the GRU-only weather extension), and the ten-seed card
+  now reads "the two models whose results depend on a random
+  initialisation" while keeping the bit-reproducibility defect attached
+  to the GRU alone, which is the only model it was demonstrated on.
+- **A new slide 28, "Limitations III -- what the second review added"**:
+  the optimiser finding (SGD with momentum at 0.839 against Adam's 0.858
+  at three days), the LSTM's stated scope boundary, and the two bounded
+  checks. Dr Tian asked for these specifically and will look for them;
+  folding them into the existing Limitations slides would have buried
+  them. 31 slides became 32.
+- **Slide 30** Q1 no longer says the GRU is "the one model that wins."
+- **Slide 31** Future Work went from four cards in a 2x2 to six in a 3x2.
+
+Rebuilt, re-validated, and every changed slide re-rendered and inspected.
+That caught one new overflow: slide 16's added fifth bullet was being
+clipped by its card, invisible in the build log and in validation, fixed
+by shortening all five bullets rather than by growing the card into the
+one below it. Not yet committed.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required

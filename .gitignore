@@ -1,7 +1,11 @@
 .venv/
 __pycache__/
+node_modules/
 features.csv
 *.png
 !report/figures/monash-logo.png
 !report/figures/monash-logo-stacked.png
 .DS_Store
+
+# PowerPoint lock files
+~$*
