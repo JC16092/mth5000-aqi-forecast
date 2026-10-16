@@ -2845,7 +2845,23 @@ settling back to exactly the pre-existing, already-reviewed warning set.
 Every new page touched was rendered to an image and checked directly,
 not assumed correct from a clean compile log. 70 pages, at the edge of
 but still inside the "up to 70 is fine" standing preference
-([[feedback_mth5000_report_length]]). Not yet committed.
+([[feedback_mth5000_report_length]]). Committed and pushed as `b9f2500`.
+
+### Same day, a thirty-fifth pass: a response PDF for Dr Tian, summarising
+### pass thirty-four with real results rather than withheld ones
+
+Asked for a PDF explaining what pass thirty-four actually did, to send
+to Dr Tian alongside or after a reply. Unlike the pass-thirty-one
+evaluation-criterion PDF, this one's entire purpose is to report
+results, the GRU optimiser finding, the LSTM beating the GRU at every
+horizon, and the two bounded-check outcomes, in enough detail that he
+does not need to read the report itself to know what changed and why.
+
+Built `MTH5000_Response_to_Second_Review.pdf` via a new
+`build_tian_response.py`, same house style. Four sections matching his
+own four points in order, plus a closing "What Changed in the Report"
+paragraph. Two pages, compiled clean, both rendered to images and
+checked. Not yet committed.
 
 ## Data sources
 
