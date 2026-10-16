@@ -168,7 +168,7 @@ function skyline(s, vals, baseY, maxH, hotOp, coolOp, gap) {
 const CHAPTERS = [
   ["Introduction", "Why a forecast only helps if it arrives before the hazardous day — and the three questions that follow."],
   ["Literature Review", "Where these methods come from — and the one thing the Delhi literature never does."],
-  ["Methodology", "The data and two real defects in it, eleven models, and one leakage-tested harness."],
+  ["Methodology", "The data and two real defects in it, twelve models, and one leakage-tested harness."],
   ["Results", "Three research questions answered — and the one that turns out to dominate the other two."],
   ["Discussion", "What the numbers mean, how large a difference really is, and where the limits sit."],
   ["Conclusion", "What was found, what it recommends, and what should be done next."],
@@ -229,7 +229,7 @@ function divider(idx, sliceStart) {
   const rows = [
     ["01", "Introduction", "Why this matters, and what three questions it answers", false],
     ["02", "Literature Review", "Classical, ML and deep learning methods, and the gap this fills", false],
-    ["03", "Methodology", "Data, two real defects, eleven models, one evaluation harness", false],
+    ["03", "Methodology", "Data, two real defects, twelve models, one evaluation harness", false],
     ["04", "Results", "Accuracy, weather, the two arms, and the decision threshold", true],
     ["05", "Discussion", "What the numbers mean, how large a difference is, and the limits", false],
     ["06", "Conclusion", "What was found, and what comes next", false],
@@ -368,14 +368,14 @@ divider(1, 20);
   const s = pres.addSlide({ masterName: "LIGHT" });
   eyebrow(s, "LITERATURE REVIEW");
   slideTitle(s, "Deep learning: narrowing to a GRU");
-  s.addText("Each ruled out a priori for a stated reason — then the two closest were fitted anyway.", { x: IN(1180), y: IN(140), w: IN(630), h: IN(60), fontFace: F, fontSize: PT(23), color: SLATE, align: "right", lineSpacingMultiple: 1.35, valign: "top" });
+  s.addText("Each ruled out a priori for a stated reason — then the two closest were fitted in full, and both beat the GRU.", { x: IN(1180), y: IN(140), w: IN(630), h: IN(60), fontFace: F, fontSize: PT(23), color: SLATE, align: "right", lineSpacingMultiple: 1.35, valign: "top" });
   hairline(s, 232);
   const rows = [
     ["MLP", "No sense of sequence order — needs the same hand-built lag table the regression and tree models already use (Hornik et al., 1989)"],
     ["CNN", "Fixed receptive field, ill-suited to an annual cycle already handed to every model as Fourier terms (LeCun et al., 1998)"],
-    ["Transformer / TFT", "Large parameter counts, tuned for datasets orders of magnitude bigger than ~3,000 observations (Lim et al., 2021) — later fitted as a bounded check", true],
+    ["Transformer / TFT", "Large parameter counts, tuned for datasets orders of magnitude bigger than ~3,000 observations (Lim et al., 2021) — fitted in full after Dr Tian challenged that premise, and it beats the GRU", true],
     ["Plain RNN", "Vanishing and exploding gradients over long sequences (Bengio et al., 1994)"],
-    ["LSTM", "Fixes that with 3 gates and a memory cell — more parameters than this dataset needs (Hochreiter & Schmidhuber, 1997) — fitted in full on Dr Tian's advice, and it wins", true],
+    ["LSTM", "Fixes that with 3 gates and a memory cell — more parameters than this dataset needs (Hochreiter & Schmidhuber, 1997) — fitted in full on Dr Tian's advice, and it wins too", true],
   ];
   rows.forEach(([name, why, tested], i) => {
     const y = 286 + i * 106;
@@ -388,7 +388,7 @@ divider(1, 20);
   card(s, 110, 816, 1700, 108, NAVY);
   pill(s, 140, 848, 44, 44, "✓", CORAL, WHITE, 22, true);
   s.addText("GRU", { x: IN(212), y: IN(816), w: IN(300), h: IN(108), fontFace: F, fontSize: PT(29), bold: true, color: WHITE, valign: "middle" });
-  s.addText("2 gates, no memory cell, same gradient-flow property, smaller parameter count (Cho et al., 2014). Chapter 4 tests that last reason directly — and does not support it.", { x: IN(520), y: IN(816), w: IN(1250), h: IN(108), fontFace: F, fontSize: PT(22), color: "C9DCDC", valign: "middle" });
+  s.addText("2 gates, no memory cell, same gradient-flow property, smaller parameter count (Cho et al., 2014). Chapter 4 tests both size arguments directly — and supports neither.", { x: IN(520), y: IN(816), w: IN(1250), h: IN(108), fontFace: F, fontSize: PT(22), color: "C9DCDC", valign: "middle" });
 }
 
 // ===========================================================================
@@ -546,25 +546,29 @@ divider(2, 40);
 {
   const s = pres.addSlide({ masterName: "LIGHT" });
   eyebrow(s, "METHODOLOGY");
-  slideTitle(s, "The two recurrent networks");
+  slideTitle(s, "The three deep learning models");
   hairline(s, 232);
   card(s, 110, 282, 840, 440);
   label(s, 156, 314, 760, "TWO GATES, NO SEPARATE MEMORY CELL");
   placeImg(s, path.join(EQ, "eq_gru-1.png"), 530, 494, 688, 272);
   s.addText("hₜ is a convex combination, not a product of nonlinear transforms — so gradients survive many timesteps.", { x: IN(156), y: IN(644), w: IN(760), h: IN(72), fontFace: F, fontSize: PT(20), color: MUTED, lineSpacingMultiple: 1.3, valign: "top", margin: 0 });
   card(s, 990, 282, 820, 440);
-  label(s, 1036, 314, 740, "BOTH NETWORKS, FITTED IDENTICALLY");
-  bullets(s, [
-    "H = 24 hidden units, a 30-day window",
-    "6 input channels (10 with weather): log-concentration, a missingness flag, two annual Fourier pairs — K=2, against ARIMA's K=4",
-    "Gaps forward-filled, the flag marking which days were filled",
-    "Adam on mean absolute error, early stopping on a chronological holdout",
-    "The LSTM swaps the recurrent cell only: 3 gates and a cell state, 3,097 parameters against the GRU's 2,329",
-  ], 1036, 356, 740, 356, 21);
+  label(s, 1036, 314, 740, "THREE ARCHITECTURES, ONE PROTOCOL");
+  const archs = [
+    ["GRU", "2 gates, no separate memory cell — 2,329 parameters", 352, NAVY],
+    ["LSTM", "3 gates and an explicit cell state — 3,097 parameters", 444, NAVY],
+    ["Transformer", "Self-attention in place of recurrence: d_model = 16, 2 heads, 1 encoder layer — 3,409, the largest of the three", 536, CORAL],
+  ];
+  archs.forEach(([name, detail, y, c]) => {
+    s.addText(name, { x: IN(1036), y: IN(y), w: IN(740), h: IN(34), fontFace: F, fontSize: PT(26), bold: true, color: c, margin: 0, valign: "middle" });
+    s.addText(detail, { x: IN(1036), y: IN(y + 34), w: IN(740), h: IN(58), fontFace: F, fontSize: PT(20), color: SLATE, lineSpacingMultiple: 1.25, valign: "top", margin: 0 });
+  });
+  s.addShape(pres.ShapeType.rect, { x: IN(1036), y: IN(636), w: IN(728), h: IN(2), fill: { color: "E6EBEB" }, line: { type: "none" } });
+  s.addText("Same 6 channels, same 30-day window, same target, same optimiser, same ten seeds. Only the architecture differs.", { x: IN(1036), y: IN(652), w: IN(740), h: IN(64), fontFace: F, fontSize: PT(21), color: SLATE, lineSpacingMultiple: 1.3, valign: "top", margin: 0 });
   card(s, 110, 754, 1700, 222, NAVY);
   s.addText("10", { x: IN(166), y: IN(786), w: IN(340), h: IN(110), fontFace: F, fontSize: PT(92), bold: true, color: CORAL, valign: "top" });
   s.addText("RANDOM SEEDS", { x: IN(166), y: IN(894), w: IN(340), h: IN(34), fontFace: F, fontSize: PT(21), bold: true, color: CORAL_LT, charSpacing: 1.4 });
-  body(s, 560, 798, 1190, 150, "The two models whose results depend on a random initialisation. Every number for them is reported as a range across ten runs, never a single favourable one — and the GRU's training is not even bit-reproducible at a fixed seed.", 25, WHITE);
+  body(s, 560, 798, 1190, 150, "The three models whose results depend on a random initialisation. Every number for them is reported as a range across ten runs, never a single favourable one — and the GRU's training is not even bit-reproducible at a fixed seed.", 25, WHITE);
 }
 
 // ===========================================================================
@@ -608,21 +612,22 @@ divider(3, 80);
   eyebrow(s, "RESULTS · RQ1");
   slideTitle(s, "Forecast accuracy");
   hairline(s, 232);
-  card(s, 110, 272, 1700, 404);
+  card(s, 110, 272, 1700, 408);
   label(s, 150, 300, 900, "RELATIVE MAE AT ONE DAY AHEAD — LOWER IS BETTER");
   [589, 872, 1155, 1720].forEach((x) =>
-    s.addShape(pres.ShapeType.rect, { x: IN(x), y: IN(322), w: IN(2), h: IN(278), fill: { color: "EDF1F1" }, line: { type: "none" } }));
-  s.addShape(pres.ShapeType.rect, { x: IN(1437), y: IN(316), w: IN(2), h: IN(290), fill: { color: "B9C6C6" }, line: { type: "none" } });
+    s.addShape(pres.ShapeType.rect, { x: IN(x), y: IN(318), w: IN(2), h: IN(294), fill: { color: "EDF1F1" }, line: { type: "none" } }));
+  s.addShape(pres.ShapeType.rect, { x: IN(1437), y: IN(312), w: IN(2), h: IN(304), fill: { color: "B9C6C6" }, line: { type: "none" } });
   const dots = [
-    ["LSTM, 10 seeds", 946, 330, 107],
-    ["GRU, 10 seeds", 929, 363, 164],
-    ["ARIMA + Fourier", 1098, 396, 0],
-    ["Random forest (change)", 1257, 429, 0],
-    ["Gradient boosting (change)", 1341, 462, 0],
-    ["Random forest (level)", 1370, 495, 0],
-    ["Ridge regression", 1420, 528, 0],
-    ["Persistence", 1437, 561, 0],
-    ["Gradient boosting (level)", 1483, 594, 0],
+    ["Transformer, 10 seeds", 951, 326, 62],
+    ["LSTM, 10 seeds", 946, 357, 107],
+    ["GRU, 10 seeds", 929, 388, 164],
+    ["ARIMA + Fourier", 1098, 419, 0],
+    ["Random forest (change)", 1257, 450, 0],
+    ["Gradient boosting (change)", 1341, 481, 0],
+    ["Random forest (level)", 1370, 512, 0],
+    ["Ridge regression", 1420, 543, 0],
+    ["Persistence", 1437, 574, 0],
+    ["Gradient boosting (level)", 1483, 605, 0],
   ];
   dots.forEach(([name, cx, y, barW]) => {
     const isRange = barW > 0;
@@ -634,29 +639,30 @@ divider(3, 80);
     }
   });
   [[529, "0.85"], [812, "0.90"], [1095, "0.95"], [1377, "1.00"], [1660, "1.05"]].forEach(([x, t]) =>
-    s.addText(t, { x: IN(x), y: IN(620), w: IN(120), h: IN(28), fontFace: F, fontSize: PT(18), bold: t === "1.00", color: t === "1.00" ? SLATE : "8FA3A4", align: "center" }));
-  s.addText("persistence", { x: IN(1310), y: IN(646), w: IN(260), h: IN(26), fontFace: F, fontSize: PT(17), color: "8FA3A4", align: "center" });
+    s.addText(t, { x: IN(x), y: IN(630), w: IN(120), h: IN(28), fontFace: F, fontSize: PT(18), bold: t === "1.00", color: t === "1.00" ? SLATE : "8FA3A4", align: "center" }));
+  s.addText("persistence", { x: IN(1310), y: IN(654), w: IN(260), h: IN(26), fontFace: F, fontSize: PT(17), color: "8FA3A4", align: "center" });
 
   s.addTable([
     [{ text: "Model", options: { bold: true, color: WHITE, fill: { color: NAVY } } },
      { text: "h = 1", options: { bold: true, color: WHITE, fill: { color: NAVY }, align: "center" } },
      { text: "h = 2", options: { bold: true, color: WHITE, fill: { color: NAVY }, align: "center" } },
      { text: "h = 3", options: { bold: true, color: WHITE, fill: { color: NAVY }, align: "center" } }],
+    ["Transformer, range over 10 seeds", "0.914–0.925", "0.870–0.893", "0.825–0.842"],
     ["LSTM, range over 10 seeds", "0.913–0.932", "0.874–0.892", "0.824–0.847"],
     ["GRU, range over 10 seeds", "0.910–0.939", "0.878–0.906", "0.831–0.879"],
     ["ARIMA(1,1,1) + Fourier", "0.940", "0.883", "0.832"],
     ["Best ML regressor (GBM, change)", "0.983", "0.937", "0.878"],
     ["Persistence", "1.000", "1.000", "1.000"],
   ], {
-    x: IN(110), y: IN(692), w: IN(1080), colW: [IN(420), IN(220), IN(220), IN(220)],
-    rowH: IN(46), fontFace: F, fontSize: PT(20), color: INK, fill: { color: WHITE },
+    x: IN(110), y: IN(696), w: IN(1080), colW: [IN(432), IN(216), IN(216), IN(216)],
+    rowH: IN(40), fontFace: F, fontSize: PT(19), color: INK, fill: { color: WHITE },
     border: [{ type: "none" }, { type: "none" }, { pt: 0.75, color: LINE }, { type: "none" }],
     align: "center", valign: "middle", margin: [4, 10, 4, 10],
   });
 
-  card(s, 1230, 692, 580, 284, NAVY);
-  s.addText("15 / 15", { x: IN(1278), y: IN(716), w: IN(490), h: IN(104), fontFace: F, fontSize: PT(86), bold: true, color: CORAL, valign: "top" });
-  body(s, 1278, 822, 490, 136, "Diebold-Mariano pairings favour ARIMA over every machine learning regressor, at every horizon. Fourteen reach p < 0.05. Both networks are the exception, and only at one day ahead.", 22, WHITE, 1.35);
+  card(s, 1230, 696, 580, 280, NAVY);
+  s.addText("15 / 15", { x: IN(1278), y: IN(718), w: IN(490), h: IN(100), fontFace: F, fontSize: PT(84), bold: true, color: CORAL, valign: "top" });
+  body(s, 1278, 820, 490, 140, "Diebold-Mariano pairings favour ARIMA over every machine learning regressor, at every horizon. Fourteen reach p < 0.05. The three networks are the exception, and only at one day ahead.", 22, WHITE, 1.35);
 }
 
 // ===========================================================================
@@ -895,13 +901,13 @@ divider(4, 120);
 {
   const s = pres.addSlide({ masterName: "LIGHT" });
   eyebrow(s, "DISCUSSION");
-  slideTitle(s, "Limitations III — what the second review added");
+  slideTitle(s, "Limitations III — what the supervisor reviews added");
   hairline(s, 232);
   const quads = [
-    [110, 282, "OPTIMISER AND LEARNING RATE — BOUNDED CHECK", "Adam at 0.01 is at or near the best setting tried at one and two days. At three days SGD with momentum beats it by about two points, 0.839 against 0.858, with a tighter seed spread. Three separate bounded checks now agree that the three-day configuration is the one this project would least defend.", true],
-    [980, 282, "THE LSTM\u2019S SCOPE, STATED PLAINLY", "It was held to the same ten-seed rolling-origin evaluation as the GRU for accuracy, and no further: no weather channels, no threshold sweep. It appears in the accuracy and significance tables and nowhere in the warning-system tables. Not tested because the marginal evidence did not justify the compute, not because a result was avoided.", false],
-    [110, 652, "A SMALL TRANSFORMER — BOUNDED CHECK", "Sixteen-dimensional embeddings, two heads, one encoder layer. It does not beat ARIMA at any horizon, consistent with the small-data argument. But it is ahead of the GRU at one and three days, which that argument did not predict.", false],
-    [980, 652, "A KAN-LSTM HYBRID — BOUNDED CHECK", "Dr Tian named this combination directly. No maintained library exists, so the layer was built from the published construction and unit-tested alone first, recovering sin(3x) to 1e-4. All three seeds trained stably. Competitive with the other three: worst at one day, best at two.", false],
+    [110, 282, "OPTIMISER AND LEARNING RATE — BOUNDED CHECK", "Adam at 0.01 is at or near the best setting tried at one and two days. At three days SGD with momentum beats it by about two points, 0.839 against 0.858, with a tighter seed spread. Three separate bounded checks now agree that the three-day configuration is the one this project would least defend.", false],
+    [980, 282, "THE LSTM AND TRANSFORMER SCOPE, STATED PLAINLY", "Both were held to the same ten-seed rolling-origin evaluation as the GRU for accuracy, and no further: no weather channels, no threshold sweep for either. Both appear in the accuracy and significance tables and nowhere in the warning-system tables. Not tested because the marginal evidence did not justify the compute, not because a result was avoided.", false],
+    [110, 652, "THE TRANSFORMER, PROMOTED OUT OF THIS LIST", "It began here as a bounded check. Dr Tian challenged the small-data premise directly — some four thousand days clears the threshold he had seen cited — so it was given the full ten-seed treatment. It beats the GRU in 8 of 10 matched seeds at every horizon and carries the strongest formal result against ARIMA at one day ahead, 7 of 10 seeds.", true],
+    [980, 652, "A KAN-LSTM HYBRID — THE ONE CHECK STILL BOUNDED", "Dr Tian named this combination directly. No maintained library exists, so the layer was built from the published construction and unit-tested alone first, recovering sin(3x) to 1e-4. All three seeds trained stably. Competitive with the other three: worst at one day, best at two.", false],
   ];
   quads.forEach(([x, y, lab, txt, dark]) => {
     card(s, x, y, 830, y === 282 ? 330 : 324, dark ? NAVY : WHITE);
@@ -923,7 +929,7 @@ divider(5, 60);
   hairline(s, 232);
   body(s, 110, 258, 1700, 44, "Hazardous PM2.5 forecast one to three days ahead at one Delhi monitor; two real data defects corrected first; the proposal's weekly-cycle assumption tested and rejected.", 23, SLATE, 1.3);
   const ans = [
-    [110, "Q1", "Machine learning earns a narrow place", "ARIMA beats every ML regressor at every horizon, DM-backed. The two that win are the networks — the GRU and the LSTM, each only at one day ahead, reported as a range over ten seeds. The LSTM is ahead of the GRU at every horizon.", false],
+    [110, "Q1", "Machine learning earns a narrow place", "ARIMA beats every ML regressor at every horizon, DM-backed. The three that win are the networks — GRU, LSTM and transformer — each clearly only at one day ahead, reported as a range over ten seeds. Both of the two added on review beat the GRU originally chosen.", false],
     [690, "Q2", "Threshold the forecast", "Forecast-then-threshold beats direct classification in 21 of 36 matched comparisons to 11, with 4 ties — real but modest. It is preferred anyway, because a forecast can be rethresholded for any future policy without refitting.", false],
     [1270, "Q3", "The budget beats the model", "Across ten specifications at a fixed alarm budget, the spread in hit rate is about five points. Moving the budget instead moves it about fifty. The decision maker's choice outweighs the modeller's.", true],
   ];
@@ -935,7 +941,7 @@ divider(5, 60);
   });
   card(s, 110, 770, 1700, 206);
   label(s, 166, 804, 1580, "ON THE METHOD ITSELF");
-  body(s, 166, 848, 1580, 110, "Trying several methods rather than defaulting to ARIMA is what surfaced the one-day-ahead network win — and what makes the negative result at two and three days credible rather than assumed. Dr Tian's review added a fourth architecture that beat the one originally chosen.", 26);
+  body(s, 166, 848, 1580, 110, "Trying several methods rather than defaulting to ARIMA is what surfaced the one-day-ahead network win — and what makes the negative result at two and three days credible. Two rounds of supervisor review then added two more architectures, and both beat the one originally chosen.", 26);
 }
 
 // ===========================================================================
@@ -952,8 +958,8 @@ divider(5, 60);
     [686, 286, "2", "Boundary layer height", "Unavailable from meteostat; it would need a reanalysis product such as ERA5. It is the variable most directly tied to the physical mechanism of an episode rather than a correlate of it."],
     [1262, 286, "3", "Refit the GRU with K = 4", "Four Fourier harmonics under the full ten-seed evaluation, not the single validation split used so far — to settle how much of the gap to ARIMA that one difference explains."],
     [110, 630, "4", "A second station", "Ideally one inside the CPCB network once its record lengthens — to test whether these findings are a property of Delhi air quality, or of this one diplomatic-enclave monitor."],
-    [686, 630, "5", "Finish the LSTM", "Fit it with the weather channels and carry it through the threshold sweep — the two steps not taken for it. The honest expectation is that this refines the central finding rather than overturning it."],
-    [1262, 630, "6", "Evaluate the two bounded checks in full", "Ten seeds and rolling origins for the transformer and the KAN-LSTM hybrid. Both were more competitive than the small-data argument predicted; one validation split cannot settle whether that is real."],
+    [686, 630, "5", "Finish the LSTM and the transformer", "Fit each with the weather channels and carry each through the threshold sweep — the two steps taken for neither. The honest expectation is that this refines the central finding rather than overturning it."],
+    [1262, 630, "6", "Evaluate the KAN-LSTM hybrid in full", "Ten seeds and rolling origins for the one architecture still on a bounded check — the same promotion the transformer was just given, after its own bounded check proved to be understating it."],
   ];
   fw.forEach(([x, y, n, head, txt]) => {
     card(s, x, y, 546, 316);

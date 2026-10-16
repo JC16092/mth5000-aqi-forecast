@@ -92,6 +92,15 @@ transformer and a KAN-LSTM hybrid. Two lessons from catching up:
   after the project had fitted one and watched it win. Any slide that
   gives a *reason* for a modelling choice needs re-reading whenever the
   evidence for that choice changes, not just the slides carrying numbers.
+  This has now happened twice: the same slide later claimed the
+  transformer was ruled out on dataset size, after the full ten-seed run
+  had already shown it beating the GRU at every horizon.
+- **A slide's structure can go stale, not just its words.** Slide 16 held
+  the GRU and LSTM in one shared bullet list because they genuinely share
+  a protocol. A transformer is not recurrent, so extending that list would
+  have been wrong rather than merely crowded; the slide was rebuilt as a
+  three-architecture comparison instead. When a new model does not fit the
+  frame a slide assumes, change the frame.
 
 ### On the connectors (recorded so it isn't re-tried)
 
@@ -130,12 +139,13 @@ tectonic slides.tex
 `slides_v2.pptx` is filled in: title slide, agenda, and 25 content
 slides covering all six chapters of `report/main.tex` (3 Introduction, 3
 Literature Review, 6 Methodology, 5 Results, 4 Discussion, 2 Conclusion),
-plus a section-divider slide before each chapter. 32 slides total.
+plus a section-divider slide before each chapter. 32 slides total, and
+current as of the transformer's promotion (report commit `9f0ede4`).
 (`slides.pptx` and `slides.tex` are at the earlier 31-slide state and
 predate the LSTM work -- see the note below.)
 
 **A counting trap worth knowing before editing any model count.** The
-project fits **eleven** specifications, but the decision-threshold sweep
+project fits **twelve** specifications, but the decision-threshold sweep
 covers **ten** of them. The report is deliberately precise about which
 number goes where, and the deck follows it: the Methodology agenda line
 and chapter divider say eleven models, while the central-result slide and

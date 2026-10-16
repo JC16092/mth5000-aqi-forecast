@@ -3028,6 +3028,64 @@ to close — a near-identical catch-up pass is now needed there too, in the
 presentation chat. No reply has been sent to Dr Tian yet; this pass
 produced the result his email asked for, not a drafted response to him.
 
+### 17 October, a twenty-ninth presentation pass: the transformer's promotion carried into the deck
+
+Report commit `9f0ede4` moved the transformer from a bounded single-split
+check to the full ten-seed rolling-origin treatment, after Dr Tian
+challenged the small-data premise the bounded check rested on. Same
+catch-up procedure as the LSTM pass: every affected claim re-derived from
+`report/tables/*.tex` and `report/main.tex` rather than from the handover
+summary. The ten/twelve split held exactly as the ten/eleven one did --
+twelve specifications now fitted, the threshold sweep still covering ten
+-- so the Methodology counts moved to twelve and the central-result and
+Q3 claims again correctly stayed at ten.
+
+The transformer's numbers, read from the regenerated tables: 0.914-0.925,
+0.870-0.893, 0.825-0.842 across the three horizons, and 7/10 seeds
+significant against ARIMA at one day, the strongest formal result of the
+three networks there, ahead of the LSTM's 5 and the GRU's 4.
+
+Slide by slide:
+
+- **Slide 9** now says the transformer was "fitted in full after Dr Tian
+  challenged that premise, and it beats the GRU," replacing last pass's
+  "later fitted as a bounded check." The GRU's own card went from
+  "Chapter 4 tests that last reason directly -- and does not support it"
+  to "tests both size arguments directly -- and supports neither," since
+  the parameter-count argument has now failed twice, against the LSTM and
+  against the transformer.
+- **Slide 16** needed restructuring rather than extending. It was "The
+  two recurrent networks" with a shared bullet list, and a transformer is
+  not recurrent, so a sixth bullet would have been both wrong and over the
+  card's capacity. It is now "The three deep learning models" with a
+  three-row architecture comparison -- mechanism and parameter count for
+  each, 2,329 / 3,097 / 3,409 -- closing on the one line that matters for
+  the comparison's validity: same channels, window, target, optimiser and
+  seeds, only the architecture differs. Better than the bullet list it
+  replaced, independent of the transformer.
+- **Slide 19** gained a third range bar and table row. The three network
+  ranges overlap, so a "lower is better" sort is ambiguous; they are
+  ordered by range midpoint (transformer, LSTM, GRU), which is both a
+  defensible visual ranking and the order the report's own prose uses when
+  it compares them. Ten dot-plot rows and seven table rows meant
+  retightening row pitch, font and card heights again.
+- **Slide 28** was the pass's real content change. "A small transformer --
+  bounded check" became "The transformer, promoted out of this list,"
+  which tells the story Dr Tian will recognise: it started here, he
+  challenged the premise, the full treatment followed and it beat the GRU
+  in 8 of 10 matched seeds. The card was made the dark one, taking that
+  emphasis from the optimiser card, and the KAN-LSTM hybrid is now labelled
+  "the one check still bounded." The LSTM scope card covers both networks.
+- **Slide 30** Q1 moved from two winning networks to three, and **slide
+  31**'s fifth Future Work item now covers both the LSTM and the
+  transformer while the sixth narrows to the hybrid alone.
+
+Two defects caught only by rendering, neither visible in the build log or
+the validator: a missing trailing comma that broke the build outright
+(caught immediately), and slide 30's closing card overrunning its bottom
+edge once the sentence grew, fixed by trimming the sentence rather than
+by growing the card into the Q-cards above it. Not yet committed.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required
