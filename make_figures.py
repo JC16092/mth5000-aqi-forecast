@@ -302,16 +302,17 @@ def fig_warning(sweep_path="threshold_sweep.csv"):
 
 
 # ---------------------------------------------------------------- figure 6
-def fig_accuracy(fc_path="forecasts_with_gru.csv", series_path=CLEAN, burn_in=1095):
+def fig_accuracy(fc_path="forecasts_with_lstm.csv", series_path=CLEAN, burn_in=1095):
     """RQ1, the figure Table 3 never had. A Cleveland dot plot: one row per
     model, one panel per horizon, a dot at that model's rMAE relative to
-    persistence (the dashed line at 1.0). The recurrent network gets a
-    horizontal range bar instead of a dot, across all ten seeds, the same
-    distinction the report's own text insists on rather than a single
-    favourable run. Climatology and the seasonal-naive benchmark are left
-    off: both sit far outside this range at one day ahead and would compress
-    the competitive cluster that is actually the point of the figure; their
-    numbers are in Table 3, unchanged.
+    persistence (the dashed line at 1.0). Both recurrent networks, the GRU
+    and the LSTM added after Dr Tian's suggestion, get a horizontal range
+    bar instead of a dot, across all ten seeds each, the same distinction
+    the report's own text insists on rather than a single favourable run.
+    Climatology and the seasonal-naive benchmark are left off: both sit far
+    outside this range at one day ahead and would compress the competitive
+    cluster that is actually the point of the figure; their numbers are in
+    Table 3, unchanged.
     """
     s = load_series(series_path, "date", "PM2.5")
     scale = ev.mase_scale(s.loc[:s.index[burn_in]].values)
@@ -320,27 +321,32 @@ def fig_accuracy(fc_path="forecasts_with_gru.csv", series_path=CLEAN, burn_in=10
     common = ev.restrict_to_common(fc)
     metrics = ev.regression_metrics(common, scale, reference="naive_carry")
 
-    order = ["gru", "arima_fourier", "hist_gbm_delta", "random_forest_delta",
+    order = ["gru", "lstm", "arima_fourier", "hist_gbm_delta", "random_forest_delta",
              "hist_gbm", "random_forest", "ridge", "naive_carry"]
     labels = {
-        "gru": "GRU, range over 10 seeds", "arima_fourier": "ARIMA",
+        "gru": "GRU, range over 10 seeds", "lstm": "LSTM, range over 10 seeds",
+        "arima_fourier": "ARIMA",
         "hist_gbm_delta": "gradient boosting, change",
         "random_forest_delta": "random forest, change",
         "hist_gbm": "gradient boosting, level",
         "random_forest": "random forest, level",
         "ridge": "ridge", "naive_carry": "persistence",
     }
+    SEEDED = {"gru": "gru_seed*.csv", "lstm": "lstm_seed*.csv"}
 
     import glob
-    seed_files = sorted(glob.glob("gru_seed*.csv"))
-    gru_by_h = {h: [] for h in (1, 2, 3)}
-    for f in seed_files:
-        g = ev.restrict_to_common(pd.read_csv(f, parse_dates=["origin"]))
-        gm = ev.regression_metrics(g, scale, reference="naive_carry")
-        for h in (1, 2, 3):
-            row = gm[(gm.model == "gru") & (gm.horizon == h)]
-            if len(row):
-                gru_by_h[h].append(float(row["rMAE"].iloc[0]))
+    seeded_by_h = {}
+    for model_name, pattern in SEEDED.items():
+        seed_files = sorted(glob.glob(pattern))
+        by_h = {h: [] for h in (1, 2, 3)}
+        for f in seed_files:
+            g = ev.restrict_to_common(pd.read_csv(f, parse_dates=["origin"]))
+            gm = ev.regression_metrics(g, scale, reference="naive_carry")
+            for h in (1, 2, 3):
+                row = gm[(gm.model == model_name) & (gm.horizon == h)]
+                if len(row):
+                    by_h[h].append(float(row["rMAE"].iloc[0]))
+        seeded_by_h[model_name] = by_h
 
     y = np.arange(len(order))[::-1]
     fig, axes = plt.subplots(1, 3, figsize=(W, 3.6), sharey=True,
@@ -350,8 +356,8 @@ def fig_accuracy(fc_path="forecasts_with_gru.csv", series_path=CLEAN, burn_in=10
         ax = axes[col]
         ax.axvline(1.0, color="0.75", lw=0.8, zorder=1)
         for yi, name in zip(y, order):
-            if name == "gru" and gru_by_h[h]:
-                lo, hi = min(gru_by_h[h]), max(gru_by_h[h])
+            if name in seeded_by_h and seeded_by_h[name][h]:
+                lo, hi = min(seeded_by_h[name][h]), max(seeded_by_h[name][h])
                 ax.plot([lo, hi], [yi, yi], color="black", lw=2.4, zorder=3,
                         solid_capstyle="round")
                 continue

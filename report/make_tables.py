@@ -30,6 +30,7 @@ OUT = os.path.join(HERE, "tables")
 
 PRETTY = {
     "gru": "GRU, 30 day sequence",
+    "lstm": "LSTM, 30 day sequence",
     "arima_fourier": "ARIMA(1,1,1) with Fourier terms",
     "arima_fourier_mean": "ARIMA, bias corrected back-transform",
     "arima_no_fourier": "ARIMA(1,1,1), no Fourier terms",
@@ -47,9 +48,14 @@ PRETTY = {
     "hgb_clf": "Gradient boosting classifier",
 }
 
-ORDER = ["gru", "arima_fourier", "random_forest_delta", "hist_gbm_delta",
+ORDER = ["gru", "lstm", "arima_fourier", "random_forest_delta", "hist_gbm_delta",
          "random_forest", "hist_gbm", "ridge", "naive_carry", "climatology",
          "seasonal_naive_7"]
+
+# Models reported as a range over independent random-initialisation seeds
+# rather than as a single point estimate, and the seed-file glob pattern
+# each one is found under.
+SEEDED_MODELS = {"gru": "gru_seed*.csv", "lstm": "lstm_seed*.csv"}
 
 
 def write(name, body):
@@ -107,26 +113,30 @@ def table_accuracy(forecast_path, series_path, burn_in=1095):
     piv = m.pivot_table(index="model", columns="horizon", values="rMAE")
     bias = m.pivot_table(index="model", columns="horizon", values="bias")
 
-    # Every seed run that exists, for the network only.
-    seeds = sorted(glob.glob(os.path.join(ROOT, "gru_seed*.csv")))
-    gru = {}
-    for f in seeds:
-        g = ev.regression_metrics(pd.read_csv(f, parse_dates=["origin"]), scale,
-                                  reference="naive_carry")
-        g = g[g.model == "gru"].set_index("horizon")["rMAE"]
-        gru[os.path.basename(f)] = g
-    G = pd.DataFrame(gru) if gru else None
-    if G is not None:
-        print(f"  network reported over {G.shape[1]} seeds")
+    # Every seed run that exists, for each model that varies with a random
+    # initialisation (currently the GRU and the LSTM).
+    seeded = {}
+    for model_name, pattern in SEEDED_MODELS.items():
+        seeds = sorted(glob.glob(os.path.join(ROOT, pattern)))
+        runs = {}
+        for f in seeds:
+            g = ev.regression_metrics(pd.read_csv(f, parse_dates=["origin"]), scale,
+                                      reference="naive_carry")
+            g = g[g.model == model_name].set_index("horizon")["rMAE"]
+            runs[os.path.basename(f)] = g
+        if runs:
+            seeded[model_name] = pd.DataFrame(runs)
+            print(f"  {model_name} reported over {seeded[model_name].shape[1]} seeds")
 
     body = ["\\begin{tabular}{lccc r}", "\\toprule",
             "Model & $h=1$ & $h=2$ & $h=3$ & Bias at $h=1$ \\\\", "\\midrule"]
     for name in ORDER:
-        if name == "gru" and G is not None:
+        if name in seeded:
+            G = seeded[name]
             cells = [f"{G.loc[h].min():.3f} to {G.loc[h].max():.3f}" for h in (1, 2, 3)]
-            body.append(f"{esc(PRETTY['gru'])}, range over {G.shape[1]} seeds & "
+            body.append(f"{esc(PRETTY[name])}, range over {G.shape[1]} seeds & "
                         + " & ".join(cells)
-                        + f" & {bias.loc['gru', 1]:+.1f} \\\\")
+                        + f" & {bias.loc[name, 1]:+.1f} \\\\")
             continue
         if name not in piv.index:
             continue
@@ -138,12 +148,21 @@ def table_accuracy(forecast_path, series_path, burn_in=1095):
 
 
 def table_warning(forecast_path, threshold=121.0):
+    """A single-seed warning-system row would violate this report's own
+    rule against reporting a seeded network as one point rather than a
+    range (Section 4.1's own lesson, learned from the GRU). LSTM has not
+    been run through the threshold sweep across its ten seeds, only
+    through the accuracy evaluation in Table~4.1, so it is deliberately
+    excluded here rather than silently shown as a single, unrepresentative
+    seed. Reported as a limitation, not a silent gap."""
     d = pd.read_csv(forecast_path, parse_dates=["origin"])
     w = ev.evaluate_warnings(d, event_threshold=threshold)
     body = ["\\begin{tabular}{lrrrrr}", "\\toprule",
             "Model & Hit rate & False alarm rate & Precision & CSI & Alarms/yr \\\\",
             "\\midrule"]
     for name in ORDER:
+        if name in SEEDED_MODELS and name != "gru":
+            continue  # see docstring: no single-seed warning-system row
         r = w[(w.model == name) & (w.horizon == 1)]
         if not len(r):
             continue
@@ -270,11 +289,13 @@ def table_weather(base_path, weather_path, series_path, burn_in=1095):
     write("weather.tex", "\n".join(body) + "\n")
 
 
-def table_significance(plain_pattern="gru_seed*.csv",
-                       weather_pattern="gru_weather_seed*.csv",
-                       other_model="arima_fourier", seed_model="gru",
-                       horizons=(1, 2, 3)):
-    """Diebold-Mariano test of the network against the ARIMA benchmark.
+def table_significance(comparisons=(
+                           ("Plain GRU vs.\\ ARIMA", "gru_seed*.csv", "gru"),
+                           ("GRU with weather vs.\\ ARIMA", "gru_weather_seed*.csv", "gru"),
+                           ("LSTM vs.\\ ARIMA", "lstm_seed*.csv", "lstm"),
+                       ),
+                       other_model="arima_fourier", horizons=(1, 2, 3)):
+    """Diebold-Mariano test of each seeded network against the ARIMA benchmark.
 
     Run once per seed, exactly like every other seed-dependent number in
     this report, and reported as the range across all ten rather than a
@@ -286,11 +307,15 @@ def table_significance(plain_pattern="gru_seed*.csv",
     initialisation noise, not the sampling uncertainty of a mean computed
     over one finite, autocorrelated run of forecast errors, which is what
     this test bounds instead.
+
+    Generalised from a GRU-only function to take a list of (label, seed-file
+    pattern, model name) triples, so a second seeded architecture (the LSTM)
+    reports through the same table rather than a separate one that would
+    silently overwrite it.
     """
     import glob
     rows = []
-    for label, pattern in [("Plain network vs.\\ ARIMA", plain_pattern),
-                           ("Network with weather vs.\\ ARIMA", weather_pattern)]:
+    for label, pattern, seed_model in comparisons:
         files = sorted(glob.glob(os.path.join(ROOT, pattern)))
         if not files:
             print(f"  no files matching {pattern}; skipping its significance rows")
@@ -502,7 +527,9 @@ def table_cleaning():
 def main():
     os.makedirs(OUT, exist_ok=True)
     clean = os.path.join(ROOT, "data", "delhi_clean.csv")
-    fc = os.path.join(ROOT, "forecasts_with_gru.csv")
+    fc = os.path.join(ROOT, "forecasts_with_lstm.csv")
+    if not os.path.exists(fc):
+        fc = os.path.join(ROOT, "forecasts_with_gru.csv")
     if not os.path.exists(fc):
         fc = os.path.join(ROOT, "forecasts_all.csv")
     sweep = os.path.join(ROOT, "threshold_sweep.csv")

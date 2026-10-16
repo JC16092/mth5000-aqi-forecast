@@ -2732,6 +2732,121 @@ this project's own standing lesson warns about, an unaudited status
 claim left to go stale, now caught on a routine re-read rather than left
 for someone else to notice.
 
+### 16 October, a thirty-fourth pass: Dr Tian's second reply acted on in
+### full, "do all of it," four new architectures and a full report
+### integration pass
+
+Dr Tian's second reply (screenshot, 15 October, 13 hours before this
+pass started): GRU's weaknesses depend on optimiser, learning rate and
+sequence length; a negative GRU-vs-ARIMA result is fine to report; try
+LSTM if the data is small, a transformer if it is large; he has no
+experience with KAN but says the plain version is weak on time series
+while a KAN-LSTM hybrid "performs excellently." Offered the user a
+breakdown of the real cost and risk of each item before touching any
+code, flagging two things directly: the transformer suggestion is
+conditional on large data and this project's ~3,093 observations are not
+large, so building one goes against his own stated logic, not with it;
+and the KAN-LSTM hybrid has no maintained library the way GRU and LSTM
+do, carries real training-instability risk, and he said himself he has
+no experience with it. User's answer: "do all risk is fine." Built and
+ran all four, each to the standard of rigor actually warranted rather
+than a uniform one.
+
+**GRU optimiser/learning-rate sensitivity** (`gru_optimizer_sensitivity.py`,
+bounded single-split, 3 seeds, mirroring the existing hidden-size/seq-len
+check): the default Adam/0.01 is near-best at one and two days, but at
+three days SGD with momentum beats it by about two points (0.839 vs
+0.858) with a tighter seed spread too, the same horizon the hidden-size
+check and the Fourier check both already flagged as the GRU's weakest
+configuration. "Activation function" was checked against the actual
+architecture and found not to apply: a GRU's gates are fixed
+sigmoid/tanh by the equations already in Methodology, not a tunable
+choice, so that part of the request was answered by explaining why it
+doesn't apply rather than testing something that isn't real.
+
+**LSTM** (`step09_lstm.py`, a genuine new numbered pipeline step, built
+by copying the GRU's exact treatment and swapping the recurrent cell):
+leak-tested, then run across the full ten-seed rolling-origin harness,
+the same production configuration as the GRU. Real result, not a token
+addition: the LSTM beats the GRU at every horizon (0.005/0.008/0.013
+points of rMAE at h=1/2/3) despite carrying roughly a third more
+parameters (3,097 vs 2,329), directly against the parameter-count
+argument Literature Review gives for preferring the smaller network.
+Against ARIMA: clean win at one day (10/10 seeds, 5/10 significant,
+slightly stronger than the GRU's own 4/10), a near-tie at two days, a
+narrow ARIMA win at three, structurally the same shape as the GRU's own
+result. `make_tables.py` was generalised, not hand-patched: `ORDER` and
+`PRETTY` took an "lstm" entry, `table_accuracy` and `table_significance`
+were rewritten to loop over a dict of seeded models instead of
+hardcoding "gru" once each, so a third seeded architecture would not
+require another rewrite. `table_warning` was deliberately **not**
+extended to LSTM: it only has one representative seed in the merged
+forecast file, and showing that as a single-seed warning-system point
+would repeat the exact mistake this project already made and fixed once
+with the GRU's own Table 4 row. `fig6_accuracy.png` was regenerated with
+both networks as range bars.
+
+**Two bounded checks, not full evaluations, named as such throughout**:
+a small transformer encoder (d\_model=16, 2 heads, 1 layer, sinusoidal
+positional encoding) and a Kolmogorov-Arnold-LSTM hybrid (`kan_layer.py`,
+a from-scratch "efficient-kan"-style KANLinear layer, B-spline edges,
+unit-tested in isolation, recovering sin(3x) from near-flat to 1e-4 MSE
+in 300 steps, before ever touching real data, since no maintained KAN
+library exists the way one does for GRU or LSTM). A genuine CrossRef
+citation problem came up and was resolved the way this project has
+resolved it before (TFT standing in for the uncitable "Attention Is All
+You Need"): the original KAN paper has no CrossRef DOI, so
+`liu2025kan`, a real, peer-reviewed 2025 Physical Review X paper by the
+same lead authors (Liu, Tegmark), was cited instead, verified directly
+against CrossRef's own record rather than assumed. On the same
+single-split bounded check as the GRU's own hyperparameter work: the
+transformer does not beat ARIMA but is unexpectedly competitive with the
+GRU, ahead of it at one and three days specifically, complicating the
+small-data argument a second time; the KAN-LSTM hybrid trained stably
+across all three seeds with zero failures (the real risk that did not
+materialise) and is competitive with, not dramatically different from,
+the other three architectures, worst at one day, best at two, tied with
+the transformer at three.
+
+**Full report integration**, not left as scripts and a chat summary:
+`refs.bib` gained `liu2025kan`; Literature Review's GRU subsection had
+its own now-falsified "GRU wins because fewer parameters matter more on
+this data" claim corrected to state plainly that this project's own
+evidence does not support that reasoning; a new Methodology subsection
+3.5.2 gives the LSTM's full gate equations and parameter count (3,097,
+confirmed by counting the fitted object's parameters, not trusted as
+arithmetic), mirroring the GRU's own treatment; a new "LSTM, fitted on
+an identical protocol" paragraph in Results sits beside the existing GRU
+discussion; three new Limitations paragraphs cover the optimiser
+finding, the LSTM's explicit RQ3/weather scope boundary, and the two
+bounded architecture checks; Future Work grew from four extensions to
+six, each recounted carefully given this project's own prior arithmetic
+bug in that exact section; the Abstract, both Conclusion sections, and
+Methodology and Discussion's own chapter-summary paragraphs were all
+updated rather than left to describe a suite that no longer matches the
+code. A full sweep for every remaining singular "the recurrent network"
+reference followed, checked one at a time rather than assumed fixed by
+the paragraphs above: some correctly stayed singular (anything specific
+to the weather extension or the GRU's own reproducibility defect, since
+neither was repeated for the LSTM), several were real misses caught only
+by the sweep, including one claim that had become literally false
+("a different random seed for the one architecture that has one") now
+that two architectures carry a seed, and one stale denominator
+("ten specifications" in Methodology's own model-family count, now
+eleven) once the LSTM was added to the full suite but not to the
+threshold-sweep-specific counts, which correctly stayed at ten.
+
+Recompiled repeatedly through this pass rather than once at the end,
+catching and fixing three new overfull-hbox warnings as they appeared
+(a List of Symbols row too wide for its column, fixed by splitting it
+and switching to a subscript-list notation; a Future Work paragraph
+breaking badly on "weather-augmented," fixed by rewording) before
+settling back to exactly the pre-existing, already-reviewed warning set.
+Every new page touched was rendered to an image and checked directly,
+not assumed correct from a clean compile log. 70 pages, at the edge of
+but still inside the "up to 70 is fine" standing preference
+([[feedback_mth5000_report_length]]). Not yet committed.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required

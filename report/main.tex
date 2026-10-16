@@ -66,8 +66,11 @@ budget from forty to one hundred alarms a year moves the hit rate by fifty.
 Machine learning earns its place only partially. The classical model beats
 every machine learning regressor at every horizon, a result strengthened
 rather than weakened by a sensitivity analysis on the cleaning threshold, and
-the one model that does win, a recurrent network, wins only at one day ahead,
-reported as a range across ten seeds rather than a single favourable one.
+the two models that do win, a GRU and an LSTM tested against it directly on
+supervisor feedback, both win only at one day ahead, each reported as a range
+across ten seeds rather than a single favourable one; the LSTM beats the GRU
+at every horizon despite carrying more parameters, the opposite of what
+motivated preferring the smaller network in the first place.
 Adding observed wind speed and temperature narrows the one-day gap further
 but leaves two and three days a statistical tie, and the extra accuracy
 moves the achievable hit rate at a fixed alarm budget by at most a point,
@@ -170,6 +173,14 @@ $\sigma$ & logistic sigmoid; distinct from the variance $\sigma^2$ used in the r
 $\odot$ & elementwise (Hadamard) product & \ref{sec:gru} \\
 $H$ & number of hidden units, 24 throughout; distinct from the Kruskal-Wallis statistic $H$ above & \ref{sec:gru} \\
 $d$ & number of input channels, 6 (plain) or 10 (with weather); distinct from ARIMA's differencing order $d$ above & \ref{sec:gru} \\[2pt]
+
+\multicolumn{3}{@{}l}{\textbf{The Long Short-Term Memory Network}} \\
+$c_t$, $\tilde c_t$ & cell state and candidate cell state at time $t$, the mechanism absent from the GRU above & \ref{sec:lstm} \\
+$f_t,i_t,o_t$ & forget, input and output gates; $i_t$ collides with the row index $i$ used in the Gradient Boosting block above, the gate's standard name in the literature rather than a notation this project chose & \ref{sec:lstm} \\
+$W_{f,i,o,c}$ & input-to-hidden gate weight matrices, one quartet rather than the GRU's triple & \ref{sec:lstm} \\
+$U_{f,i,o,c}$ & hidden-to-hidden gate weight matrices, same quartet pattern & \ref{sec:lstm} \\
+$b_f,b_i,b_o,b_c$ & gate biases, same two-halves training convention as the GRU's & \ref{sec:lstm} \\
+\multicolumn{3}{@{}l}{\footnotesize $h_t$, $\sigma$, $\odot$, $H$ and $d$ are reused unchanged from the GRU block above.} \\[2pt]
 
 \multicolumn{3}{@{}l}{\textbf{Evaluation Measures}} \\
 TP, FP, FN, TN & true/false positive/negative counts at a given decision threshold & \ref{sec:evalmeasures} \\
@@ -497,21 +508,28 @@ The gated recurrent unit (GRU) simplifies the LSTM to two gates and no
 separate memory cell, while retaining the property that gradients can flow
 across many timesteps without vanishing \citep{cho2014gru}. Its full
 specification, and the specific architecture used in this project, is given
-in Section~\ref{sec:gru}. The GRU's appeal for a daily series with roughly
-three thousand observations is precisely its smaller parameter count relative
-to an LSTM, which matters more on a dataset this size than the slightly
-larger representational capacity an LSTM's extra gate and cell state provide.
-\citet{lim2021survey} survey the broader move of deep learning into time
-series forecasting of which the recurrent, convolutional and attention-based
-families in Section~\ref{sec:lit-dl-landscape} are all part, and note that
-the gain such architectures offer over classical methods depends heavily on
-how much data and exogenous structure a given forecasting problem provides,
-the same conditioning factor Section~\ref{sec:lit-ml} identifies as deciding
-whether machine learning or a classical benchmark wins on a series of a
-given size; this survey, and the general account of deep learning's
-strengths and limits given by \citet{lecun2015deep}, frame the GRU result
-in Chapter~\ref{chap:results} as an instance of a known pattern rather than
-an isolated one. A practical limitation specific to
+in Section~\ref{sec:gru}. The GRU's a priori appeal for a daily series with
+roughly three thousand observations was its smaller parameter count
+relative to an LSTM, on the reasoning that fewer parameters matter more on
+a dataset this size than the slightly larger representational capacity an
+LSTM's extra gate and cell state provide. Section~\ref{sec:lstm} and
+Chapter~\ref{chap:results} test that reasoning directly rather than leaving
+it a citation-backed assumption, once an alternative architecture was
+actually fitted under the identical protocol: an LSTM outperforms the GRU
+at every horizon in this project's own results, so the parameter-count
+argument, a defensible prior, is not what this project's own evidence
+supports. \citet{lim2021survey} survey the broader move of deep learning
+into time series forecasting of which the recurrent, convolutional and
+attention-based families in Section~\ref{sec:lit-dl-landscape} are all
+part, and note that the gain such architectures offer over classical
+methods depends heavily on how much data and exogenous structure a given
+forecasting problem provides, the same conditioning factor
+Section~\ref{sec:lit-ml} identifies as deciding whether machine learning or
+a classical benchmark wins on a series of a given size; this survey, and
+the general account of deep learning's strengths and limits given by
+\citet{lecun2015deep}, frame the recurrent-network results in
+Chapter~\ref{chap:results} as an instance of a known pattern rather than an
+isolated one. A practical limitation specific to
 recurrent architectures, and directly relevant to this project's own series,
 is that they require a value at every timestep and cannot represent a
 missing observation natively; \citet{che2018rnn} study exactly this problem
@@ -917,7 +935,9 @@ Fourier terms; and three missingness indicators.
 Missing values are never imputed. Gradient boosting accepts them natively and the
 state space models skip the measurement update at a gap, so the absence is
 carried as information rather than replaced by a fabricated value. The single
-exception is the recurrent network, discussed in Section~\ref{sec:gru}.
+exception is the recurrent networks, the GRU and the LSTM, which share the
+same channel construction and are discussed together in
+Sections~\ref{sec:gru} and~\ref{sec:lstm}.
 
 \subsection{Weather Covariates}
 \label{sec:weather}
@@ -963,7 +983,7 @@ answer, which is what makes the first trustworthy.
 \section{Classical and Machine Learning Methods}
 \label{sec:ml-methods}
 
-Six of the ten specifications fitted in this project belong to the machine
+Six of the eleven specifications fitted in this project belong to the machine
 learning family in the broad sense used in Section~\ref{sec:lit-ml}: the
 classical ARIMA benchmark, which is included here for comparison even though
 it predates the term, and the three explicitly machine learning regressors,
@@ -1333,17 +1353,77 @@ used for the tree models' capacity in Section~\ref{sec:ml-methods};
 Section~\ref{sec:limitations} also reports a bounded check of that choice,
 run after the fact.
 
+\subsection{The Long Short-Term Memory Network: Architecture and Training}
+\label{sec:lstm}
+
+Dr Tian's own review of a draft of this chapter suggested testing the
+GRU-over-LSTM choice directly rather than leaving it to the parameter-count
+argument alone (Section~\ref{sec:lit-dl}). This section does so. The long
+short-term memory network \citep{hochreiter1997lstm} maintains both a
+hidden state $h_t\in\mathbb{R}^H$ and a separate cell state
+$c_t\in\mathbb{R}^H$, updated at each timestep by three gates rather than
+the GRU's two. The forget gate $f_t$ controls how much of the previous
+cell state is retained; the input gate $i_t$ controls how much of a new
+candidate is written to it; the output gate $o_t$ controls how much of the
+(squashed) cell state is exposed as the hidden state:
+\begin{align}
+f_t &= \sigma\big(W_f x_t + U_f h_{t-1} + b_f\big), \label{eq:lstm-f}\\
+i_t &= \sigma\big(W_i x_t + U_i h_{t-1} + b_i\big), \label{eq:lstm-i}\\
+o_t &= \sigma\big(W_o x_t + U_o h_{t-1} + b_o\big), \label{eq:lstm-o}\\
+\tilde c_t &= \tanh\big(W_c x_t + U_c h_{t-1} + b_c\big), \label{eq:lstm-ctilde}\\
+c_t &= f_t \odot c_{t-1} \;+\; i_t \odot \tilde c_t, \label{eq:lstm-c}\\
+h_t &= o_t \odot \tanh(c_t), \label{eq:lstm-h}
+\end{align}
+with $\sigma$, $\odot$, and every weight and bias playing the same role as
+in the GRU equations above, now across four gates instead of two. The
+explicit cell state $c_t$, absent from the GRU, is the LSTM's distinguishing
+mechanism: the forget and input gates let it carry information additively
+across timesteps largely undisturbed, rather than always being
+reconstructed as a convex combination of the previous and candidate state
+the way the GRU's $h_t$ is in Equation~\ref{eq:gru-h}.
+
+The network fitted here is identical in every respect to the GRU of
+Section~\ref{sec:gru} except the recurrent cell itself: the same six
+channels (log concentration, missingness flag, two annual Fourier pairs),
+the same 30-day window, the same $H=24$ hidden units, the same change-in-log
+target with the origin value added back, the same Adam optimiser minimising
+mean absolute error with early stopping on the same chronological holdout,
+and the same treatment across ten random seeds, reported as a range rather
+than a point for the same reason. Holding every other design choice fixed
+isolates the one comparison this subsection exists to make: GRU against
+LSTM, not GRU against a differently-tuned LSTM.
+
+Following the same parameter count convention as Equation~\ref{eq:gru-params}
+(PyTorch's \texttt{nn.LSTM} splits each gate's bias into two separately
+learned halves, the same departure from Equations~\ref{eq:lstm-f}
+to~\ref{eq:lstm-h} noted for the GRU), four gates rather than three give
+\begin{equation}
+4H(d+H+2) \;+\; (H+1)
+\label{eq:lstm-params}
+\end{equation}
+trainable parameters. For $H=24$ and the six-channel network, $d=6$,
+Equation~\ref{eq:lstm-params} gives 3{,}097 parameters, confirmed directly
+by counting the fitted model object's own parameters, roughly a third more
+than the GRU's 2{,}329 for the same channels. Results are given alongside
+the GRU's in Section~\ref{sec:results-rq1}; the weather-augmented channel
+set used for the GRU in Section~\ref{sec:weather} was not refitted for the
+LSTM, nor was the decision-threshold sweep of
+Section~\ref{sec:threshold} rerun with it, a scope boundary stated
+explicitly in Section~\ref{sec:limitations} rather than left for a reader
+to notice on their own.
+
 \section{Rolling-Origin Evaluation}
 \label{sec:rolling}
 
 Every model was evaluated over 2{,}303 origins from 9 November 2019 to 24 August
 2026, spanning 6.8 years, with a three year burn-in and model state advanced
 daily between refits. Parameters are re-estimated every 90 days for every
-specification except the recurrent network, which refits every 180 days:
-each of its refits trains a network from scratch rather than solving a
-closed form or appending one more observation to an already-converged
-filter, so halving its refit frequency is the practical cost of including
-it in the suite at all rather than an oversight.
+specification except the two recurrent networks, the GRU and the LSTM,
+which refit every 180 days: each of their refits trains a network from
+scratch rather than solving a closed form or appending one more
+observation to an already-converged filter, so halving the refit
+frequency is the practical cost of including a trained network in the
+suite at all rather than an oversight.
 
 This is not a refinement of a single train-test split; it replaces one, for the
 reason standard cross-validation is inappropriate for dependent data in the
@@ -1522,9 +1602,10 @@ differently.
 
 \section{Reproducibility}
 
-The analysis runs end to end from an empty directory via ten numbered
-pipeline scripts, nine of which carry an automated correctness test, run
-with \texttt{--test}, that exits before producing any output if its own
+The analysis runs end to end from an empty directory via eleven numbered
+pipeline scripts, the LSTM of Section~\ref{sec:lstm} the most recent
+addition, ten of which carry an automated correctness test, run with
+\texttt{--test}, that exits before producing any output if its own
 checks fail. The rolling origin harness verifies its own leakage
 invariant before every run. Every table in this report is generated directly
 from the result files by \texttt{make\_tables.py}; no number has been
@@ -1546,13 +1627,16 @@ Section~\ref{sec:ml-methods}, comprises a classical ARIMA benchmark and three
 regressors, ridge, random forest, and gradient boosting, each controlling
 the bias-variance trade-off by a different mechanism: shrinkage, bagging, or
 additive stagewise correction. Deep learning, in Section~\ref{sec:dl-methods},
-comprises a single gated recurrent network, whose gating mechanism is
-specifically what lets it avoid the vanishing-gradient failure of a plain
-recurrent network. Every model is evaluated under the same rolling-origin
+comprises two gated recurrent networks, a GRU and an LSTM fitted under an
+otherwise identical protocol specifically to test the choice between them
+directly, each avoiding the vanishing-gradient failure of a plain
+recurrent network through a different gating mechanism, two gates and no
+separate memory cell for the GRU, three gates and an explicit cell state
+for the LSTM. Every model is evaluated under the same rolling-origin
 protocol, specified in Section~\ref{sec:rolling}, and scored by the same
 measures, specified in Section~\ref{sec:evalmeasures}, so that the comparison
 in Chapter~\ref{chap:results} is a fair one; where that comparison involves
-the network against the ARIMA benchmark, it is also given a formal
+a network against the ARIMA benchmark, it is also given a formal
 significance test, specified in Section~\ref{sec:dmtest}.
 
 % ============================================================================
@@ -1566,8 +1650,8 @@ significance test, specified in Section~\ref{sec:dmtest}.
 \centering
 \caption{Relative mean absolute error against persistence, under rolling origin
 evaluation over 2{,}303 origins. Lower is better and 1.000 is persistence. The
-recurrent network is given as the range over ten initialisation seeds; it is the
-only model whose result depends on one.}
+two recurrent networks, the GRU and the LSTM, are each given as the range over
+ten initialisation seeds; they are the only models whose result depends on one.}
 \label{tab:accuracy}
 \footnotesize
 \resizebox{\textwidth}{!}{\input{tables/accuracy}}
@@ -1577,18 +1661,18 @@ only model whose result depends on one.}
 \centering
 \includegraphics[width=\textwidth]{figures/fig6_accuracy}
 \caption{Table~\ref{tab:accuracy} as a dot plot, one row per model, one panel
-per horizon, the vertical line at 1.000 marking persistence. The recurrent
-network has no single dot: its ten seeds are shown as a horizontal range
-bar rather than a point estimate. Climatology and the seasonal-naive
-benchmark are omitted here, both well outside this axis range at one day
-ahead; their numbers are unchanged in Table~\ref{tab:accuracy}.}
+per horizon, the vertical line at 1.000 marking persistence. Neither
+recurrent network has a single dot: each one's ten seeds are shown as a
+horizontal range bar rather than a point estimate. Climatology and the
+seasonal-naive benchmark are omitted here, both well outside this axis range
+at one day ahead; their numbers are unchanged in Table~\ref{tab:accuracy}.}
 \label{fig:accuracy}
 \end{figure}
 
 Table~\ref{tab:accuracy} and Figure~\ref{fig:accuracy} answer the first
 research question, and the answer is not uniform across horizons.
 
-At one day ahead the recurrent network is the best model, and this is robust:
+At one day ahead the GRU is the best model, and this is robust:
 across ten initialisation seeds it is numerically ahead of the ARIMA
 specification in every one, and clearly so, beyond this report's own 0.004
 noise floor (Section~\ref{sec:noise-floor}), in eight of the ten; the two
@@ -1604,7 +1688,7 @@ seed, 0.879, is clearly the weaker of the two.
 
 \begin{table}[htbp]
 \centering
-\caption{Diebold-Mariano test of the recurrent network against the ARIMA
+\caption{Diebold-Mariano test of each recurrent network against the ARIMA
 benchmark (Section~\ref{sec:dmtest}), run once per seed and given as the
 range across all ten. A negative statistic favours the network at that
 seed; a positive one favours ARIMA. The last column counts seeds reaching
@@ -1615,7 +1699,7 @@ $p<0.05$, two-sided.}
 
 Table~\ref{tab:significance} puts a formal test behind the comparison the
 paragraph above makes by counting seed signs against an empirical floor. At
-one day ahead the statistic favours the network in all ten seeds and the
+one day ahead the statistic favours the GRU in all ten seeds and the
 advantage reaches $p<0.05$ in four of them. At two days, every seed's
 $p$-value exceeds 0.07 and none reaches significance. At three days exactly
 one seed does, and in ARIMA's favour, $p=0.0056$; the rest do not.
@@ -1632,12 +1716,34 @@ signal altogether but because it receives a coarser one.
 Section~\ref{sec:limitations} reports a bounded check of exactly that
 difference, and it accounts for a meaningful share of the gap at three days.
 
-The network is reported as a range rather than a point because it is the only
-model whose result depends on a random initialisation, and the dependence is not
-small. Across ten seeds the spread is 0.029 at one day, 0.028 at two and 0.048 at
-three. At three days that spread is wider than the gap separating the ARIMA from
-two of the other models in the table, so a single seed could have been reported
-as beating them or losing to them at the analyst's convenience.
+The GRU is reported as a range rather than a point because, until the LSTM
+below, it was the only model whose result depends on a random
+initialisation, and the dependence is not small. Across ten seeds the
+spread is 0.029 at one day, 0.028 at two and 0.048 at three. At three days
+that spread is wider than the gap separating the ARIMA from two of the
+other models in the table, so a single seed could have been reported as
+beating them or losing to them at the analyst's convenience.
+
+\paragraph{The LSTM, fitted on an identical protocol (Section~\ref{sec:lstm}).}
+Table~\ref{tab:accuracy} shows it ahead of the GRU at every horizon, by
+0.005 at one day, 0.008 at two and 0.013 at three, despite carrying roughly
+a third more parameters, 3{,}097 against 2{,}329. That directly tests, and
+does not support, the parameter-count reasoning Section~\ref{sec:lit-dl}
+gives for preferring the smaller architecture: on this evidence the
+smaller network is not winning because it is smaller. Against ARIMA
+specifically, the LSTM's own picture mirrors the GRU's more than it
+departs from it. At one day ahead it is numerically ahead in all ten
+seeds (mean rMAE 0.919 against ARIMA's 0.940) and Table~\ref{tab:significance}
+reaches $p<0.05$ in five of them, a formal result if anything slightly
+stronger than the GRU's own four of ten. At two days the two models are
+close to indistinguishable, 0.882 against ARIMA's 0.883, and no seed
+reaches significance either way. At three days ARIMA remains marginally
+ahead, 0.831 against the LSTM's 0.836, again with no seed reaching
+significance. The LSTM was not carried through the weather extension of
+Section~\ref{sec:weather} or the decision-threshold sweep of
+Section~\ref{sec:threshold}; Section~\ref{sec:limitations} states this
+scope boundary directly rather than leaving Table~\ref{tab:accuracy} to
+imply a fuller treatment than the one actually given.
 
 Two subsidiary results support the specification choices. Removing the Fourier
 terms from the ARIMA degrades it by 3.3 points of relative error at one day and
@@ -1647,9 +1753,10 @@ from the origin rather than the level improves
 both tree models, because a tree cannot extrapolate beyond the targets it was
 trained on and this series drifts downward across the decade.
 
-Table~\ref{tab:significance} tests only the one comparison in this report
-with a seed to range over. The same test applies just as directly to the
-other five machine learning rows against ARIMA (ridge, and the random
+Table~\ref{tab:significance} tests the three comparisons in this report
+with a seed to range over: the plain GRU, the weather-augmented GRU, and
+the LSTM, each against ARIMA. The same test applies just as directly to
+the other five machine learning rows against ARIMA (ridge, and the random
 forest and gradient boosting's level and change-target variants): each is
 reported as a single fit rather than a range, so one Diebold-Mariano
 statistic per horizon is the whole comparison, not an average over
@@ -1965,7 +2072,7 @@ about five points, and at three days ahead, at the loosest budget this report
 considers, a climatology forecast that uses no recent information whatever
 comes within roughly a hundredth of the best fitted model, 0.816 against 0.827.
 
-This is not an argument against modelling. ARIMA and the recurrent network
+This is not an argument against modelling. ARIMA and the recurrent networks
 both earn real, if modest, gains over persistence in Table~\ref{tab:accuracy},
 and a better point forecast still narrows the range of thresholds worth
 considering. It is an argument about where the leverage in this problem
@@ -1988,13 +2095,17 @@ Three results in this project bound that question from below. Running the
 identical pipeline on two different machines moved the tree models by up to
 0.004 in relative error, because histogram gradient boosting parallelises
 with OpenMP and floating point summation order depends on the thread count.
-Changing only the random initialisation of the recurrent network moved it by
-0.028 to 0.048 across ten seeds. A third and less expected result bounds it
-further: rerunning the identical command with the same seed on the same
-machine moved the network's score by nearly as much as switching to a
-genuinely different seed does, which Section~\ref{sec:limitations} discusses
-and which this report takes as the practical floor on how precisely the
-network's result can be stated at all.
+Changing only the random initialisation of the GRU moved it by 0.028 to
+0.048 across ten seeds; the LSTM's own spread, measured the same way, is
+tighter at every horizon, 0.018 to 0.023, but still far from zero. A third
+and less expected result bounds it further: rerunning the identical GRU
+command with the same seed on the same machine moved its score by nearly
+as much as switching to a genuinely different seed does, which
+Section~\ref{sec:limitations} discusses and which this report takes as the
+practical floor on how precisely a trained network's result can be stated
+at all; the same check was not repeated for the LSTM, so whether it shares
+the GRU's specific reproducibility defect or only its general sensitivity
+to initialisation is not yet known.
 
 Table~\ref{tab:accuracy} contains several gaps at or below those two floors, and
 naming them is more convincing than asserting that they exist. At one day ahead,
@@ -2008,14 +2119,14 @@ never repeated for every pair in the table, so the honest reading is that it
 might apply more broadly than the one architecture it was taken on, not that
 it is known to be absent elsewhere.
 
-The sharpest instance involves the recurrent network directly, because its own
+The sharpest instance involves the GRU directly, because its own
 reported range is wide enough to supply the comparison by itself. At three days
-ahead, the network's worst seed scores 0.879, a thousandth away from gradient
+ahead, its worst seed scores 0.879, a thousandth away from gradient
 boosting's change-target result of 0.878, several rows lower in the same
 table. Nothing about the data or the method changed between those
-two numbers; a different random seed for the one architecture that has one was
+two numbers; a different random seed for the same architecture was
 enough to move it from a result indistinguishable from the classical benchmark,
-at that same horizon the network's best seed ties ARIMA to within a few parts
+at that same horizon the GRU's best seed ties ARIMA to within a few parts
 in ten thousand (Section~\ref{sec:results-rq1}), to one indistinguishable from
 the weakest-looking machine learning regressor in the table. A table that printed only one of those two seeds would have told a reader
 something true about that run and nothing reliable about the architecture.
@@ -2164,6 +2275,22 @@ much of the gap that coarseness explains, as opposed to a genuine
 representational limit, is now an open and fairly pointed question rather
 than a closed one.
 
+A third bounded check, raised directly by Dr Tian, varied the optimiser
+and learning rate the GRU trains with, holding architecture at the
+report's defaults, on the same single-split, three-seed design as the two
+checks above. At one and two days ahead the default, Adam at a learning
+rate of 0.01, is at or near the best setting tried: switching to RMSprop
+or SGD, or moving the learning rate by a factor of three in either
+direction, never improves the mean by more than a point. At three days
+the pattern breaks the same way the window-length check broke it: SGD
+with momentum improves the mean by roughly two points over the default,
+0.839 against 0.858, with a visibly tighter spread across seeds too. The
+same horizon that already has the worst-tested window length and the
+most to gain from more Fourier harmonics also has the worst-tested
+optimiser, three separate bounded checks now agreeing that the three-day
+GRU configuration used throughout this report is the one this project's
+own sensitivity analysis would least defend if a reader asked it to.
+
 A full rerun of this project's pipeline, performed late in the writing
 process specifically to refresh every result from scratch, surfaced a
 further limitation worth stating plainly rather than leaving implicit in a
@@ -2185,6 +2312,69 @@ reason, and even ten should be read as a reduction in the problem rather
 than a solution to it; a result reported as a range across seeds is a
 statement about the spread of outcomes this training procedure produces,
 not a bound on where its true performance lies.
+
+The LSTM of Section~\ref{sec:lstm} was held to the same ten-seed
+rolling-origin evaluation as the GRU for accuracy, but not carried
+further: it was not given a weather-augmented channel set
+(Section~\ref{sec:weather}), and it was not run through the
+decision-threshold sweep of Section~\ref{sec:threshold}, so it appears in
+Table~\ref{tab:accuracy} and Table~\ref{tab:significance} but nowhere in
+Chapter~\ref{chap:results}'s warning-system tables. Given the central
+finding of this report, that the alarm budget dominates which model is
+chosen far more than the model itself does, there is no particular reason
+to expect the LSTM would disturb that finding; it was not tested directly
+because the marginal evidentiary value did not justify the computation
+with submission close, not because a result was anticipated and avoided.
+
+Two further architectures were tried, following Dr Tian's own suggestion
+directly, each as a bounded single-split check in the same spirit as the
+three above rather than a full rolling-origin evaluation: building either
+one properly would be comparable in effort to the GRU's or the LSTM's own
+treatment, and a bounded check is the way this project has consistently
+chosen to spend limited time on a question worth a first answer rather
+than committing to a full one blind.
+
+A small transformer encoder, sixteen-dimensional embeddings, two
+attention heads, one encoder layer, sinusoidal positional encoding, was
+fitted on the identical channel window. Section~\ref{sec:lit-dl-landscape}
+argues this project's roughly three thousand observations favour a
+recurrent architecture over one built for self-attention, and on the
+single split used throughout this section the transformer does not beat
+ARIMA's own single-split figures (0.903, 0.850 and 0.798 at one, two and
+three days, Section~\ref{sec:rolling}) at any horizon, consistent with
+that argument. It is, however, more competitive with the recurrent
+networks on this same comparison than the argument predicts: 0.903, 0.890
+and 0.818 against the GRU's single-split 0.914, 0.886 and 0.858 on
+identical data, ahead of the GRU at one and three days specifically. A
+small transformer on a short sequence was not the clear underperformer
+relative to a GRU that the small-data argument implies, even though it
+still does not close the gap to ARIMA.
+
+A Kolmogorov-Arnold Network was tried as a hybrid specifically because Dr
+Tian named that combination directly: an LSTM backbone handling the
+sequence, its usual linear output layer replaced by a Kolmogorov-Arnold
+layer \citep{liu2025kan}, a learnable function on each input-output edge
+rather than a fixed weight. No established, maintained library exists for
+this the way one does for the GRU or LSTM, so the layer was implemented
+here from the published construction (a base path plus a B-spline
+correction on a fixed grid) and checked in isolation before being fitted
+on real data: a single such layer recovers a held-out $\sin(3x)$ target to
+within $10^{-4}$ mean squared error from a near-flat start. The practical
+risk, training a novel architecture with no library to lean on and no
+prior use in this project, was real and did not materialise: all three
+seeds trained stably, with no divergence or non-finite output at any
+point. On the same bounded single-split check the hybrid is competitive
+with, not dramatically better or worse than, the other three
+architectures: 0.924, 0.862 and 0.818 at one, two and three days, worst
+of the four at one day, best of the four at two days, and at three days
+essentially tied with the transformer, both well ahead of the GRU and
+LSTM on this specific check. A null result here, the hybrid simply
+failing to train, would have been informative on its own; a working but
+unremarkable one is the result actually obtained, reported as exactly
+that rather than dismissed or oversold in either direction. None of these
+two architectures' bounded numbers has changed anything in
+Table~\ref{tab:accuracy}; both would need the full rolling-origin
+treatment before either could be.
 
 Wind speed and temperature were added, in Section~\ref{sec:weather}, but the
 treatment is narrower than a full meteorological extension in two specific
@@ -2231,7 +2421,7 @@ with the confidence it is.
 
 This project forecast hazardous PM2.5 days at a single Delhi monitor one to
 three days ahead, comparing a classical benchmark against three machine
-learning regressors and a deep recurrent network, and evaluating every
+learning regressors and two deep recurrent networks, and evaluating every
 specification as a warning system rather than by average error alone. Two
 real defects in the source data, a clipped instrument ceiling and a
 mischaracterised coverage statistic, were found and corrected before any
@@ -2256,9 +2446,16 @@ a Diebold-Mariano test at every one of those comparisons rather than point
 estimates alone (Section~\ref{sec:results-rq1}), a result that strengthens
 rather than weakens under the sensitivity analysis in
 Section~\ref{sec:limitations}. Among models using the series' own history
-alone, the recurrent network is the one that wins, and only at one day ahead,
-reported honestly as a range across ten random initialisations rather than
-as a single favourable seed. Adding wind speed and temperature
+alone, the recurrent networks are the ones that win, and only at one day
+ahead, each reported honestly as a range across ten random initialisations
+rather than as a single favourable seed. Of the two, the LSTM beats the
+GRU at every horizon despite carrying roughly a third more parameters,
+directly against the parameter-count reasoning that motivated choosing
+the smaller architecture in the first place (Section~\ref{sec:lit-dl}); a
+small transformer and a Kolmogorov-Arnold-LSTM hybrid, tried afterward as
+bounded checks rather than full evaluations, were each more competitive
+with the recurrent networks than their own small-data arguments predicted,
+without closing the gap to ARIMA. Adding wind speed and temperature
 (Section~\ref{sec:results-weather}) does not move that boundary as cleanly
 as a first batch of five seeds suggested: across ten seeds the
 weather-enabled network still wins clearly at one day ahead, but at two
@@ -2298,10 +2495,11 @@ result that a project restricted to classical methods would never have found.
 \section{Future Work}
 \label{sec:future}
 
-Four extensions follow: two from where this report's own weather work
+Six extensions follow: two from where this report's own weather work
 stopped, a third from the Fourier-harmonic check in
-Section~\ref{sec:limitations}, and a fourth from the single-station
-limitation.
+Section~\ref{sec:limitations}, a fourth from the single-station
+limitation, and a fifth and sixth from the LSTM and the two bounded
+architecture checks added after Dr Tian's own suggestion.
 The threshold sweep has already been put through the weather-augmented
 models (Section~\ref{sec:results-weather}), so the open thread is not
 whether that comparison happened but what would change its answer: a real
@@ -2328,17 +2526,41 @@ A fourth extension is independent of weather: repeating the analysis at a
 second, independent station, ideally one inside the Central Pollution
 Control Board network once its record lengthens, would test whether the
 findings here are a property of Delhi air quality or an artefact of the one
-diplomatic enclave monitor this project was restricted to. Until then, the
-central recommendation stands on its own: a hazardous air quality warning
-system should be designed around the alarm budget its operator can justify,
-with the forecasting model treated as a secondary refinement rather than the
-primary design choice.
+diplomatic enclave monitor this project was restricted to.
+
+A fifth extension completes the LSTM's own treatment: fitting it with the
+weather channels of Section~\ref{sec:weather} and carrying it through the
+decision-threshold sweep of Section~\ref{sec:threshold}, the two steps
+Section~\ref{sec:limitations} states were not taken for it.
+Given how narrowly the weather extension and the GRU-versus-LSTM
+comparison have each moved the central finding on their own, the honest
+expectation is that this would refine rather than overturn it. A stated
+expectation is not the same evidence as the run itself, though.
+
+A sixth follows directly from the two bounded checks in
+Section~\ref{sec:limitations}: a full ten-seed rolling-origin evaluation
+of the small transformer and the Kolmogorov-Arnold-LSTM hybrid, in place
+of the single-split, three-seed check each was given here. Both were
+more competitive on that bounded check than this project's own
+small-data argument predicted, the transformer against the GRU
+specifically and the hybrid against all three other architectures at two
+and three days ahead; whether either result is a genuine property of the
+architecture or an artefact of one validation split neither check can
+settle on its own is precisely what the full evaluation would decide.
+
+Until any of these six is carried out, the central recommendation stands
+on its own: a hazardous air quality warning system should be designed
+around the alarm budget its operator can justify, with the forecasting
+model treated as a secondary refinement rather than the primary design
+choice.
 
 \section{Chapter Summary}
 
 Three research questions were asked and three were answered. Machine
-learning earns a real but narrow place: the recurrent network alone beats
-the classical benchmark, and only one day ahead. Forecasting the
+learning earns a real but narrow place: only the two recurrent networks
+beat the classical benchmark, and only one day ahead, with the LSTM ahead
+of the GRU despite more parameters, directly against the reasoning that
+motivated choosing the smaller one. Forecasting the
 concentration and then thresholding it has a modest, genuine edge over
 classifying the exceedance directly, not a decisive one. And the decision
 threshold, not the model, is what principally determines how many
