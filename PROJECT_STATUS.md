@@ -3021,12 +3021,29 @@ lesson about what "done" requires. Not yet committed: `step10_transformer.py`,
 `transformer_vs_arima_tenseed_summary.csv`, `fig6_accuracy.png`, and this
 file.
 
-**Still open from this pass**: the presentation deck (both `slides.pptx`
-and the Beamer source) still describes the transformer as a bounded check
-only, the same gap pass 34 left for the "twenty-eighth presentation pass"
-to close — a near-identical catch-up pass is now needed there too, in the
-presentation chat. No reply has been sent to Dr Tian yet; this pass
-produced the result his email asked for, not a drafted response to him.
+**Update, same day:** the presentation deck gap closed itself out. The
+report chat messaged the presentation session directly with the real
+numbers; it re-derived everything from `report/tables/*.tex` and
+`main.tex` rather than trusting that summary, confirmed it agreed, and
+committed the catch-up pass as `4874f90` (slides 2, 9, 11, 16, 19, 28, 30,
+31). Slide 16 was restructured rather than extended, since the transformer
+isn't recurrent and a sixth bullet under "the two recurrent networks"
+would have been wrong, not just crowded. The Beamer source
+(`slides.tex`/`slides.pdf`) is still the pre-LSTM 31-slide version and
+remains untouched, flagged but not fixed, since the `.pptx` is the one in
+use.
+
+**Also same day:** a two-page summary PDF was built
+(`build_transformer_update.py` to `MTH5000_Transformer_Full_Results.pdf`),
+same house style as the other Tian-facing documents, carrying the real
+Table 4.1 and 4.2 rows (rMAE ranges, parameter counts, the full
+Diebold-Mariano breakdown for all three networks) rather than prose
+alone, since the first draft was prose-only and the user asked for the
+actual numbers to be in it. An email was drafted in chat alongside it and
+the user sent that email with the summary PDF to Dr Tian directly.
+**The full `main.pdf` was deliberately not sent yet** — the plan is to
+send the complete report once he replies to the summary, not before.
+**Still open:** his reply.
 
 ### 17 October, a twenty-ninth presentation pass: the transformer's promotion carried into the deck
 
@@ -3085,6 +3102,66 @@ the validator: a missing trailing comma that broke the build outright
 (caught immediately), and slide 30's closing card overrunning its bottom
 edge once the sentence grew, fixed by trimming the sentence rather than
 by growing the card into the Q-cards above it. Not yet committed.
+
+### 17 October, a thirtieth presentation pass: attention equations added, and the Beamer deck finally brought level
+
+Two follow-ups the user confirmed after the transformer pass.
+
+**The attention equations, added after all.** The previous two passes had
+deliberately skipped equation slides for the LSTM and the transformer,
+on the reasoning that the LSTM is the GRU with one more gate and the
+result matters more than the algebra in a twenty-minute oral. That
+reasoning does not transfer to the transformer, which is the one
+architecture in the suite that is not a variation on the others, so the
+user's call to add them is the right one. New slide 17, "Self-attention
+in place of recurrence": `eq_attn-1.png` typeset from LaTeX in the same
+`mathptmx` as the other three, carrying Equations 3.10, 3.14 and 3.15
+from the report exactly as written.
+
+Notably, the multi-head construction is **not** given as a displayed
+equation, because the report does not give one either -- it describes
+multi-head in prose, and its List of Symbols defines no output
+projection matrix. Writing one for the slide would have meant inventing
+notation ($W^O$) that the report never defines, which is the kind of
+small fabrication this project has repeatedly caught elsewhere. It is
+carried in prose on the slide, as the report carries it.
+
+The slide also states the four architecture-specific settings that were
+never independently tuned (d_model = 16, two heads, one encoder layer,
+Adam at 0.001 rather than 0.01) and that the GRU has three bounded
+sensitivity checks behind it while the transformer has none. That is a
+limitation Dr Tian may well probe, and the report states it plainly in
+Section 3.5.3, so the deck should not be quieter about it than the
+report is. 33 slides.
+
+**The Beamer deck brought level.** `slides.tex` was still at the pre-LSTM
+31-slide state, two catch-up passes behind, and still carried the
+retracted "GRU chosen for fewer parameters" justification. Both passes
+were replayed against it rather than only the most recent one: the
+lit-review screen, the imputation and refit-cadence plurals, the GRU
+frame rebuilt as "The Three Deep Learning Models" with all three
+parameter counts, the new self-attention frame, the accuracy table's two
+extra rows, a new "Limitations III" frame, the conclusions' "one model
+that wins" corrected to three, and Future Work from four items to six.
+33 pages, matching the pptx.
+
+`fig6_accuracy` needed no attention: the Beamer deck pulls it straight
+from `report/figures/`, so the regenerated three-range-bar version
+appeared on its own. The pptx builds that chart natively and did need
+both updates by hand -- worth remembering that the two decks fail
+differently.
+
+Compiling surfaced three new overfull vboxes against a pre-existing
+baseline of three (3.62, 3.45 and 1.12pt, established by compiling the
+committed version for comparison rather than assumed). The worst was 62pt
+on the accuracy frame, from two extra table rows plus a longer caption;
+fixed by stepping the table and caption to `\scriptsize` and resizing
+the figure, then restoring the figure to 0.44 textwidth once the text
+had shrunk, since at 0.34 it was no longer legible. The others were
+fixed by setting `\footnotesize` on the lit-review screen and trimming
+two conclusions bullets. Final state is the pre-existing three plus one
+0.62pt, smaller than any already accepted. Every changed page rendered
+and inspected.
 
 ## Data sources
 

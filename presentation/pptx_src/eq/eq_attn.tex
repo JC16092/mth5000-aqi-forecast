@@ -1,0 +1,10 @@
+\documentclass[12pt]{standalone}
+\usepackage{mathptmx}
+\usepackage{amsmath,amssymb}
+\begin{document}
+$\begin{aligned}
+\mathrm{Attention}(Q,K,V) &= \mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_{model}}}\right) V\\[6pt]
+Z' &= \mathrm{LayerNorm}\big(Z + \mathrm{MultiHead}(Z)\big)\\[2pt]
+Z'' &= \mathrm{LayerNorm}\big(Z' + W_2\,\mathrm{ReLU}(W_1 Z' + b_1) + b_2\big)
+\end{aligned}$
+\end{document}

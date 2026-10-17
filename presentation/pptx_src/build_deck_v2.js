@@ -572,6 +572,31 @@ divider(2, 40);
 }
 
 // ===========================================================================
+// 17 — Self-attention: the one architecture that is not a variation on the others
+// ===========================================================================
+{
+  const s = pres.addSlide({ masterName: "LIGHT" });
+  eyebrow(s, "METHODOLOGY");
+  slideTitle(s, "Self-attention in place of recurrence");
+  hairline(s, 232);
+  card(s, 110, 282, 1060, 440);
+  label(s, 156, 314, 980, "SCALED DOT-PRODUCT ATTENTION, AND THE ENCODER LAYER");
+  placeImg(s, path.join(EQ, "eq_attn-1.png"), 640, 462, 940, 222);
+  s.addText("Every timestep in the 30-day window attends directly to every other one. There is no hidden state propagated step by step — and so no inherent sense of order.", { x: IN(156), y: IN(600), w: IN(980), h: IN(96), fontFace: F, fontSize: PT(21), color: MUTED, lineSpacingMultiple: 1.3, valign: "top", margin: 0 });
+  card(s, 1210, 282, 600, 440);
+  label(s, 1256, 314, 520, "WHAT HAS TO BE ADDED BACK");
+  bullets(s, [
+    "A sinusoidal positional encoding, added before the first layer — attention alone cannot tell position",
+    "Two heads on separate subspaces of Q, K and V, so more than one relationship between positions survives",
+    "A linear layer on the final position, predicting the change in log concentration",
+  ], 1256, 358, 520, 330, 19);
+  card(s, 110, 754, 1700, 222, NAVY);
+  s.addText("4", { x: IN(166), y: IN(786), w: IN(340), h: IN(110), fontFace: F, fontSize: PT(92), bold: true, color: CORAL, valign: "top" });
+  s.addText("UNTUNED SETTINGS", { x: IN(166), y: IN(894), w: IN(340), h: IN(34), fontFace: F, fontSize: PT(21), bold: true, color: CORAL_LT, charSpacing: 1.4 });
+  body(s, 560, 798, 1190, 150, "d_model = 16, two heads, one encoder layer, and Adam at 0.001 rather than the 0.01 the GRU and LSTM use — all inherited unchanged from the bounded check. The GRU has three bounded sensitivity checks behind it; the transformer has none yet.", 25, WHITE);
+}
+
+// ===========================================================================
 // 17 — Rolling-origin evaluation and measures
 // ===========================================================================
 {

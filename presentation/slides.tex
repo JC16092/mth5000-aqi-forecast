@@ -121,24 +121,26 @@
 \end{frame}
 
 \begin{frame}{Deep Learning: Why a GRU}
+  \footnotesize
   \begin{itemize}
     \item \textbf{MLP} (Hornik et al., 1989): no sense of sequence order
-      -- needs the same hand-built lag table as the regression and tree
-      models
+      -- needs the same hand-built lag table as the tree models
     \item \textbf{CNN} (LeCun et al., 1998): fixed receptive field,
       ill-suited to an annual cycle already handed to every model as
       Fourier terms
     \item \textbf{Transformer / TFT} (Lim et al., 2021): large parameter
       counts tuned for datasets orders of magnitude bigger than
-      $\sim$3{,}000 observations
+      $\sim$3{,}000 observations -- \emph{fitted in full after Dr Tian
+      challenged that premise, and it beats the GRU}
     \item \textbf{Plain RNN:} vanishing/exploding gradients over long
       sequences (Bengio et al., 1994)
     \item \textbf{LSTM} fixes this with 3 gates and a memory cell --
       more parameters than this dataset needs (Hochreiter \& Schmidhuber,
-      1997)
+      1997) -- \emph{fitted in full on Dr Tian's advice, and it wins too}
     \item \textbf{GRU} (Cho et al., 2014): 2 gates, no memory cell, same
-      gradient-flow property, smaller parameter count -- the assumptions
-      that best match this project's data
+      gradient-flow property, smaller parameter count -- the \emph{a
+      priori} choice. Chapter 4 tests both size arguments, and supports
+      neither
   \end{itemize}
 \end{frame}
 
@@ -215,13 +217,13 @@
     \item One row per origin $t$, using only data up to day $t$: lags,
       rolling mean/SD/max, anomalies, exceedance frequency, calendar and
       annual Fourier terms, missingness flags
-    \item Missing values are never imputed, except for the GRU, shown
-      next
+    \item Missing values are never imputed, except for the three
+      networks, shown next
     \item \textbf{Weather} (\texttt{meteostat}): temperature, wind speed,
       pressure, precipitation, each with a lag and a 3-day rolling mean
     \item \textbf{Third data defect:} the weather archive ends 202 days
       before the PM2.5 series -- a hard cutoff. Precipitation is only
-      54\% complete and excluded from the GRU
+      54\% complete and excluded from the GRU's weather channels
   \end{itemize}
 \end{frame}
 
@@ -246,41 +248,77 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{The Gated Recurrent Unit}
+\begin{frame}{The Three Deep Learning Models}
   \begin{columns}
     \column{0.5\textwidth}
     \footnotesize
+    The GRU, in full:
     \begin{align*}
       z_t &= \sigma(W_z x_t + U_z h_{t-1} + b_z)\\
       r_t &= \sigma(W_r x_t + U_r h_{t-1} + b_r)\\
       \tilde h_t &= \tanh(W_h x_t + U_h(r_t\odot h_{t-1}) + b_h)\\
       h_t &= (1-z_t)\odot h_{t-1} + z_t\odot \tilde h_t
     \end{align*}
+    \vspace{-6pt}
+    \begin{itemize}
+      \item \textbf{GRU:} 2 gates, no memory cell -- 2{,}329 parameters
+      \item \textbf{LSTM:} 3 gates, explicit cell state -- 3{,}097
+      \item \textbf{Transformer:} self-attention, $d_{model}=16$, 2
+        heads, 1 layer -- 3{,}409, the largest
+    \end{itemize}
     \column{0.5\textwidth}
     \footnotesize
+    One protocol, three architectures:
     \begin{itemize}
       \item $H=24$ hidden units, 30-day window
       \item 6 channels (10 with weather): log-concentration, missingness
         flag, Fourier pairs ($K=2$ vs.\ ARIMA's $K=4$)
       \item Gaps forward-filled, missingness flagged
       \item Adam, MAE loss, early stopping
-      \item \textbf{10 seeds} -- not bit-reproducible at a fixed seed;
-        every result is a range
+      \item Same channels, window, target, optimiser and seeds --
+        \textbf{only the architecture differs}
+      \item \textbf{10 seeds} each; the GRU is not bit-reproducible even
+        at a fixed seed, so every result is a range
     \end{itemize}
   \end{columns}
+\end{frame}
+
+\begin{frame}{Self-attention in Place of Recurrence}
+  \footnotesize
+  Every timestep in the 30-day window attends directly to every other
+  one. There is no hidden state propagated step by step -- and so no
+  inherent sense of order.
+  \begin{align*}
+    \mathrm{Attention}(Q,K,V) &= \mathrm{softmax}\!\left(
+      \frac{QK^\top}{\sqrt{d_{model}}}\right) V\\
+    Z' &= \mathrm{LayerNorm}\big(Z + \mathrm{MultiHead}(Z)\big)\\
+    Z'' &= \mathrm{LayerNorm}\big(Z' + W_2\,\mathrm{ReLU}(W_1 Z' + b_1)
+      + b_2\big)
+  \end{align*}
+  \begin{itemize}
+    \item A sinusoidal positional encoding is added before the first
+      layer -- attention alone cannot tell position
+    \item Two heads on separate subspaces of $Q$, $K$, $V$, so more than
+      one relationship between positions survives
+    \item \textbf{Four settings, none independently tuned:}
+      $d_{model}=16$, 2 heads, 1 encoder layer, and Adam at 0.001 rather
+      than the GRU and LSTM's 0.01 -- all inherited from the bounded
+      check. The GRU has three bounded sensitivity checks behind it; the
+      transformer has none yet
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Rolling-Origin Evaluation and Warning-System Measures}
   \begin{itemize}
     \item \textbf{2{,}303 origins}, Nov 2019--Aug 2026, refit every 90
-      days (180 for the GRU). At origin $t$, only data up to day $t$ is
+      days (180 for the three networks). At origin $t$, only data up to day $t$ is
       used -- enforced by construction, verified by a corruption test
     \item \textbf{Accuracy:} rMAE against persistence (1.000 =
       persistence) and MASE, per horizon
     \item \textbf{Warning system:} hit rate, false alarm rate, precision,
       CSI, alarms per year -- plain accuracy is never reported
     \item \textbf{Diebold-Mariano test} (HLN small-sample correction):
-      GRU vs.\ ARIMA per seed, and ARIMA vs.\ each ML regressor
+      each network vs.\ ARIMA per seed, and ARIMA vs.\ each ML regressor
   \end{itemize}
 \end{frame}
 
@@ -288,11 +326,13 @@
 \section{Results}
 
 \begin{frame}{Forecast Accuracy (RQ1)}
-  \centering\footnotesize
+  \centering\scriptsize
   \begin{tabular}{lccc}
     \toprule
     Model & $h=1$ & $h=2$ & $h=3$ \\
     \midrule
+    Transformer, range over 10 seeds & 0.914--0.925 & 0.870--0.893 & 0.825--0.842 \\
+    LSTM, range over 10 seeds & 0.913--0.932 & 0.874--0.892 & 0.824--0.847 \\
     GRU, range over 10 seeds & 0.910--0.939 & 0.878--0.906 & 0.831--0.879 \\
     ARIMA(1,1,1) + Fourier & \textbf{0.940} & \textbf{0.883} & \textbf{0.832} \\
     Best ML regressor (GBM, change) & 0.983 & 0.937 & 0.878 \\
@@ -300,12 +340,16 @@
     \bottomrule
   \end{tabular}
 
-  \includegraphics[width=0.46\textwidth]{fig6_accuracy}
+  \includegraphics[width=0.44\textwidth]{fig6_accuracy}
 
-  \raggedright\small
-  GRU wins clearly at $h=1$; ARIMA wins or ties beyond it ($h=3$: 0.831
-  vs.\ 0.832). ARIMA beats every ML regressor at every horizon: 15 of 15
-  DM pairings favour it, 14 at $p<0.05$.
+  \raggedright\scriptsize
+  All three networks win clearly at $h=1$ only; ARIMA wins or ties beyond
+  it. Both architectures added on supervisor review beat the GRU -- the
+  LSTM at every horizon, the transformer in 8 of 10 matched seeds. By the
+  DM test at $h=1$ the transformer is strongest: 7 of 10 seeds
+  significant against ARIMA, to the LSTM's 5 and the GRU's 4. ARIMA still
+  beats every ML \emph{regressor} at every horizon, 15 of 15 DM pairings,
+  14 at $p<0.05$.
 \end{frame}
 
 \begin{frame}{Does Weather Change the Answer?}
@@ -425,6 +469,29 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Limitations III: What the Supervisor Reviews Added}
+  \begin{itemize}
+    \item \textbf{Optimiser and learning rate} (bounded check): Adam at
+      0.01 is at or near best at $h=1,2$; at $h=3$ SGD with momentum
+      beats it by $\sim$2 points (0.839 vs.\ 0.858). Three bounded checks
+      now agree $h=3$ is the configuration this project would least
+      defend
+    \item \textbf{LSTM and transformer scope:} both got the full ten-seed
+      accuracy evaluation and no further -- no weather channels, no
+      threshold sweep for either, so neither appears in the
+      warning-system tables
+    \item \textbf{The transformer was promoted out of this list:} it
+      began as a bounded check; Dr Tian challenged the small-data premise
+      ($\sim$4{,}000 days clears the threshold he had seen cited), so it
+      was given the full treatment -- and it beats the GRU in 8 of 10
+      matched seeds at every horizon
+    \item \textbf{KAN-LSTM hybrid} -- the one check still bounded. No
+      maintained library, so the layer was built from the published
+      construction and unit-tested alone first. All three seeds trained
+      stably; competitive with the other three
+  \end{itemize}
+\end{frame}
+
 % ============================================================================
 \section{Conclusion}
 
@@ -433,17 +500,19 @@
     \item Forecast hazardous PM2.5 1--3 days ahead at one Delhi monitor;
       two real data defects corrected; the weekly-cycle assumption tested
       and rejected
-    \item Spread across models at fixed budget: $\sim$5 points. Spread
-      across budgets, model fixed: $\sim$50 points
+    \item Spread across models at a fixed budget: $\sim$5 points;
+      across budgets, model fixed: $\sim$50
     \item ARIMA beats every ML regressor at every horizon (DM-backed);
-      the GRU is the one model that wins, only at $h=1$, reported as a
-      range over ten seeds
+      the three that win are the networks -- GRU, LSTM and transformer --
+      each clearly only at $h=1$, each a range over ten seeds. Both added
+      on review beat the GRU originally chosen
     \item Weather narrows $h=1$ further but leaves $h=2$/$h=3$ a tie or
-      more-often-loss; its gain buys little once thresholded
-    \item Forecast-then-threshold beats direct classification 21 of 36 --
-      real but modest, preferred also for rethresholdability
-    \item Trying several methods, not defaulting to ARIMA, is what
-      surfaced the $h=1$ GRU win and made the negative result credible
+      a loss; its gain buys little once thresholded
+    \item Forecast-then-threshold beats direct classification 21 of 36;
+      modest, but preferred for rethresholdability
+    \item Trying several methods, not defaulting to ARIMA, surfaced the
+      $h=1$ network win and made the negative result credible -- and two
+      rounds of review then bettered the architecture first chosen
   \end{itemize}
 \end{frame}
 
@@ -456,6 +525,10 @@
       ten-seed rolling-origin evaluation
     \item A second, independent station -- ideally CPCB -- once its
       record lengthens
+    \item Finish the LSTM and the transformer: weather channels and the
+      threshold sweep, the two steps taken for neither
+    \item Evaluate the KAN-LSTM hybrid in full -- the same promotion the
+      transformer was just given
   \end{enumerate}
   \vspace{6pt}
   \centering

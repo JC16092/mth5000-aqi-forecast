@@ -9,11 +9,13 @@ scripts, the same figures, and the same
   deliverable and the only deck that is up to date**. Built by
   `pptx_src/build_deck_v2.js`. This is the "threshold line" design (see
   below). Tracked, the same way `report/main.pdf` is.
-- **`slides.tex`** / **`slides.pdf`** -- the original Beamer version.
-  Tracked, but **stale**: it is at the pre-LSTM 31-slide state and still
-  carries the "GRU chosen because fewer parameters" justification that
-  the report has since retracted (see "Kept in sync with the report"
-  below). Do not present from it without bringing it forward first.
+- **`slides.tex`** / **`slides.pdf`** -- the Beamer version, **now level
+  with the pptx**: both catch-up passes (LSTM, then transformer) were
+  replayed against it, so it is also 33 slides and carries the same
+  corrected content. Kept because it is the fallback if PowerPoint is
+  unavailable in the room. The two decks are **not** auto-synced -- a
+  content change in one has to be made in the other deliberately, and
+  that is exactly how it fell two passes behind once already.
 - **`slides.pptx`** -- the earlier teal/coral deck, regenerable with
   `pptx_src/build_deck.js`. Deliberately **not** tracked: it is
   superseded and carries the same retracted justification, and its build
@@ -136,10 +138,10 @@ tectonic slides.tex
 
 ## Status
 
-`slides_v2.pptx` is filled in: title slide, agenda, and 25 content
+`slides_v2.pptx` is filled in: title slide, agenda, and 26 content
 slides covering all six chapters of `report/main.tex` (3 Introduction, 3
-Literature Review, 6 Methodology, 5 Results, 4 Discussion, 2 Conclusion),
-plus a section-divider slide before each chapter. 32 slides total, and
+Literature Review, 7 Methodology, 5 Results, 4 Discussion, 2 Conclusion),
+plus a section-divider slide before each chapter. 33 slides total, and
 current as of the transformer's promotion (report commit `9f0ede4`).
 (`slides.pptx` and `slides.tex` are at the earlier 31-slide state and
 predate the LSTM work -- see the note below.)
@@ -162,8 +164,9 @@ Validated (`scripts/office/validate.py`), content-checked (`markitdown`),
 and visually QA'd page-by-page by rendering to images, not just by a
 clean compile/validate log or an un-inspected "looks designed" assumption.
 
-`pptx_src/eq/` holds the three equation images (ARIMA+Fourier, ridge
-closed-form, the GRU's four gate equations), typeset from LaTeX
+`pptx_src/eq/` holds the four equation images (ARIMA+Fourier, ridge
+closed-form, the GRU's four gate equations, and scaled dot-product
+attention with the encoder layer), typeset from LaTeX
 (`mathptmx`, matching the report's own math font) rather than built as
 PowerPoint text, since PowerPoint has no native equation-typesetting good
 enough to match the report. Their `.tex` sources are kept alongside the
