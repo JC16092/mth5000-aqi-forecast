@@ -1720,15 +1720,15 @@ addresses a known and specific failure mode of the test, not every way
 its normal approximation could be imprecise on a series with this one's
 particular shape.
 
-This is applied to exactly the comparison Section~\ref{sec:results-rq1}
-already makes by counting seed signs against the empirical noise floor: the
-recurrent network against the ARIMA benchmark, with and without weather, at
-every horizon. Because the network alone depends on a random
-initialisation, the test is run once per seed against the same ARIMA
-forecast and reported as the range across all ten, exactly the convention
-already used for every other seed-dependent number in this report, rather
-than as a single run's $p$-value that a different seed could have produced
-differently.
+This is applied to exactly the comparisons Section~\ref{sec:results-rq1}
+already makes by counting seed signs against the empirical noise floor:
+the GRU against the ARIMA benchmark, with and without weather, the LSTM
+against it, and the transformer against it, at every horizon. Because the
+networks alone depend on a random initialisation, the test is run once per
+seed against the same ARIMA forecast for each and reported as the range
+across all ten, exactly the convention already used for every other
+seed-dependent number in this report, rather than as a single run's
+$p$-value that a different seed could have produced differently.
 
 \section{Reproducibility}
 
@@ -2194,7 +2194,7 @@ question nobody asked.
 \section{Chapter Summary}
 
 Table~\ref{tab:accuracy} answers the first research question with a
-horizon-dependent result: the deep learning model wins at one day ahead, the
+horizon-dependent result: the deep learning models win at one day ahead, the
 classical model wins or ties beyond it. Table~\ref{tab:weather}
 (Section~\ref{sec:results-weather}) shows that boundary holding at one day
 ahead once observed weather is added, but across ten seeds rather than the
@@ -2257,13 +2257,15 @@ identical pipeline on two different machines moved the tree models by up to
 with OpenMP and floating point summation order depends on the thread count.
 Changing only the random initialisation of the GRU moved it by 0.028 to
 0.048 across ten seeds; the LSTM's own spread, measured the same way, is
-tighter at every horizon, 0.018 to 0.023, but still far from zero. A third
+tighter at every horizon, 0.018 to 0.023, and the transformer's tighter
+again, 0.011 to 0.023, but none of the three is close to zero. A third
 and less expected result bounds it further: rerunning the identical GRU
 command with the same seed on the same machine moved its score by nearly
 as much as switching to a genuinely different seed does, which
 Section~\ref{sec:limitations} discusses and which this report takes as the
 practical floor on how precisely a trained network's result can be stated
-at all; the same check was not repeated for the LSTM, so whether it shares
+at all; the same check was not repeated for the LSTM or the transformer,
+so whether either shares
 the GRU's specific reproducibility defect or only its general sensitivity
 to initialisation is not yet known.
 
@@ -2297,15 +2299,18 @@ that pair. Any claim that one of those models is better than another, made
 without stating the run to run variation, is not supported by the evidence.
 
 A formal test of the same question, rather than a tolerance measured by
-rerunning and compared by eye, is available for the one comparison in this
-report with enough seeds to support it: the network against ARIMA, in
-Table~\ref{tab:significance} (Section~\ref{sec:results-rq1}). It is,
-throughout, the more conservative reading. At one day ahead the network's
+rerunning and compared by eye, now exists for all three seeded networks
+against ARIMA, in Table~\ref{tab:significance} (Section~\ref{sec:results-rq1}).
+Taking the plain GRU first, since it is the one already discussed above: it
+is, throughout, the more conservative reading. At one day ahead its
 advantage reaches conventional significance in four of the ten seeds, not
 the eight credited to it by the noise-floor count above; at two days none
 of the ten reaches it, where the noise-floor count had already read most of
-the table as a tie; at three days a single seed does, and even that one
-only at $p=0.049$. The two readings differ because each bounds something
+the table as a tie; at three days a single seed does, $p=0.0056$. The LSTM
+and the transformer show the same conservative pattern relative to their
+own noise-floor counts: both reach significance in more seeds at one day
+ahead than the plain GRU, five and seven of ten respectively, and neither
+reaches it at two or three days at all. The two readings differ because each bounds something
 different. The noise floor measured here, 0.004 to 0.048, bounds how much a
 score moves for reasons that have nothing to do with which model is better:
 thread scheduling, floating point summation order, a different draw of
