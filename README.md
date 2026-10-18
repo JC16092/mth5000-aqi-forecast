@@ -50,16 +50,29 @@ step01_data_check.py        viability check: ADF test, periodogram, ACF/PACF
 step01b_clean.py            reports and (when told) removes impossible values
 step02_features.py          builds the supervised feature table (--weather for the weather extension)
 evaluation.py                shared scoring module; every model is scored by this and nothing else
+significance.py              Diebold-Mariano significance test, shared by every seeded-network comparison
 step03_benchmarks.py        persistence, seasonal-naive, climatology
 step04_arima.py             ARIMA with annual Fourier terms (single-split benchmark)
 step05_rolling.py           the rolling-origin evaluation harness
 step06_ml.py                ridge, random forest, gradient boosting (level and change targets)
 step07_warning.py           direct classification arm + the decision-threshold sweep
 step08_gru.py               the recurrent network (--weather for the weather-augmented variant)
+step09_lstm.py               the LSTM, same protocol as the GRU, added on Dr Tian's suggestion
+step10_transformer.py        the transformer, promoted from a bounded check to the same full treatment
+kan_layer.py                 from-scratch Kolmogorov-Arnold linear layer (B-spline construction)
 make_figures.py             every figure in the report, generated from the result files
 build_weather_regression.py assembles the combined weather-vs-no-weather comparison files
 compare_weather.py          console sanity check: weather vs. no-weather GRU accuracy
 compare_weather_threshold.py console sanity check: does the weather accuracy gain survive the threshold sweep
+
+Bounded single-split sensitivity checks, each a standalone script whose numbers
+appear only in the Limitations prose, not in any table:
+gru_hyperparam_sensitivity.py   GRU hidden size and window length
+gru_fourier_ablation.py         GRU Fourier harmonic count (K=2 vs K=4)
+gru_optimizer_sensitivity.py    GRU optimiser and learning rate
+arima_coefficient_stability.py  phi_1 / theta_1 stability across rolling-origin refits
+transformer_bounded_check.py    the transformer's original single-split check, before promotion
+kan_lstm_bounded_check.py       the Kolmogorov-Arnold-LSTM hybrid, still a bounded check
 report/
   main.tex                  the report source
   make_tables.py            every table in the report, generated from the result files
@@ -102,6 +115,23 @@ for N in 0 1 2 3 4 5 6 7 8 9; do
 done
 wait
 cp gru_seed0.csv forecasts_with_gru.csv
+
+# LSTM, 10 seeds (added on Dr Tian's suggestion to test the GRU-over-LSTM choice directly)
+for N in 0 1 2 3 4 5 6 7 8 9; do
+  python step09_lstm.py --csv data/delhi_clean.csv --seed $N \
+         --existing forecasts_with_gru.csv --out lstm_seed${N}.csv &
+done
+wait
+cp lstm_seed0.csv forecasts_with_lstm.csv
+
+# Transformer, 10 seeds (promoted from a bounded check once Dr Tian questioned the
+# small-data argument against trying one at all)
+for N in 0 1 2 3 4 5 6 7 8 9; do
+  python step10_transformer.py --csv data/delhi_clean.csv --seed $N \
+         --existing forecasts_with_lstm.csv --out transformer_seed${N}.csv &
+done
+wait
+cp transformer_seed0.csv forecasts_with_transformer.csv
 
 # Direct classification arm, fit once
 python step07_warning.py --csv data/delhi_clean.csv --features features.csv \

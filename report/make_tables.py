@@ -15,6 +15,7 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from step01_data_check import load_series          # noqa: E402
+from step01b_clean import load as load_raw, apply_rules  # noqa: E402
 from step07_warning import operating_point_at_alarms  # noqa: E402
 import evaluation as ev                            # noqa: E402
 import significance as sig                         # noqa: E402
@@ -514,11 +515,29 @@ def table_arms(sweep_path, budgets=(40, 60, 80, 100)):
     return tally
 
 
-def table_cleaning():
-    rows = [("Value below zero", "5", "Mass concentration cannot be negative"),
-            ("Coverage below 50\\%", "270", "Against the cadence taken from the data"),
-            ("Value above 1000", "7", "Judgement; sensitivity analysis in Section~\\ref{sec:limitations}"),
-            ("\\textbf{Total}", "\\textbf{282 of 3{,}375}", "")]
+def table_cleaning(raw_path):
+    """Computed from the raw data and the production cleaning call, not
+    hand-typed: this was the one table in the project that still violated
+    this file's own opening rule, and a hand-typed table is a table that
+    silently stops matching its own data the next time the cleaning rule
+    is revisited.
+    """
+    raw = load_raw(raw_path)
+    cleaned = apply_rules(raw, min_value=0, max_value=1000, max_ratio=None,
+                          min_coverage=50)
+    counts = cleaned["clean_reason"].value_counts()
+    below_min = int(counts.get("below_min", 0))
+    low_coverage = int(counts.get("low_coverage", 0))
+    above_max = int(counts.get("above_max", 0))
+    total_removed = below_min + low_coverage + above_max
+    total_raw = int(raw["PM2.5_raw"].notna().sum())
+    total_str = f"{total_removed} of {total_raw:,}".replace(",", "{,}")
+
+    rows = [("Value below zero", f"{below_min}", "Mass concentration cannot be negative"),
+            ("Coverage below 50\\%", f"{low_coverage}", "Against the cadence taken from the data"),
+            ("Value above 1000", f"{above_max}",
+             "Judgement; sensitivity analysis in Section~\\ref{sec:limitations}"),
+            ("\\textbf{Total}", f"\\textbf{{{total_str}}}", "")]
     body = ["\\begin{tabular}{llp{6.2cm}}", "\\toprule",
             "Rule & Days removed & Basis \\\\", "\\midrule"]
     for a, b, c in rows:
@@ -543,7 +562,7 @@ def main():
     table_dataset(clean)
     table_accuracy(fc, clean)
     table_warning(fc)
-    table_cleaning()
+    table_cleaning(os.path.join(ROOT, "data", "delhi.csv"))
     table_significance()
     table_significance_ml(fc)
     if os.path.exists(sweep):

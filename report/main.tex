@@ -1730,6 +1730,33 @@ across all ten, exactly the convention already used for every other
 seed-dependent number in this report, rather than as a single run's
 $p$-value that a different seed could have produced differently.
 
+A further limitation, not yet stated, is that this test is run
+twenty-seven separate times across this report, once per seeded network
+family per horizon (twelve tests, across the GRU, the weather-augmented
+GRU, the LSTM and the transformer) and once per machine learning
+regressor per horizon (fifteen tests), each read at the conventional five
+per cent level with no correction for running that many at once. Under a
+global null in which none of these twenty-seven comparisons is genuinely
+different from ARIMA, roughly 1.4 false positives would be expected from
+chance alone. Applying a Bonferroni correction across all twenty-seven,
+taking each seeded family's best seed as its representative figure since
+the fifteen regressor comparisons carry only one fit each, only six
+survive: ridge at every horizon, the weather-augmented GRU at one day
+ahead, the change-target random forest at three days, and gradient
+boosting's level target at one day ahead. None of the plain GRU's, the
+LSTM's or the transformer's own best-seed results survive it, despite
+each reaching nominal significance individually. Taking the best seed per
+family is itself a second, undisclosed form of selection this correction
+does not account for, so if anything this is an optimistic picture of how
+the seeded networks would fare under a fully rigorous joint correction,
+not a pessimistic one. This does not overturn the report's central
+qualitative claims, which rest on several independent sources of
+evidence, the noise floor, the seed-sign counts, and this test agreeing
+with each other, rather than on any single $p$-value; it is, however, a
+reason to read every individual significance claim beyond one day ahead
+in Table~\ref{tab:significance} and Table~\ref{tab:significance-ml} as
+suggestive rather than confirmed.
+
 \section{Reproducibility}
 
 The analysis runs end to end from an empty directory via twelve numbered

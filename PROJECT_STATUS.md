@@ -3163,6 +3163,47 @@ two conclusions bullets. Final state is the pre-existing three plus one
 0.62pt, smaller than any already accepted. Every changed page rendered
 and inspected.
 
+### 17-18 October, a thirty-seventh pass (report chat): a full read-through
+### found and fixed three stale network references, plus a wrong p-value
+
+Asked, separately from the transformer work itself, to go through the whole
+74-page report in depth and give feedback. Read every line of `main.tex`,
+re-verified the mathematics in every Methodology subsection directly
+against the fitted code (not just the derivations), cross-checked all 49
+citation keys against `refs.bib` (zero missing, zero orphaned), and
+independently recomputed the Wilson score intervals quoted in Section 5.2,
+which matched exactly.
+
+Found three places where the transformer's promotion to a full seeded
+network, and in one case the LSTM's, had never been swept through:
+Section 3.8's intro ("the recurrent network against ARIMA" when there are
+now four such comparisons), the Results chapter summary ("the deep
+learning model wins" when there are three), and Section 5.2's spread
+paragraph, which named the GRU's and LSTM's own seed-to-seed spread but
+not the transformer's (0.011 to 0.023, the tightest of the three).
+
+The more serious find came while fixing the second of those: Section 5.2
+also claimed to be reporting "the one comparison... with enough seeds,"
+quoting $p=0.049$ for the GRU's one significant seed at three days ahead.
+That figure is actually the weather-GRU's result; the plain GRU's own
+value, $p=0.0056$, was already stated correctly in Section 4.1. The two
+sections contradicted each other. Rewrote the paragraph to cover all three
+networks' significance counts and corrected the p-value. All six fixes
+recompiled clean (same three pre-existing cosmetic warnings, nothing new)
+and were individually verified in the rendered PDF text, not just assumed
+from the source edit. Committed `63bdd3e` and pushed, on request, together
+with the presentation session's two pending commits (`4874f90`, `dcb5f81`).
+
+### 19 October: Dr Tian's reply to the transformer summary
+
+"The results look very good. You can now concentrate on writing the
+report." Sent 00:11, in reply to the summary PDF and email from pass 36 --
+not yet to the full report, which per pass 36's note was deliberately held
+back until this reply came. The student's own stated plan was to send the
+full draft once this update arrived; whether that has happened yet should
+be checked at the start of the next session rather than assumed either
+way. No other action taken on this message yet.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required
