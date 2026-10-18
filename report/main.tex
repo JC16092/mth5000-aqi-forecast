@@ -299,7 +299,7 @@ authority is willing to raise is a more consequential design decision than
 the forecasting model behind it. The methodological significance lies in
 applying a leakage-tested rolling-origin evaluation, rather than a single
 train-test split, to a model suite spanning classical statistics, machine
-learning, and a deep recurrent architecture, on a dataset small enough that
+learning, and three deep learning architectures, on a dataset small enough that
 the comparison between method families is itself informative about where
 each is reliable.
 
@@ -963,9 +963,9 @@ Fourier terms; and three missingness indicators.
 Missing values are never imputed. Gradient boosting accepts them natively and the
 state space models skip the measurement update at a gap, so the absence is
 carried as information rather than replaced by a fabricated value. The single
-exception is the recurrent networks, the GRU and the LSTM, which share the
+exception is the three networks, the GRU, the LSTM and the transformer, which share the
 same channel construction and are discussed together in
-Sections~\ref{sec:gru} and~\ref{sec:lstm}.
+Sections~\ref{sec:gru},~\ref{sec:lstm} and~\ref{sec:transformer}.
 
 \subsection{Weather Covariates}
 \label{sec:weather}
@@ -1338,8 +1338,8 @@ own weight vector and bias. For $H=24$, Equation~\ref{eq:gru-params} gives
 ten-channel weather version, $d=10$, both confirmed directly by counting
 the fitted model objects' own parameters rather than trusted as arithmetic.
 
-A recurrent network forces a compromise that no other model in this project
-requires. It must be handed a value at every timestep: it cannot skip one the
+A recurrent network forces a compromise that the classical and tree-based
+models in this project do not share. It must be handed a value at every timestep: it cannot skip one the
 way the state space model in Section~\ref{sec:arima} skips a measurement
 update, and it cannot accept a missing value the way the histogram gradient
 boosting model in Section~\ref{sec:ml-methods} can. Gaps are therefore carried
@@ -1516,7 +1516,16 @@ the same six channels (log concentration, missingness flag, two annual
 Fourier pairs), the same 30-day window, the same change-in-log target with
 the origin value added back, the same Adam optimiser with early stopping on
 the same chronological holdout, and the same treatment across ten random
-seeds, reported as a range for the same reason. Four settings are specific
+seeds, reported as a range for the same reason. Unlike the GRU and LSTM,
+this is not an architectural necessity: self-attention has no inherent
+requirement that every position carry a real observation the way a
+recurrent cell does, discussed in Section~\ref{sec:gru}, and an attention
+mask could in principle represent a genuine gap directly rather than
+filling it. That richer treatment was not built here. The transformer
+instead reuses the GRU's forward-fill-plus-missingness-flag channel
+construction unchanged, so it inherits the same practical limitation as a
+matter of this project's implementation choice, not of the architecture
+itself. Four settings are specific
 to this architecture and were not independently tuned: $d_{model}=16$,
 $n_{head}=2$ attention heads, a single encoder layer with feed-forward width
 $d_{ff}=4d_{model}=64$, and an Adam learning rate of 0.001 rather than the
