@@ -237,6 +237,19 @@ def table_budget(sweep_path):
             cells.append(f"{g['hit_rate'].max():.3f}" if len(g) else "--")
         body.append(f"\\quad {esc(PRETTY.get(name, name))}, $h=1$ & "
                     + " & ".join(cells) + " \\\\")
+    body.append("\\midrule")
+    # The two models the Discussion chapter's sharpest illustrations name
+    # directly at h=3 (persistence winning outright at a tight budget;
+    # climatology nearly matching the best model at the loosest one), so a
+    # reader can check those specific claims against a printed cell rather
+    # than the prose alone.
+    for name in ["naive_carry", "climatology"]:
+        cells = []
+        for b in budgets:
+            g = sw[(sw.model == name) & (sw.horizon == 3) & (sw.alarms_per_year <= b)]
+            cells.append(f"{g['hit_rate'].max():.3f}" if len(g) else "--")
+        body.append(f"\\quad {esc(PRETTY.get(name, name))}, $h=3$ & "
+                    + " & ".join(cells) + " \\\\")
     body += ["\\bottomrule", "\\end{tabular}"]
     write("budget.tex", "\n".join(body) + "\n")
 

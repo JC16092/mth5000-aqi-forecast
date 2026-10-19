@@ -444,10 +444,10 @@ single split was replaced by the rolling-origin harness.
 \subsection{The Deep Learning Landscape for Time Series}
 \label{sec:lit-dl-landscape}
 
-Before narrowing to the single architecture this project fits, it is worth
-stating why the others on offer were not chosen, since "we used a recurrent
-network" is a much weaker claim without the alternatives it was weighed
-against. The simplest deep architecture is the multilayer perceptron (MLP),
+Before narrowing to the recurrent family this project started from, it is
+worth stating why the others on offer were not chosen, since "we used a
+recurrent network" is a much weaker claim without the alternatives it was
+weighed against. The simplest deep architecture is the multilayer perceptron (MLP),
 a feedforward network shown to approximate any continuous function given
 enough hidden units \citep{hornik1989universal}, applied to forecasting
 since at least the 1990s \citep{zhang1998ann}. An MLP has no sense of
@@ -713,8 +713,9 @@ out-of-sample evaluation and scale-free accuracy measures, rather than
 taking any single reported number at face value; deep learning methods for
 sequences, the wider landscape of feedforward, convolutional and
 attention-based architectures weighed against the recurrent family before
-narrowing to it, the specific architectural reason a GRU rather than an
-LSTM suits a dataset this size, and the structural limitation, an inability
+narrowing to it, the architectural reason originally given for preferring
+a GRU over an LSTM, which Chapter~\ref{chap:results} goes on to test and
+not support, and the structural limitation, an inability
 to represent a missing input, that a recurrent architecture carries
 regardless of which gated variant is chosen; the physical background and
 Delhi-specific forecasting literature, emission sources, biomass burning,
@@ -1534,7 +1535,12 @@ single-split bounded check (Section~\ref{sec:limitations}) that preceded
 the full evaluation. Section~\ref{sec:limitations} reports bounded
 sensitivity checks for the GRU's own hyperparameters; no equivalent check
 exists yet for the transformer's, which is stated here rather than left for
-a reader of Table~\ref{tab:accuracy} to assume.
+a reader of Table~\ref{tab:accuracy} to assume. With submission close, the
+full ten-seed evaluation itself was judged the better use of the time a
+sensitivity sweep would have taken; the comparison in
+Table~\ref{tab:accuracy} should therefore be read as the result of this
+one configuration, not as evidence that it is the best one available to
+the architecture.
 
 Summing the input projection, one encoder layer's self-attention and
 feed-forward sublayers with their two layer normalisations, and the output
@@ -2171,7 +2177,10 @@ arm throughout rather than on the classifiers.
 \begin{table}[htbp]
 \centering
 \caption{Best hit rate available within a budget of alarms per year, with the
-event fixed at the health threshold and only the decision threshold varying.}
+event fixed at the health threshold and only the decision threshold varying.
+Persistence and climatology are also broken out at $h=3$, the two specific
+models the discussion of this table names directly, so those claims can be
+checked against a printed cell rather than the prose alone.}
 \label{tab:budget}
 \footnotesize
 \resizebox{\textwidth}{!}{\input{tables/budget}}
@@ -2287,6 +2296,13 @@ day to the next, and the annual cycle.
 \section{How Large Is a Difference Between Models?}
 \label{sec:noise-floor}
 
+This section bounds that question three separate ways, each more
+conservative than the last: an empirical noise floor measured directly by
+rerunning the pipeline, a formal significance test, and a check of how
+precise the significance counts themselves are. All three agree on
+direction; what they progressively narrow is how much confidence the
+exact numbers in Table~\ref{tab:accuracy} deserve.
+
 Three results in this project bound that question from below. Running the
 identical pipeline on two different machines moved the tree models by up to
 0.004 in relative error, because histogram gradient boosting parallelises
@@ -2382,6 +2398,14 @@ allows.
 
 \section{Limitations}
 \label{sec:limitations}
+
+The limitations below are organised roughly by kind rather than
+alphabetically: scope restrictions that cannot be fixed within this
+project (the station, the city, the cleaning threshold) come first,
+followed by specific, bounded uncertainties that were actively measured
+rather than assumed (the hyperparameter and reproducibility checks), and
+finally the scope boundaries of the newer architectures and the weather
+extension. None of what follows overturns the central finding; Section~\ref{sec:noise-floor} already discusses why.
 
 The analysis rests on a single monitor, OpenAQ location 8118, which
 Section~\ref{sec:data} shows is supplied through AirNow and is almost

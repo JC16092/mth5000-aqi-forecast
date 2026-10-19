@@ -3204,6 +3204,66 @@ full draft once this update arrived; whether that has happened yet should
 be checked at the start of the next session rather than assumed either
 way. No other action taken on this message yet.
 
+### 19 October, a thirty-eighth pass: a genuine page-by-page review of all
+### 74 pages, and five more findings fixed
+
+Asked explicitly to go page by page through the whole compiled PDF, not
+section by section, and write what's good, what could be better, and an
+examiner's-eye note for each one. Did exactly that: read every one of the
+74 pages against its own rendered content (not just the LaTeX source),
+wrote a genuine entry for each rather than padding thin pages, and
+independently re-verified several specific numeric claims against the
+raw data along the way rather than trusting the prose -- most notably
+Table 4.7's two headline illustrations (persistence winning outright at
+$h=3$, budget 40; climatology nearly matching the best model at $h=3$,
+budget 100), both of which checked out exactly, the second only after
+tracing it to a specific GRU seed (seed 9) once the obvious candidates
+didn't add up to the claimed figure. Saved as `REPORT_REVIEW.md` in the
+project root and sent to the user, with a prioritised summary at the top
+rather than leaving them to read all 74 entries to find what to act on.
+
+**Five real findings, all fixed and verified by recompiling and visually
+re-rendering the changed pages, same three pre-existing cosmetic warnings
+throughout, nothing new:**
+
+1. The Literature Review's own chapter summary (Section 2.7) contradicted
+   its own chapter body (Section 2.3.3): the body correctly says the
+   GRU-over-LSTM parameter-count reasoning was tested and not supported,
+   but the chapter's summary of itself restated that same reasoning as
+   settled. The most important find of this pass, not because it was hard
+   to fix, but because a reader who only skims chapter summaries would
+   have come away with the wrong picture of what the chapter actually
+   found.
+2. Section 2.3.1's opening line still said "the single architecture this
+   project fits" -- missed by four previous fix rounds because all of
+   them searched for "recurrent"-specific phrasing rather than "single
+   architecture." Now "the recurrent family this project started from."
+3. Table 4.7's two sharpest illustrative numbers weren't independently
+   checkable: the table only named specific models at $h=1$, so a reader
+   had to take the $h=3$ persistence and climatology claims on faith.
+   Extended `table_budget()` in `make_tables.py` to add both as their own
+   rows at $h=3$, with a caption explaining why; the numbers (0.359 and
+   0.816) now sit in a printed cell exactly where the prose discusses
+   them.
+4. The Discussion chapter's limitations are individually well-argued but
+   stack six dense pages deep before the reassuring synthesis arrives at
+   the very end, which could leave a skimming reader more alarmed about
+   the report's rigor than the evidence warrants. Added one-sentence
+   signposts at the start of Section 5.2 and Section 5.3 rather than
+   cutting any of the actual content.
+5. The transformer's hyperparameters were disclosed as never
+   sensitivity-checked (unlike the GRU's three bounded checks) but the
+   report didn't say why, leaving an obvious follow-up question
+   unanswered. Added the actual reasoning directly: the full-evaluation
+   promotion itself was judged the better use of the time a sweep would
+   have taken, and Table 4.1 should be read as this one configuration's
+   result, not evidence it's the best available to the architecture.
+
+The AI-tool-use declaration remains the one item from this and every
+earlier critical-review pass that's a different kind of risk from
+everything else found, and remains entirely the user's call. Not yet
+committed as of writing this entry.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required
