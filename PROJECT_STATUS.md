@@ -3424,7 +3424,19 @@ unchanged at 73. Spot-checked Figure 3.1 directly in the compiled PDF to
 confirm the colour actually survives the LaTeX/`tectonic` round trip, not
 just the standalone PNG.
 
-**Not yet committed as of writing this entry.**
+**Committed (`ce54653`) and pushed, on request.**
+
+### 25 October, same day: reply sent to Dr Tian
+
+A five-point reply covering everything above (sections/hat, List of
+Symbols, numbering check, hats on all six chapters, the six new figures)
+was drafted and given to the user; they sent it themselves. Verified
+against his original email point by point before it went, not just
+asserted: re-checked section counts per chapter (1 through 6: 5, 6, 9, 4,
+4, 3), re-screenshotted Chapters 2, 3 and 6's hats directly in the
+compiled PDF (only 1, 4 and 5 had been checked earlier), and recompiled
+clean with zero undefined references immediately beforehand. Waiting on
+his response; nothing further to do until it arrives.
 
 ## Data sources
 
