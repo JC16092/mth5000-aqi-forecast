@@ -88,129 +88,6 @@ alarm budget, treating the forecasting model as a secondary refinement.
 \listoffigures
 \listoftables
 
-\chapter*{List of Symbols}
-\addcontentsline{toc}{chapter}{List of Symbols}
-\noindent
-Grouped by the section each symbol is first used in, rather than
-alphabetically, since the report moves between several method families
-each with its own standard notation, and a handful of letters are reused
-for genuinely different quantities across them. Where that happens, the
-other meaning is named rather than left for the reader to notice.
-
-\begin{longtable}{>{\raggedright\arraybackslash}p{2.3cm}>{\raggedright\arraybackslash}p{9.6cm}>{\raggedright\arraybackslash}p{1.6cm}}
-\toprule
-Symbol & Meaning & Section \\
-\midrule
-\endfirsthead
-\multicolumn{3}{l}{\small\itshape (List of Symbols, continued)} \\
-\toprule
-Symbol & Meaning & Section \\
-\midrule
-\endhead
-\midrule
-\multicolumn{3}{r}{\small\itshape continued on next page} \\
-\endfoot
-\bottomrule
-\endlastfoot
-
-\multicolumn{3}{@{}l}{\textbf{General notation, used throughout}} \\
-$n$ & number of observations or scored rows in the quantity at hand & \\
-$y_t$ & the series value at time $t$; on the log scale unless stated otherwise & \\
-$e_i$, $e_t$ & a forecast error, $\hat y - y$ & \\
-$h$ & forecast horizon, 1, 2 or 3 days; distinct from the GRU's hidden state $h_t$ below & \ref{sec:gru} \\[2pt]
-
-\multicolumn{3}{@{}l}{\textbf{Seasonality Analysis}} \\
-$\omega_j$ & Fourier frequency, $2\pi j/n$ & \ref{sec:weekly} \\
-$I(\omega_j)$ & periodogram value at frequency $\omega_j$ & \ref{sec:weekly} \\
-$\hat\rho_k$ & sample autocorrelation at lag $k$; $k$ here is reused later as the AIC parameter count, the Fourier harmonic index, and the Diebold-Mariano lag index, each unrelated to this one & \ref{sec:weekly} \\
-$\bar y$ & sample mean & \ref{sec:weekly} \\
-$F$ & one-way ANOVA test statistic; distinct from the boosting ensemble $F_m$ below & \ref{sec:weekly} \\
-$n_g$, $\bar y_g$ & size and mean of day-of-week group $g$ & \ref{sec:weekly} \\
-$H$ & Kruskal-Wallis test statistic; distinct from the GRU's hidden size $H$ below & \ref{sec:weekly} \\
-$R_g$ & sum of ranks in group $g$ & \ref{sec:weekly} \\[2pt]
-
-\multicolumn{3}{@{}l}{\textbf{ARIMA with Fourier Terms}} \\
-$B$ & backshift operator, $By_t = y_{t-1}$; distinct from the random forest's tree count $B$ below & \ref{sec:arima} \\
-$\phi(B)$, $\theta(B)$ & autoregressive and moving-average polynomials & \ref{sec:arima} \\
-$\phi_1,\ldots,\phi_p$; $\theta_1,\ldots,\theta_q$ & AR and MA coefficients & \ref{sec:arima} \\
-$p,d,q$ & ARIMA order; $d$ here is the differencing order, distinct from the GRU's channel count $d$ below & \ref{sec:arima} \\
-$c$ & constant term & \ref{sec:arima} \\
-$\varepsilon_t$ & white-noise innovation & \ref{sec:arima} \\
-$x_t$ & exogenous regressor vector at time $t$ (the Fourier terms) & \ref{sec:arima} \\
-$k$ & here, the number of free parameters in the AIC formula; reused immediately below as the Fourier harmonic index, and again in the ACF and Diebold-Mariano sections as a lag index & \ref{sec:arima} \\
-$\hat L$ & maximised likelihood & \ref{sec:arima} \\
-$K$ & number of Fourier harmonic pairs (order), 4 for ARIMA and the tree/ridge feature table, 2 for the GRU & \ref{sec:arima} \\
-$\alpha_k,\beta_k$ & sine and cosine coefficients at harmonic $k$; $\beta_k$ is unrelated to ridge's coefficient vector $\beta$ below & \ref{sec:arima} \\
-$m$, $s^2$ & forecast mean and variance on the log scale, used in the back-transform & \ref{sec:arima} \\[2pt]
-
-\multicolumn{3}{@{}l}{\textbf{Ridge Regression}} \\
-$X$ & feature matrix & \ref{sec:ml-methods} \\
-$\beta$ & coefficient vector; distinct from the Fourier coefficients $\beta_k$ above & \ref{sec:ml-methods} \\
-$\lambda$ & ridge penalty parameter & \ref{sec:ml-methods} \\
-$I$ & identity matrix & \ref{sec:ml-methods} \\
-$J(\beta)$ & the penalised least-squares objective & \ref{sec:ml-methods} \\[2pt]
-
-\multicolumn{3}{@{}l}{\textbf{Random Forest}} \\
-$B$ & number of trees; distinct from ARIMA's backshift operator $B$ above & \ref{sec:ml-methods} \\
-$T_b(x)$ & prediction of the $b$-th tree & \ref{sec:ml-methods} \\
-$\hat f(x)$ & forest prediction, the average of $T_1,\ldots,T_B$ & \ref{sec:ml-methods} \\
-$\rho$, $\sigma^2$ & pairwise correlation and variance of the individual trees & \ref{sec:ml-methods} \\
-$j,s$ & a candidate split's feature and threshold & \ref{sec:ml-methods} \\
-$R_1,R_2$ & the two regions either side of a split & \ref{sec:ml-methods} \\[2pt]
-
-\multicolumn{3}{@{}l}{\textbf{Gradient Boosting}} \\
-$F_m(x)$ & the ensemble after $m$ boosting rounds; distinct from the ANOVA statistic $F$ above & \ref{sec:ml-methods} \\
-$h_m(x)$ & the tree fitted at round $m$ & \ref{sec:ml-methods} \\
-$L(y,F)$ & loss function; reused with a different signature, $L(e)$, in the Diebold-Mariano test below & \ref{sec:ml-methods} \\
-$r_{im}$ & pseudo-residual for row $i$ at round $m$ & \ref{sec:ml-methods} \\
-$\nu$ & shrinkage (learning rate) & \ref{sec:ml-methods} \\
-$M$ & number of boosting rounds & \ref{sec:ml-methods} \\
-$\gamma$ & the ensemble's constant initial prediction & \ref{sec:ml-methods} \\[2pt]
-
-\multicolumn{3}{@{}l}{\textbf{The Gated Recurrent Unit}} \\
-$h_t$ & hidden state at time $t$; distinct from the forecast horizon $h$ used everywhere else in this report, the one notational collision in it worth flagging on its own & \ref{sec:gru} \\
-$z_t$, $r_t$ & update and reset gates & \ref{sec:gru} \\
-$\tilde h_t$ & candidate hidden state & \ref{sec:gru} \\
-$W_z,W_r,W_h$; $U_z,U_r,U_h$ & input-to-hidden and hidden-to-hidden gate weight matrices & \ref{sec:gru} \\
-$b_z,b_r,b_h$ & gate biases (each trained as two halves in the implementation used; Section~\ref{sec:gru} explains why) & \ref{sec:gru} \\
-$\sigma$ & logistic sigmoid; distinct from the variance $\sigma^2$ used in the random forest and ARIMA sections above & \ref{sec:gru} \\
-$\odot$ & elementwise (Hadamard) product & \ref{sec:gru} \\
-$H$ & number of hidden units, 24 throughout; distinct from the Kruskal-Wallis statistic $H$ above & \ref{sec:gru} \\
-$d$ & number of input channels, 6 (plain) or 10 (with weather); distinct from ARIMA's differencing order $d$ above & \ref{sec:gru} \\[2pt]
-
-\multicolumn{3}{@{}l}{\textbf{The Long Short-Term Memory Network}} \\
-$c_t$, $\tilde c_t$ & cell state and candidate cell state at time $t$, the mechanism absent from the GRU above & \ref{sec:lstm} \\
-$f_t,i_t,o_t$ & forget, input and output gates; $i_t$ collides with the row index $i$ used in the Gradient Boosting block above, the gate's standard name in the literature rather than a notation this project chose & \ref{sec:lstm} \\
-$W_{f,i,o,c}$ & input-to-hidden gate weight matrices, one quartet rather than the GRU's triple & \ref{sec:lstm} \\
-$U_{f,i,o,c}$ & hidden-to-hidden gate weight matrices, same quartet pattern & \ref{sec:lstm} \\
-$b_f,b_i,b_o,b_c$ & gate biases, same two-halves training convention as the GRU's & \ref{sec:lstm} \\
-\multicolumn{3}{@{}l}{\footnotesize $h_t$, $\sigma$, $\odot$, $H$ and $d$ are reused unchanged from the GRU block above.} \\[2pt]
-
-\multicolumn{3}{@{}l}{\textbf{The Transformer}} \\
-$d_{model}$ & embedding width, 16 throughout; distinct from the GRU and LSTM's hidden size $H$, since this is not a recurrent state & \ref{sec:transformer} \\
-$n_{head}$ & number of attention heads, 2 throughout & \ref{sec:transformer} \\
-$d_{ff}$ & feed-forward sublayer width, $4d_{model}=64$ throughout & \ref{sec:transformer} \\
-$pos$, $i$ & position index within the 30-day window and embedding-pair index in the positional encoding; $i$ here is unrelated to the row index $i$ used in the Gradient Boosting block above & \ref{sec:transformer} \\
-$PE$ & sinusoidal positional encoding, added to the input embedding before the first layer & \ref{sec:transformer} \\
-$Q,K,V$ & query, key and value matrices, each a learned projection of the embedded window & \ref{sec:transformer} \\
-$W^Q,W^K,W^V$ & the three projection matrices producing $Q$, $K$, $V$ & \ref{sec:transformer} \\
-$Z,Z',Z''$ & the embedded window and its state after each encoder sublayer & \ref{sec:transformer} \\
-$W_1,W_2,b_1,b_2$ & the feed-forward sublayer's two linear layers; unrelated to the GRU and LSTM's own gate weights above & \ref{sec:transformer} \\
-\multicolumn{3}{@{}l}{\footnotesize $d$ is reused unchanged from the GRU and LSTM blocks above, the number of input channels.} \\[2pt]
-
-\multicolumn{3}{@{}l}{\textbf{Evaluation Measures}} \\
-TP, FP, FN, TN & true/false positive/negative counts at a given decision threshold & \ref{sec:evalmeasures} \\
-$n_{\mathrm{train}}$ & number of training observations & \ref{sec:evalmeasures} \\[2pt]
-
-\multicolumn{3}{@{}l}{\textbf{Statistical Comparison of Forecasts (Diebold-Mariano Test)}} \\
-$e_{1,t},e_{2,t}$ & forecast errors of the two models being compared, at origin $t$ & \ref{sec:dmtest} \\
-$L(e)$ & loss applied to a forecast error; $|e|$ throughout this report & \ref{sec:dmtest} \\
-$d_t$ & loss differential, $L(e_{1,t})-L(e_{2,t})$; unrelated to ARIMA's differencing order $d$ above & \ref{sec:dmtest} \\
-$\bar d$ & mean loss differential & \ref{sec:dmtest} \\
-$\mathrm{DM}$, $\mathrm{DM}^{*}$ & the Diebold-Mariano statistic and its Harvey-Leybourne-Newbold small-sample correction & \ref{sec:dmtest} \\
-$\hat\gamma_k$ & sample autocovariance of $d_t$ at lag $k$ & \ref{sec:dmtest} \\
-\end{longtable}
-
 \clearpage
 \pagenumbering{arabic}
 \setcounter{page}{1}
@@ -218,8 +95,6 @@ $\hat\gamma_k$ & sample autocovariance of $d_t$ at lag $k$ & \ref{sec:dmtest} \\
 % ============================================================================
 \chapter{Introduction}
 \label{chap:intro}
-
-\section{Research Background}
 
 Air pollution in Indian cities regularly reaches concentrations classified as
 hazardous to human health. Fine particulate matter small enough to be
@@ -320,8 +195,6 @@ proposes future work.
 % ============================================================================
 \chapter{Literature Review}
 \label{chap:lit}
-
-\section{Air Quality Forecasting: Challenges and Characteristics}
 
 Daily particulate matter series present a specific set of statistical
 challenges that distinguish them from the time series most forecasting
@@ -740,8 +613,6 @@ alone would have anticipated.
 % ============================================================================
 \chapter{Methodology}
 \label{chap:method}
-
-\section{Research Design}
 
 This chapter proceeds from data to model to evaluation. Section~\ref{sec:data}
 describes the data source and the station-selection process.
@@ -1818,6 +1689,13 @@ significance test, specified in Section~\ref{sec:dmtest}.
 \chapter{Results and Analysis}
 \label{chap:results}
 
+This chapter reports results in the order the three research questions were
+posed: forecast accuracy against classical and naive benchmarks
+(Section~\ref{sec:results-rq1}), the forecast-then-threshold and
+direct-classification arms compared head to head (Section~\ref{sec:arms}),
+and the decision-threshold sweep whose finding the rest of this report turns
+out to depend on (Section~\ref{sec:threshold}).
+
 \section{Forecast Accuracy}
 \label{sec:results-rq1}
 
@@ -1861,6 +1739,24 @@ has a seed that clears the floor against the other: the best network seed,
 0.831, and ARIMA's 0.832 are separated by a few parts in ten thousand, a tie
 in any language that would survive examination, while the worst network
 seed, 0.879, is clearly the weaker of the two.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/fig8_predictions}
+\caption{What the one-day-ahead forecasts in Table~\ref{tab:accuracy} look
+like against the series they predict, over one representative winter
+(November 2024 to February 2025) rather than the full 6.8 years, which
+would compress every episode into an unreadable smear. The GRU line is
+seed 0 alone, for illustration only; every quantitative GRU claim
+elsewhere in this report ranges or averages over all ten.}
+\label{fig:predictions}
+\end{figure}
+
+Figure~\ref{fig:predictions} puts a face on that numeric result: both
+models track the shape of each winter episode rather than only its level,
+and the gap between them is visible mainly on the sharpest rises, exactly
+where a short-range nonlinear model would be expected to earn whatever
+edge it has.
 
 \begin{table}[htbp]
 \centering
@@ -2263,6 +2159,13 @@ practice.
 \chapter{Discussion}
 \label{chap:discussion}
 
+This chapter interprets the results of Chapter~\ref{chap:results} rather
+than restating them: what the operational finding means for model choice,
+how large the remaining differences between models actually are once seed
+variability and formal significance are accounted for
+(Section~\ref{sec:noise-floor}), and the limitations that qualify every
+claim made here (Section~\ref{sec:limitations}).
+
 \section{The Operational Question Dominates the Modelling Question}
 
 Table~\ref{tab:budget} and Figure~\ref{fig:warning} together make a single
@@ -2516,6 +2419,19 @@ optimiser, three separate bounded checks now agreeing that the three-day
 GRU configuration used throughout this report is the one this project's
 own sensitivity analysis would least defend if a reader asked it to.
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/fig9_gru_sensitivity}
+\caption{The three bounded checks above, together: mean rMAE across the
+same three seeds, one row per setting tried, the vertical line in each
+panel marking the default configuration used everywhere else in this
+report. No single row is the point; the pattern across all eleven is.
+They sit close to the default at one and two days ahead and spread
+widely at three, which is the quantitative content behind this section's
+claim that the three-day configuration is the least defensible one.}
+\label{fig:gru-sensitivity}
+\end{figure}
+
 A full rerun of this project's pipeline, performed late in the writing
 process specifically to refresh every result from scratch, surfaced a
 further limitation worth stating plainly rather than leaving implicit in a
@@ -2653,8 +2569,6 @@ with the confidence it is.
 % ============================================================================
 \chapter{Conclusion}
 \label{chap:conclusion}
-
-\section{Summary of the Study}
 
 This project forecast hazardous PM2.5 days at a single Delhi monitor one to
 three days ahead, comparing a classical benchmark against three machine

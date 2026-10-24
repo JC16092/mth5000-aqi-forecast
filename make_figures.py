@@ -432,6 +432,144 @@ def fig_arms(sweep_path="threshold_sweep.csv"):
     plt.close(fig)
 
 
+# ---------------------------------------------------------------- figure 8
+def fig_predictions(fc_path="forecasts_with_transformer.csv",
+                     start="2024-11-01", end="2025-02-15"):
+    """What the one-day-ahead forecasts actually look like against the
+    series they are predicting, over one representative winter window
+    rather than the full 6.8 years, which would compress every episode
+    into an unreadable smear. ARIMA is its usual rolling-origin fit; the
+    GRU line is seed 0 alone, for illustration only, exactly the single-seed
+    presentation the rest of this report deliberately avoids for any
+    reported number.
+    """
+    fc = pd.read_csv(fc_path, parse_dates=["origin"])
+    fc = fc[fc["horizon"] == 1].copy()
+    fc["target"] = fc["origin"] + pd.Timedelta(days=1)
+
+    def series_for(model):
+        g = fc[fc["model"] == model].sort_values("target")
+        g = g[(g["target"] >= start) & (g["target"] <= end)]
+        return g.set_index("target")
+
+    actual = series_for("arima_fourier")["y_true"]
+    arima = series_for("arima_fourier")["y_pred"]
+    gru = series_for("gru")["y_pred"]
+
+    fig, ax = plt.subplots(figsize=(W, 2.6))
+    ax.fill_between(actual.index, THRESHOLD, actual.where(actual > THRESHOLD),
+                    color="0.85", linewidth=0, zorder=1)
+    ax.plot(actual.index, actual.values, color="0.15", lw=1.2, zorder=4,
+            label="actual")
+    ax.plot(arima.index, arima.values, color="0.15", lw=1.0, ls="--", zorder=3,
+            label="ARIMA, 1 day ahead")
+    ax.plot(gru.index, gru.values, color="0.15", lw=1.0, ls=":", zorder=3,
+            label="GRU, 1 day ahead (seed 0, illustrative only)")
+    ax.axhline(THRESHOLD, color="black", ls=(0, (1, 1)), lw=0.6, zorder=2)
+    ax.text(actual.index[-1], THRESHOLD + 15, f"hazard threshold, {THRESHOLD:.0f}",
+            fontsize=7.2, va="bottom", ha="right")
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+    ax.set_ylabel("PM2.5 (µg per cubic metre)")
+    ax.legend(loc="upper right", fontsize=7, handlelength=2.3, borderpad=0.2,
+              labelspacing=0.25)
+    strip(ax)
+    fig.savefig("fig8_predictions.png")
+    plt.close(fig)
+
+
+# ---------------------------------------------------------------- figure 9
+def fig_gru_sensitivity(hyper_path="gru_hyperparam_sensitivity.csv",
+                         fourier_path="gru_fourier_ablation.csv",
+                         opt_path="gru_optimizer_sensitivity.csv"):
+    """The three bounded checks behind Section 5.3's claim that the GRU's
+    three-day configuration is this report's least defensible: architecture
+    (hidden size, window length), seasonal input (Fourier order) and
+    training procedure (optimiser, learning rate), each varied one at a
+    time around the fitted default and scored by the same three seeds. One
+    row per setting, one panel per horizon, mean rMAE across the three
+    seeds; the vertical line in each panel is the default configuration
+    used everywhere else in this report. The point is not any single row:
+    it is that the rows barely move at one day ahead and spread out at
+    three.
+    """
+    hp = pd.read_csv(hyper_path)
+    fo = pd.read_csv(fourier_path)
+    op = pd.read_csv(opt_path)
+
+    def mean_rmae(frame, mask, h):
+        g = frame[mask & (frame.horizon == h)]
+        return g["rMAE"].mean()
+
+    order = [
+        ("Architecture", "H=24, 30-day window (default)"),
+        ("Architecture", "H=12"),
+        ("Architecture", "H=48"),
+        ("Architecture", "15-day window"),
+        ("Architecture", "45-day window"),
+        ("Architecture", "60-day window"),
+        ("Seasonal input", "K=4 (matches ARIMA)"),
+        ("Training", "Adam, lr=0.003"),
+        ("Training", "Adam, lr=0.03"),
+        ("Training", "SGD, lr=0.01"),
+        ("Training", "RMSprop, lr=0.01"),
+    ]
+    masks = {
+        "H=24, 30-day window (default)": (hp, hp.sweep == "default"),
+        "H=12": (hp, (hp.sweep == "hidden") & (hp.hidden == 12)),
+        "H=48": (hp, (hp.sweep == "hidden") & (hp.hidden == 48)),
+        "15-day window": (hp, (hp.sweep == "seq_len") & (hp.seq_len == 15)),
+        "45-day window": (hp, (hp.sweep == "seq_len") & (hp.seq_len == 45)),
+        "60-day window": (hp, (hp.sweep == "seq_len") & (hp.seq_len == 60)),
+        "K=4 (matches ARIMA)": (fo, fo.fourier_k == 4),
+        "Adam, lr=0.003": (op, (op.sweep == "lr") & (op.lr == 0.003)),
+        "Adam, lr=0.03": (op, (op.sweep == "lr") & (op.lr == 0.03)),
+        "SGD, lr=0.01": (op, (op.sweep == "optimizer") & (op.optimizer == "sgd")),
+        "RMSprop, lr=0.01": (op, (op.sweep == "optimizer") & (op.optimizer == "rmsprop")),
+    }
+
+    y_pos, labels, cur_group = [], [], None
+    y = 0
+    for grp, label in order:
+        if cur_group is not None and grp != cur_group:
+            y -= 1
+        y_pos.append(y)
+        labels.append(label)
+        y -= 1
+        cur_group = grp
+    group_header_y = {"Architecture": y_pos[0] + 0.9,
+                      "Seasonal input": y_pos[[g for g, _ in order].index("Seasonal input")] + 0.9,
+                      "Training": y_pos[[g for g, _ in order].index("Training")] + 0.9}
+
+    default_rmae = {h: mean_rmae(hp, hp.sweep == "default", h) for h in (1, 2, 3)}
+
+    fig, axes = plt.subplots(1, 3, figsize=(W, 3.9), sharey=True,
+                             gridspec_kw={"wspace": 0.08})
+    for col, h in enumerate([1, 2, 3]):
+        ax = axes[col]
+        ax.axvline(default_rmae[h], color="0.75", lw=0.9, zorder=1)
+        for yi, (grp, label) in zip(y_pos, order):
+            frame, mask = masks[label]
+            v = mean_rmae(frame, mask, h)
+            marker = "s" if label.endswith("(default)") else "o"
+            ax.plot(v, yi, marker, ms=4.2 if marker == "o" else 5,
+                    mfc="0.15", mec="none", zorder=3)
+        if col == 0:
+            ax.set_yticks(y_pos)
+            ax.set_yticklabels(labels, fontsize=7.1)
+            for grp_name, gy in group_header_y.items():
+                ax.text(0.775, gy, grp_name, fontsize=6.8, style="italic",
+                        color="0.35", va="bottom")
+        ax.set_ylim(min(y_pos) - 0.8, 1.9)
+        ax.set_xlim(0.78, 1.00)
+        ax.set_xlabel("rMAE")
+        ax.set_title(f"{h} day{'s' if h > 1 else ''} ahead", loc="left")
+        strip(ax, left=(col == 0))
+        ax.tick_params(axis="y", length=0)
+
+    fig.savefig("fig9_gru_sensitivity.png")
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     raw = load(RAW)
     clean = load(CLEAN)
@@ -454,6 +592,16 @@ if __name__ == "__main__":
         print("wrote fig7_arms.png")
     except FileNotFoundError:
         print("threshold_sweep.csv not found; skipping figure 7")
+    try:
+        fig_predictions()
+        print("wrote fig8_predictions.png")
+    except FileNotFoundError:
+        print("forecasts_with_transformer.csv not found; skipping figure 8")
+    try:
+        fig_gru_sensitivity()
+        print("wrote fig9_gru_sensitivity.png")
+    except FileNotFoundError:
+        print("GRU sensitivity CSVs not found; skipping figure 9")
     _, r2 = deseasonalise(clean)
     print(f"annual Fourier K=4 on log PM2.5: R2 = {r2:.3f}")
     print("wrote fig1_series.png fig2_coverage.png fig3_weekly.png fig4_annual.png")

@@ -3043,7 +3043,10 @@ actual numbers to be in it. An email was drafted in chat alongside it and
 the user sent that email with the summary PDF to Dr Tian directly.
 **The full `main.pdf` was deliberately not sent yet** — the plan is to
 send the complete report once he replies to the summary, not before.
-**Still open:** his reply.
+**Update, 19 October:** he replied ("the results look very good... you can
+now concentrate on writing the report"), and the full draft report has
+now been sent to him per the original plan. **Still open:** his response
+to the draft itself.
 
 ### 17 October, a twenty-ninth presentation pass: the transformer's promotion carried into the deck
 
@@ -3199,10 +3202,9 @@ with the presentation session's two pending commits (`4874f90`, `dcb5f81`).
 "The results look very good. You can now concentrate on writing the
 report." Sent 00:11, in reply to the summary PDF and email from pass 36 --
 not yet to the full report, which per pass 36's note was deliberately held
-back until this reply came. The student's own stated plan was to send the
-full draft once this update arrived; whether that has happened yet should
-be checked at the start of the next session rather than assumed either
-way. No other action taken on this message yet.
+back until this reply came. **Update, same day:** the student has now
+sent the full draft report to Dr Tian, per the original plan. Waiting on
+his response to it; nothing further to do until it arrives.
 
 ### 19 October, a thirty-eighth pass: a genuine page-by-page review of all
 ### 74 pages, and five more findings fixed
@@ -3263,6 +3265,82 @@ The AI-tool-use declaration remains the one item from this and every
 earlier critical-review pass that's a different kind of risk from
 everything else found, and remains entirely the user's call. Not yet
 committed as of writing this entry.
+
+### 23-25 October: Dr Tian's reply to the full draft, and a response pass
+
+Replied 23 October, 19:48: "The project looks great." Four minor writing
+comments, plus a push for more figures. All four acted on the same pass:
+
+1. **Chapter 1 was too many short sections for three pages** (he counted
+   five; the chapter actually had six). Fixed as a side effect of item 4
+   below: demoting "Research Background" to the chapter's hat left exactly
+   five numbered sections, matching his count without any further cuts.
+2. **List of Symbols removed** (`main.tex` lines 91-212, the five-page
+   `longtable` plus its `\chapter*`). Checked first that nothing in the
+   body referenced it by name or by its labels (`\ref{sec:gru}` etc. are
+   defined in the body chapters, not here, so removing the table doesn't
+   touch them) -- clean, nothing broke.
+3. **Figure/equation/table numbering audited** and found already correct:
+   equations are chapter-scoped (3.1, 3.2, ...) matching figures and
+   tables, no hardcoded "Figure 3.2"-style text bypassing `\ref` anywhere,
+   and the compile has zero undefined-reference warnings. Likely general
+   caution on his part rather than a specific defect; nothing changed.
+4. **Chapter hats added to all six chapters**, modelled directly on his
+   own example (the old Section 3.1 "Research Design," pure chapter
+   roadmap with no findings in it). Four chapters already had an
+   opening section shaped that way, so it was demoted to unnumbered prose
+   under the chapter title: Chapter 1 ("Research Background"), Chapter 2
+   ("Air Quality Forecasting: Challenges and Characteristics"), Chapter 3
+   ("Research Design," his named example), Chapter 6 ("Summary of the
+   Study"). Chapter 4 and Chapter 5 open straight into substantive content
+   (Table 4.1; the chapter's central argument) that would have lost real
+   visibility by being stripped of its heading, so those two got short new
+   unnumbered orienting paragraphs instead, written fresh rather than
+   demoting existing text.
+
+**More figures, the fifth comment.** He counted three existing figures;
+the report actually has seven (confirmed by both the List of Figures and
+an independent grep), so this was likely a quick undercount on his part,
+but the underlying ask -- more figures -- was clear regardless. Rather
+than padding the count, found two genuine gaps: nothing showed predictions
+against the actual series, and the GRU's three hyperparameter bounded
+checks (Section 5.3) were reported in prose and table numbers only, never
+plotted.
+
+- `fig8_predictions.png`: one-day-ahead ARIMA and GRU (seed 0,
+  illustrative only, captioned as such) against the actual series, over
+  one representative winter (November 2024 to February 2025) rather than
+  the full 6.8 years. Source: `forecasts_with_transformer.csv`'s own
+  `y_true`/`y_pred` columns, horizon 1, target date = origin + 1 day.
+  Placed in Section 4.1, right after the Table 4.1 / Figure 4.1
+  interpretation and before the Diebold-Mariano table, as Figure 4.2.
+- `fig9_gru_sensitivity.png`: all three bounded checks (architecture,
+  Fourier order, optimiser/learning rate) as one eleven-row dot plot
+  faceted by horizon, mean rMAE across the same three seeds each, a
+  vertical reference line at the default configuration per panel. Source:
+  `gru_hyperparam_sensitivity.csv`, `gru_fourier_ablation.csv`,
+  `gru_optimizer_sensitivity.csv` -- the same three CSVs the existing
+  prose already cites. Cross-checked several of the plotted numbers
+  against that prose before trusting the figure (e.g. the 45-day-window
+  gain at $h=3$, 2.2 points; the SGD gain at $h=3$, 0.839 against 0.858;
+  the $K=4$ gain at $h=3$, 3.96 points) -- all matched exactly, confirming
+  the figure visualises what the text already claims rather than
+  introducing new numbers. Placed in Section 5.3, directly after the
+  paragraph that synthesises all three checks ("...the one this project's
+  own sensitivity analysis would least defend"), as Figure 5.1.
+
+Both new figures added to `make_figures.py` (`fig_predictions`,
+`fig_gru_sensitivity`) in the same monochrome house style as the existing
+seven -- `strip()` axes, Liberation Serif, no colour -- and wired into the
+`__main__` block alongside them. Report grew from 69 pages (after the List
+of Symbols removal) to 72. Recompiled clean after every individual change,
+not just at the end: zero undefined references throughout, same
+pre-existing cosmetic warnings as before (the 2.74pt List of Figures
+overfull hbox, a couple of table overfull/underfull boxes), nothing new.
+Spot-checked the rendered PDF pages for the hat conversions and both new
+figures directly, not just trusted the source edit.
+
+**Not yet committed or sent back to Dr Tian as of writing this entry.**
 
 ## Data sources
 
