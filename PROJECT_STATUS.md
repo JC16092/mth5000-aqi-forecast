@@ -3385,8 +3385,46 @@ all four rendered pages directly in the compiled PDF, not just trusted the
 source edit.
 
 Thirteen figures total now (the original seven, Figures 4.2 and 5.1 from
-the previous pass, these four). **Not yet committed as of writing this
-entry.**
+the previous pass, these four). **Committed (`37f12ee`) and pushed, on
+request.**
+
+### 25 October, same day: figures recoloured, by request
+
+Asked directly: "I dont want the figures to be black and white." The
+monochrome house style was a deliberate choice, documented in this file and
+in `make_figures.py`'s own docstring, so this is a real reversal of an
+earlier decision, not a new default -- noted above in Style preferences so
+a later session doesn't silently revert it.
+
+Anchored the palette to Monash's own brand blue, `#006CAB`, sampled
+directly from `figures/monash-logo.svg` rather than guessed. Extended it to
+a full categorical set with the Okabe-Ito colour-blind-safe palette, whose
+own "blue" is nearly identical to Monash's, so the two slot together rather
+than clashing: orange, green, vermillion and purple alongside the blue.
+Settled on one consistent rule used throughout rather than improvising
+per figure: vermillion, and only vermillion, marks a specifically
+called-out point (figure 1's series maximum, figure 3's weekly-lag
+markers, figure 10's invertibility-boundary crossings, figure 13's
+periodogram peaks); every other colour distinguishes a category or series;
+structural elements -- axis spines, threshold and reference lines,
+significance bands -- stay neutral grey or black so they read as
+reference rather than data. Line style stays doubled up with colour on
+every multi-series line figure (figures 5, 7, 8), not replaced by it, so
+identity still survives a greyscale photocopy even though colour is now
+the primary cue.
+
+All thirteen figures in `make_figures.py` touched, each individually
+reasoned about rather than globally swapped: which series gets which
+colour follows the figure's own argument (families in figure 6 and figure
+11, groups in figure 9, the two conditions in figure 12) rather than an
+arbitrary assignment. Regenerated all thirteen, reviewed every one as an
+image before copying into `report/figures/`, recompiled clean, zero
+undefined references, same pre-existing cosmetic warnings, page count
+unchanged at 73. Spot-checked Figure 3.1 directly in the compiled PDF to
+confirm the colour actually survives the LaTeX/`tectonic` round trip, not
+just the standalone PNG.
+
+**Not yet committed as of writing this entry.**
 
 ## Data sources
 
@@ -3412,7 +3450,11 @@ entry.**
 
 ## Style preferences for documents
 
-- Plain academic formatting: Times serif, black only, no colour, no decorative rules.
+- Plain academic formatting: Times serif, no decorative rules. Body text and
+  tables stay black. **Figures changed 25 October**: the user asked for
+  colour rather than the original black-and-grey-only house style -- see
+  the dated entry below for the palette and reasoning. Keep this in mind if
+  a future figure is added; don't silently revert to monochrome.
 - No em dashes anywhere.
 - Title block carries full name, student ID, degree, unit code, supervisor, school.
 - Every citation verified against CrossRef before use, never inferred.

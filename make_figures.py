@@ -1,9 +1,11 @@
 """Figures for the supervision brief.
 
-House style: serif, black and grey only, no colour, no chartjunk. Liberation
-Serif is metric compatible with Times, so the figures sit consistently beside
-Times body text. Every figure carries one argument; anything that does not serve
-that argument is left out.
+House style: serif, Liberation Serif metric-compatible with Times so the
+figures sit consistently beside Times body text, no chartjunk. Colour is
+used where it carries information (distinguishing series, flagging a
+specific point) and skipped where position alone already does the job.
+Every figure carries one argument; anything that does not serve that
+argument is left out.
 """
 
 import numpy as np
@@ -46,6 +48,20 @@ RAW = "data/delhi.csv"
 CLEAN = "data/delhi_clean.csv"
 W = 6.3
 
+# Monash blue (#006CAB, sampled directly from figures/monash-logo.svg),
+# extended to a full categorical set with the Okabe-Ito colour-blind-safe
+# palette (Monash's own blue stands in almost exactly for Okabe-Ito's
+# "blue"), so multi-series figures stay distinguishable without relying on
+# colour alone -- line style or marker shape still carries the same
+# distinction wherever there is more than one series.
+BLUE = "#006CAB"
+ORANGE = "#E69F00"
+GREEN = "#009E73"
+VERMILLION = "#D55E00"
+PURPLE = "#CC79A7"
+SKYBLUE = "#56B4E9"
+FLAG = VERMILLION  # the one colour used, throughout, to mark a called-out point
+
 
 def strip(ax, left=True):
     """Recessive axes: keep only what carries information."""
@@ -68,12 +84,12 @@ def fig_series(clean):
     fig, ax = plt.subplots(figsize=(W, 2.5))
 
     ax.fill_between(s.index, THRESHOLD, s.where(s > THRESHOLD),
-                    color="0.55", linewidth=0, zorder=2)
-    ax.plot(s.index, s.values, lw=0.35, color="0.25", zorder=3)
+                    color=VERMILLION, alpha=0.25, linewidth=0, zorder=2)
+    ax.plot(s.index, s.values, lw=0.35, color=BLUE, zorder=3)
     ax.axhline(THRESHOLD, color="black", ls=(0, (4, 3)), lw=0.8, zorder=4)
 
     i = s.idxmax()
-    ax.plot([i], [s.max()], "o", ms=3.5, mfc="white", mec="black", mew=0.8, zorder=5)
+    ax.plot([i], [s.max()], "o", ms=3.5, mfc="white", mec=FLAG, mew=1.0, zorder=5)
     ax.annotate(f"{s.max():.0f} on {i.date()}", xy=(i, s.max()),
                 xytext=(12, -2), textcoords="offset points", fontsize=7.5, va="center")
 
@@ -100,8 +116,8 @@ def fig_coverage(raw):
                                           "top": 0.80})
 
     ax = axes[0]
-    ax.plot(df.index, df["n_obs"], ".", ms=0.9, color="0.5", zorder=2)
-    ax.plot(df.index, df["cadence"], color="black", lw=1.0, zorder=4)
+    ax.plot(df.index, df["n_obs"], ".", ms=0.9, color=SKYBLUE, zorder=2)
+    ax.plot(df.index, df["cadence"], color=BLUE, lw=1.1, zorder=4)
     ax.axhline(24, color="black", ls=(0, (4, 3)), lw=0.8, zorder=3)
     # Both annotations sit in the empty band above the data rather than on top
     # of the scatter, which was unreadable in print.
@@ -109,7 +125,7 @@ def fig_coverage(raw):
     # the scatter, which was unreadable in print.
     # Offset off the lines themselves, so neither label reads as a strikethrough.
     ax.text(df.index[-1], 19, "  assumed 24", fontsize=7.2, va="center", ha="left")
-    ax.text(df.index[-1], 53, "  actual", fontsize=7.2, va="center", ha="left")
+    ax.text(df.index[-1], 53, "  actual", fontsize=7.2, va="center", ha="left", color=BLUE)
     ax.text(df.index[40], 55, "readings contributing to each daily mean",
             fontsize=7.2, va="bottom")
     ax.set_ylabel("readings per day")
@@ -129,7 +145,7 @@ def fig_coverage(raw):
         n.append(len(sub))
         rate.append(1000 * (sub["PM2.5_raw"] > 500).sum() / max(len(sub), 1))
     y = np.arange(len(bands))[::-1]
-    ax.barh(y, rate, height=0.55, color="0.45", edgecolor="none")
+    ax.barh(y, rate, height=0.55, color=VERMILLION, edgecolor="none")
     for yi, r, ni in zip(y, rate, n):
         ax.text(r + 0.5, yi, f"{r:.1f}   (n = {ni})", va="center", fontsize=7.2)
     ax.set_yticks(y); ax.set_yticklabels([f"{l}%" for l in labels])
@@ -170,12 +186,12 @@ def fig_weekly(clean):
     a = acf(rr, nlags=21, fft=True)
     band = 1.96 / np.sqrt(len(rr))
     lags = np.arange(1, 22)
-    ax.axhspan(-band, band, color="0.88", zorder=1)
+    ax.axhspan(-band, band, color=BLUE, alpha=0.12, zorder=1)
     weekly = np.isin(lags, [7, 14, 21])
-    ax.vlines(lags, 0, a[1:22], color="0.45", lw=1.0, zorder=2)
-    ax.plot(lags[~weekly], a[1:22][~weekly], "o", ms=3, color="0.35", zorder=3)
-    ax.plot(lags[weekly], a[1:22][weekly], "o", ms=5, mfc="white", mec="black",
-            mew=1.0, zorder=4)
+    ax.vlines(lags, 0, a[1:22], color=BLUE, alpha=0.5, lw=1.0, zorder=2)
+    ax.plot(lags[~weekly], a[1:22][~weekly], "o", ms=3, color=BLUE, zorder=3)
+    ax.plot(lags[weekly], a[1:22][weekly], "o", ms=5, mfc="white", mec=FLAG,
+            mew=1.2, zorder=4)
     for L in (7, 14, 21):
         ax.annotate(str(L), xy=(L, a[L]), xytext=(0, 7), textcoords="offset points",
                     ha="center", fontsize=7.5)
@@ -199,8 +215,8 @@ def fig_weekly(clean):
         his.append(100 * (np.exp(g.mean() + h) - 1))
     y = np.arange(7)[::-1]
     ax.axvline(0, color="0.3", lw=0.6, zorder=1)
-    ax.hlines(y, los, his, color="0.55", lw=1.0, zorder=2)
-    ax.plot(means, y, "o", ms=3.5, color="black", zorder=3)
+    ax.hlines(y, los, his, color=BLUE, alpha=0.55, lw=1.2, zorder=2)
+    ax.plot(means, y, "o", ms=3.5, color=BLUE, zorder=3)
     ax.set_yticks(y); ax.set_yticklabels(names)
     ax.set_xlabel("effect on concentration (%)")
     ax.set_title("(b) No day differs from the rest\n      (ANOVA p = 0.34)", loc="left")
@@ -219,9 +235,9 @@ def fig_annual(clean):
     names = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
 
     fig, ax = plt.subplots(figsize=(W * 0.62, 2.15))
-    ax.fill_between(months, q1, q3, color="0.85", linewidth=0, zorder=2)
-    ax.plot(months, med, color="black", lw=1.2, zorder=4)
-    ax.plot(months, med, "o", ms=3, color="black", zorder=5)
+    ax.fill_between(months, q1, q3, color=BLUE, alpha=0.18, linewidth=0, zorder=2)
+    ax.plot(months, med, color=BLUE, lw=1.3, zorder=4)
+    ax.plot(months, med, "o", ms=3, color=BLUE, zorder=5)
     ax.axhline(THRESHOLD, color="black", ls=(0, (4, 3)), lw=0.8, zorder=3)
     # Placed in the summer trough, where the line has nothing under it.
     ax.text(6.5, THRESHOLD + 10, "hazard threshold", fontsize=7.2, ha="center")
@@ -247,17 +263,17 @@ def fig_warning(sweep_path="threshold_sweep.csv"):
     alarm rate of 0.10 sounds negligible and is roughly one wasted alarm every ten
     quiet days.
 
-    Monochrome, so identity is carried by line style and a direct label at the end
-    of each curve rather than by colour. Four curves per panel is the limit at
-    which that stays readable, so one representative of each family is shown.
+    Identity is carried by colour and line style together, redundantly, rather
+    than colour alone. Four curves per panel is the limit at which that stays
+    readable, so one representative of each family is shown.
     """
     sw = pd.read_csv(sweep_path)
 
     show = [
-        ("arima_fourier", "ARIMA", "-", "black", 1.3),
-        ("hist_gbm_delta", "gradient boosting", "--", "0.35", 1.1),
-        ("hgb_clf", "classifier", "-.", "0.5", 1.1),
-        ("naive_carry", "persistence", ":", "0.6", 1.1),
+        ("arima_fourier", "ARIMA", "-", BLUE, 1.4),
+        ("hist_gbm_delta", "gradient boosting", "--", ORANGE, 1.2),
+        ("hgb_clf", "classifier", "-.", GREEN, 1.2),
+        ("naive_carry", "persistence", ":", VERMILLION, 1.2),
     ]
     present = [x for x in show if x[0] in set(sw["model"])]
 
@@ -351,6 +367,9 @@ def fig_accuracy(fc_path="forecasts_with_transformer.csv", series_path=CLEAN, bu
                     by_h[h].append(float(row["rMAE"].iloc[0]))
         seeded_by_h[model_name] = by_h
 
+    FAMILY = {"gru": VERMILLION, "lstm": VERMILLION, "transformer": VERMILLION,
+              "arima_fourier": BLUE, "naive_carry": "0.3"}
+
     y = np.arange(len(order))[::-1]
     fig, axes = plt.subplots(1, 3, figsize=(W, 3.6), sharey=True,
                              gridspec_kw={"wspace": 0.08})
@@ -359,16 +378,17 @@ def fig_accuracy(fc_path="forecasts_with_transformer.csv", series_path=CLEAN, bu
         ax = axes[col]
         ax.axvline(1.0, color="0.75", lw=0.8, zorder=1)
         for yi, name in zip(y, order):
+            colr = FAMILY.get(name, ORANGE)
             if name in seeded_by_h and seeded_by_h[name][h]:
                 lo, hi = min(seeded_by_h[name][h]), max(seeded_by_h[name][h])
-                ax.plot([lo, hi], [yi, yi], color="black", lw=2.4, zorder=3,
+                ax.plot([lo, hi], [yi, yi], color=colr, lw=2.6, zorder=3,
                         solid_capstyle="round")
                 continue
             row = metrics[(metrics.model == name) & (metrics.horizon == h)]
             if not len(row):
                 continue
             v = float(row["rMAE"].iloc[0])
-            ax.plot(v, yi, "o", ms=4.5, mfc="0.2", mec="none", zorder=3)
+            ax.plot(v, yi, "o", ms=5, mfc=colr, mec="none", zorder=3)
         if col == 0:
             ax.set_yticks(y)
             ax.set_yticklabels([labels[n] for n in order], fontsize=7.3)
@@ -395,9 +415,9 @@ def fig_arms(sweep_path="threshold_sweep.csv"):
     sw = pd.read_csv(sweep_path)
     budgets = (40, 60, 80, 100)
     pairs = [
-        ("ridge", "logistic", "ridge vs. logistic", "-"),
-        ("random_forest_delta", "forest_clf", "random forest vs. its classifier", "--"),
-        ("hist_gbm_delta", "hgb_clf", "gradient boosting vs. its classifier", ":"),
+        ("ridge", "logistic", "ridge vs. logistic", "-", BLUE),
+        ("random_forest_delta", "forest_clf", "random forest vs. its classifier", "--", ORANGE),
+        ("hist_gbm_delta", "hgb_clf", "gradient boosting vs. its classifier", ":", GREEN),
     ]
 
     fig, axes = plt.subplots(1, 3, figsize=(W, 2.7), sharey=True,
@@ -406,7 +426,7 @@ def fig_arms(sweep_path="threshold_sweep.csv"):
     for col, h in enumerate([1, 2, 3]):
         ax = axes[col]
         ax.axhline(0, color="0.75", lw=0.8, zorder=1)
-        for reg, clf, label, ls in pairs:
+        for reg, clf, label, ls, colr in pairs:
             diffs = []
             for b in budgets:
                 r = operating_point_at_alarms(sw, reg, h, b)
@@ -414,8 +434,8 @@ def fig_arms(sweep_path="threshold_sweep.csv"):
                 d = ((r["hit_rate"] - c["hit_rate"])
                      if (r is not None and c is not None) else np.nan)
                 diffs.append(d)
-            ax.plot(budgets, diffs, ls, color="black", lw=1.3, marker="o",
-                    ms=3.3, mfc="black", mec="none", zorder=3,
+            ax.plot(budgets, diffs, ls, color=colr, lw=1.4, marker="o",
+                    ms=3.3, mfc=colr, mec="none", zorder=3,
                     label=label if col == 0 else None)
         ax.set_xlim(35, 105)
         ax.set_xticks(budgets)
@@ -458,12 +478,12 @@ def fig_predictions(fc_path="forecasts_with_transformer.csv",
 
     fig, ax = plt.subplots(figsize=(W, 2.6))
     ax.fill_between(actual.index, THRESHOLD, actual.where(actual > THRESHOLD),
-                    color="0.85", linewidth=0, zorder=1)
+                    color=VERMILLION, alpha=0.18, linewidth=0, zorder=1)
     ax.plot(actual.index, actual.values, color="0.15", lw=1.2, zorder=4,
             label="actual")
-    ax.plot(arima.index, arima.values, color="0.15", lw=1.0, ls="--", zorder=3,
+    ax.plot(arima.index, arima.values, color=BLUE, lw=1.1, ls="--", zorder=3,
             label="ARIMA, 1 day ahead")
-    ax.plot(gru.index, gru.values, color="0.15", lw=1.0, ls=":", zorder=3,
+    ax.plot(gru.index, gru.values, color=VERMILLION, lw=1.1, ls=":", zorder=3,
             label="GRU, 1 day ahead (seed 0, illustrative only)")
     ax.axhline(THRESHOLD, color="black", ls=(0, (1, 1)), lw=0.6, zorder=2)
     ax.text(actual.index[-1], THRESHOLD + 15, f"hazard threshold, {THRESHOLD:.0f}",
@@ -541,6 +561,7 @@ def fig_gru_sensitivity(hyper_path="gru_hyperparam_sensitivity.csv",
                       "Training": y_pos[[g for g, _ in order].index("Training")] + 0.9}
 
     default_rmae = {h: mean_rmae(hp, hp.sweep == "default", h) for h in (1, 2, 3)}
+    GROUP_COLOR = {"Architecture": BLUE, "Seasonal input": ORANGE, "Training": GREEN}
 
     fig, axes = plt.subplots(1, 3, figsize=(W, 3.9), sharey=True,
                              gridspec_kw={"wspace": 0.08})
@@ -550,15 +571,17 @@ def fig_gru_sensitivity(hyper_path="gru_hyperparam_sensitivity.csv",
         for yi, (grp, label) in zip(y_pos, order):
             frame, mask = masks[label]
             v = mean_rmae(frame, mask, h)
-            marker = "s" if label.endswith("(default)") else "o"
+            is_default = label.endswith("(default)")
+            marker = "s" if is_default else "o"
+            colr = "0.15" if is_default else GROUP_COLOR[grp]
             ax.plot(v, yi, marker, ms=4.2 if marker == "o" else 5,
-                    mfc="0.15", mec="none", zorder=3)
+                    mfc=colr, mec="none", zorder=3)
         if col == 0:
             ax.set_yticks(y_pos)
             ax.set_yticklabels(labels, fontsize=7.1)
             for grp_name, gy in group_header_y.items():
                 ax.text(0.775, gy, grp_name, fontsize=6.8, style="italic",
-                        color="0.35", va="bottom")
+                        color=GROUP_COLOR[grp_name], va="bottom")
         ax.set_ylim(min(y_pos) - 0.8, 1.9)
         ax.set_xlim(0.78, 1.00)
         ax.set_xlabel("rMAE")
@@ -586,8 +609,8 @@ def fig_arima_stability(path="arima_coefficient_stability.csv"):
                              gridspec_kw={"wspace": 0.3})
 
     ax = axes[0]
-    ax.plot(df["refit_origin"], df["phi_1"], "-o", color="0.25", lw=0.9,
-            ms=2.8, mfc="0.25", mec="none", zorder=3)
+    ax.plot(df["refit_origin"], df["phi_1"], "-o", color=BLUE, lw=1.0,
+            ms=2.8, mfc=BLUE, mec="none", zorder=3)
     ax.set_ylabel(r"$\hat\phi_1$")
     ax.set_title("(a) The AR coefficient", loc="left")
     ax.xaxis.set_major_locator(mdates.YearLocator(2))
@@ -599,10 +622,10 @@ def fig_arima_stability(path="arima_coefficient_stability.csv"):
     ax.text(df["refit_origin"].iloc[0], -1.0 - 0.0025, "invertibility boundary",
             fontsize=7.2, va="top")
     ax.plot(df.loc[~crosses, "refit_origin"], df.loc[~crosses, "theta_1"],
-            "o", ms=3.2, color="0.25", mfc="0.25", mec="none", zorder=3)
-    ax.plot(df["refit_origin"], df["theta_1"], "-", color="0.6", lw=0.7, zorder=2)
+            "o", ms=3.2, color=BLUE, mfc=BLUE, mec="none", zorder=3)
+    ax.plot(df["refit_origin"], df["theta_1"], "-", color=BLUE, alpha=0.4, lw=0.8, zorder=2)
     ax.plot(df.loc[crosses, "refit_origin"], df.loc[crosses, "theta_1"],
-            "o", ms=5, mfc="white", mec="black", mew=1.0, zorder=4)
+            "o", ms=5, mfc="white", mec=FLAG, mew=1.2, zorder=4)
     ax.set_ylabel(r"$\hat\theta_1$")
     ax.set_title("(b) The MA coefficient: 3 of 28 refits cross the boundary",
                  loc="left")
@@ -633,6 +656,8 @@ def fig_architecture_bounded():
     order = ["GRU (default)", "LSTM", "Transformer", "Kolmogorov-Arnold-LSTM"]
     frames = {"GRU (default)": gru, "LSTM": lstm, "Transformer": transformer,
               "Kolmogorov-Arnold-LSTM": kan}
+    colors = {"GRU (default)": BLUE, "LSTM": ORANGE, "Transformer": GREEN,
+              "Kolmogorov-Arnold-LSTM": VERMILLION}
     arima_rmae = {1: 0.940, 2: 0.883, 3: 0.832}
 
     y = np.arange(len(order))[::-1]
@@ -646,7 +671,7 @@ def fig_architecture_bounded():
             g = frames[name]
             vals = g[g.horizon == h]["rMAE"]
             lo, hi = vals.min(), vals.max()
-            ax.plot([lo, hi], [yi, yi], color="black", lw=2.4, zorder=3,
+            ax.plot([lo, hi], [yi, yi], color=colors[name], lw=2.6, zorder=3,
                     solid_capstyle="round")
         if col == 0:
             ax.set_yticks(y)
@@ -690,15 +715,15 @@ def fig_weather_effect(scale_series=CLEAN, burn_in=1095):
     plain = seed_rmae("gru_seed*.csv")
     weather = seed_rmae("gru_weather_seed*.csv")
 
-    rows = [("with weather", weather), ("plain", plain)]
+    rows = [("with weather", weather, BLUE), ("plain", plain, ORANGE)]
     y = np.arange(len(rows))[::-1]
     fig, axes = plt.subplots(1, 3, figsize=(W, 1.75), sharey=True,
                              gridspec_kw={"wspace": 0.08})
     for col, h in enumerate([1, 2, 3]):
         ax = axes[col]
-        for yi, (label, by_h) in zip(y, rows):
+        for yi, (label, by_h, colr) in zip(y, rows):
             lo, hi = min(by_h[h]), max(by_h[h])
-            ax.plot([lo, hi], [yi, yi], color="black", lw=3.2, zorder=3,
+            ax.plot([lo, hi], [yi, yi], color=colr, lw=3.4, zorder=3,
                     solid_capstyle="round")
         if col == 0:
             ax.set_yticks(y)
@@ -732,9 +757,9 @@ def fig_periodogram(series_path=CLEAN):
     top = np.argsort(power)[::-1][:6]
 
     fig, ax = plt.subplots(figsize=(W, 2.3))
-    ax.plot(periods, power, color="0.4", lw=0.5, zorder=2)
-    ax.plot(periods[top], power[top], "o", ms=4, mfc="white", mec="black",
-            mew=1.0, zorder=4)
+    ax.plot(periods, power, color=BLUE, lw=0.6, zorder=2)
+    ax.plot(periods[top], power[top], "o", ms=4, mfc="white", mec=FLAG,
+            mew=1.2, zorder=4)
     ax.axvline(7, color="black", ls=(0, (1, 1)), lw=0.7, zorder=1)
     ax.text(7, power.max() * 1.02, "7 days",
             fontsize=7.2, ha="center", va="bottom")
