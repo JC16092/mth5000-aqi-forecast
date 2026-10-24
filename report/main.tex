@@ -757,6 +757,15 @@ read as a period of $n/j$ days rather than a frequency. It gives dominant
 periods of 357.9, 178.9, 188.4, 397.7, 325.4 and 60.7 days, which is the
 annual cycle and its harmonics, with nothing near seven.
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/fig13_periodogram}
+\caption{The periodogram itself, the six dominant periods above marked
+open against the frequency axis they were ranked from. The dotted line at
+seven days, where a weekly cycle would appear, sits on the noise floor.}
+\label{fig:periodogram}
+\end{figure}
+
 On the deseasonalised logarithm of concentration, the sample autocorrelation
 at lag $k$,
 \begin{equation}
@@ -962,6 +971,16 @@ this, so a forecast is still produced and still scored at those refits
 exactly as at any other; the single pair reported above describes the
 model this evaluation settles into for most of its span, not a property
 holding at every refit within it.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/fig10_arima_stability}
+\caption{Both coefficients across all 28 refits. $\hat\phi_1$ drifts
+upward over the evaluation span rather than sitting still; $\hat\theta_1$
+oscillates close to the invertibility boundary and crosses it outright at
+the three refits marked open, each with fewer than 1,700 training days.}
+\label{fig:arima-stability}
+\end{figure}
 
 Using trigonometric
 regressors at a fixed set of frequencies to carry a seasonal pattern inside
@@ -1955,6 +1974,17 @@ what makes the finding a property of the weather signal and of the
 network's own training instability, rather than of how the coverage gap was
 filled.
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/fig12_weather_effect}
+\caption{The recurrent network's own range over ten seeds, plain against
+weather-augmented, by horizon. The bars separate cleanly at one day ahead
+and overlap substantially at two and three, which is Table~\ref{tab:weather}'s
+mixed verdict shown as width and position rather than as a column of
+numbers.}
+\label{fig:weather-effect}
+\end{figure}
+
 That accuracy gain was then carried through to Research Question 3 directly,
 by rerunning the threshold sweep from Section~\ref{sec:threshold} with the
 weather models added to the roster of candidates at every budget, on exactly
@@ -2528,6 +2558,16 @@ that rather than dismissed or oversold in either direction. None of this
 hybrid's bounded numbers has changed anything in
 Table~\ref{tab:accuracy}; it would need the full rolling-origin
 treatment, now given to the transformer, before they could.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/fig11_architecture_bounded}
+\caption{All four architectures' bounded checks together, each a range
+over the same three seeds, against ARIMA's rolling-origin rMAE from
+Table~\ref{tab:accuracy} for reference. The hybrid sits among the other
+three rather than apart from them at every horizon shown.}
+\label{fig:architecture-bounded}
+\end{figure}
 
 Wind speed and temperature were added, in Section~\ref{sec:weather}, but the
 treatment is narrower than a full meteorological extension in two specific

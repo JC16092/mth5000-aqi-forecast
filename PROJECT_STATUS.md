@@ -3340,7 +3340,53 @@ overfull hbox, a couple of table overfull/underfull boxes), nothing new.
 Spot-checked the rendered PDF pages for the hat conversions and both new
 figures directly, not just trusted the source edit.
 
-**Not yet committed or sent back to Dr Tian as of writing this entry.**
+**Committed (`336ff4a`) and pushed, on request.** A reply to Dr Tian was
+drafted (not sent -- the user is sending it themselves) and is not stored
+anywhere in this repo.
+
+### 25 October, four more figures, by request
+
+Asked what else could reasonably be figured rather than just told to add
+more; proposed four candidates, each checked against real, already-computed
+data before being suggested, not invented on the spot. Asked to add all
+four.
+
+- **ARIMA coefficient stability** (`fig10_arima_stability.png`, two
+  panels, $\hat\phi_1$ and $\hat\theta_1$ across all 28 refits): visualises
+  the refit-stability paragraph in Section 3.4.1, placed directly after
+  it. Verified the three invertibility-boundary crossings
+  ($-1.006$, $-1.011$, $-1.013$) against `arima_coefficient_stability.csv`
+  directly before plotting; exact match.
+- **All four network architectures' bounded checks together**
+  (`fig11_architecture_bounded.png`): GRU, LSTM, transformer and the
+  KAN-LSTM hybrid, each a three-seed range, against ARIMA's rolling-origin
+  rMAE for reference. Placed in Section 5.3 right after the KAN-LSTM
+  paragraph it visualises.
+- **The weather-covariate reversal** (`fig12_weather_effect.png`): the
+  GRU's own ten-seed range, plain against weather-augmented, by horizon.
+  Placed in Section 4.1.1 after the "honest summary" paragraph. The bars
+  visibly separate at one day ahead and overlap at two and three, the same
+  reversal Table 4.4 already reports as numbers.
+- **The periodogram itself** (`fig13_periodogram.png`): the frequency-
+  domain companion to Figure 3.3's time-domain weekly-cycle test, computed
+  the identical way `step01_data_check.py` does (periodogram of the
+  mean-removed, gap-interpolated raw series). Placed in Section 3.3.2
+  right after the periodogram equation and its six dominant periods.
+  First draft clipped its rightmost marker (397.7 days) against the axis
+  edge; widened the x-limit and re-rendered.
+
+All four added to `make_figures.py` in the same monochrome house style,
+wired into the `__main__` block, generated, reviewed as images before
+being placed, then wired into `main.tex` at the specific paragraph each
+one visualises -- not appended at chapter ends. Report grew from 72 to 73
+pages. Recompiled clean after every change, zero undefined references,
+same pre-existing cosmetic warnings throughout, nothing new. Spot-checked
+all four rendered pages directly in the compiled PDF, not just trusted the
+source edit.
+
+Thirteen figures total now (the original seven, Figures 4.2 and 5.1 from
+the previous pass, these four). **Not yet committed as of writing this
+entry.**
 
 ## Data sources
 

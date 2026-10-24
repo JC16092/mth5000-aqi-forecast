@@ -570,6 +570,185 @@ def fig_gru_sensitivity(hyper_path="gru_hyperparam_sensitivity.csv",
     plt.close(fig)
 
 
+# --------------------------------------------------------------- figure 10
+def fig_arima_stability(path="arima_coefficient_stability.csv"):
+    """The refit-by-refit stability check behind Section 3.4.1's claim that
+    a single reported coefficient pair describes the model this evaluation
+    settles into for most of its span, not a property holding at every
+    refit. Two panels, one per coefficient, against the 28 refit origins.
+    The dashed line in panel (b) is the invertibility boundary; the three
+    refits that cross it are marked open rather than filled.
+    """
+    df = pd.read_csv(path, parse_dates=["refit_origin"]).sort_values("refit_origin")
+    crosses = df["theta_1"] < -1.0
+
+    fig, axes = plt.subplots(1, 2, figsize=(W, 2.5),
+                             gridspec_kw={"wspace": 0.3})
+
+    ax = axes[0]
+    ax.plot(df["refit_origin"], df["phi_1"], "-o", color="0.25", lw=0.9,
+            ms=2.8, mfc="0.25", mec="none", zorder=3)
+    ax.set_ylabel(r"$\hat\phi_1$")
+    ax.set_title("(a) The AR coefficient", loc="left")
+    ax.xaxis.set_major_locator(mdates.YearLocator(2))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    strip(ax)
+
+    ax = axes[1]
+    ax.axhline(-1.0, color="black", ls=(0, (4, 3)), lw=0.8, zorder=2)
+    ax.text(df["refit_origin"].iloc[0], -1.0 - 0.0025, "invertibility boundary",
+            fontsize=7.2, va="top")
+    ax.plot(df.loc[~crosses, "refit_origin"], df.loc[~crosses, "theta_1"],
+            "o", ms=3.2, color="0.25", mfc="0.25", mec="none", zorder=3)
+    ax.plot(df["refit_origin"], df["theta_1"], "-", color="0.6", lw=0.7, zorder=2)
+    ax.plot(df.loc[crosses, "refit_origin"], df.loc[crosses, "theta_1"],
+            "o", ms=5, mfc="white", mec="black", mew=1.0, zorder=4)
+    ax.set_ylabel(r"$\hat\theta_1$")
+    ax.set_title("(b) The MA coefficient: 3 of 28 refits cross the boundary",
+                 loc="left")
+    ax.xaxis.set_major_locator(mdates.YearLocator(2))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    strip(ax)
+
+    fig.savefig("fig10_arima_stability.png")
+    plt.close(fig)
+
+
+# --------------------------------------------------------------- figure 11
+def fig_architecture_bounded():
+    """The four architectures' single-split, three-seed bounded checks,
+    together: GRU (the report's own default configuration), LSTM,
+    transformer, and the Kolmogorov-Arnold-LSTM hybrid, each scored on the
+    same held-out split and the same three seeds. The vertical line in
+    each panel is ARIMA's rolling-origin rMAE from Table 4.1, included so
+    the bounded checks can be read against the same reference the rest of
+    the report uses, not only against each other.
+    """
+    gru = pd.read_csv("gru_hyperparam_sensitivity.csv")
+    gru = gru[gru.sweep == "default"]
+    lstm = pd.read_csv("lstm_bounded_check.csv")
+    transformer = pd.read_csv("transformer_bounded_check.csv")
+    kan = pd.read_csv("kan_lstm_bounded_check.csv")
+
+    order = ["GRU (default)", "LSTM", "Transformer", "Kolmogorov-Arnold-LSTM"]
+    frames = {"GRU (default)": gru, "LSTM": lstm, "Transformer": transformer,
+              "Kolmogorov-Arnold-LSTM": kan}
+    arima_rmae = {1: 0.940, 2: 0.883, 3: 0.832}
+
+    y = np.arange(len(order))[::-1]
+    fig, axes = plt.subplots(1, 3, figsize=(W, 2.3), sharey=True,
+                             gridspec_kw={"wspace": 0.08})
+    for col, h in enumerate([1, 2, 3]):
+        ax = axes[col]
+        ax.axvline(arima_rmae[h], color="0.75", lw=0.9, zorder=1,
+                   label="ARIMA (Table 4.1)" if col == 0 else None)
+        for yi, name in zip(y, order):
+            g = frames[name]
+            vals = g[g.horizon == h]["rMAE"]
+            lo, hi = vals.min(), vals.max()
+            ax.plot([lo, hi], [yi, yi], color="black", lw=2.4, zorder=3,
+                    solid_capstyle="round")
+        if col == 0:
+            ax.set_yticks(y)
+            ax.set_yticklabels(order, fontsize=7.6)
+        ax.set_ylim(-0.8, len(order) - 0.2)
+        ax.set_xlim(0.78, 1.00)
+        ax.set_xlabel("rMAE")
+        ax.set_title(f"{h} day{'s' if h > 1 else ''} ahead", loc="left")
+        strip(ax, left=(col == 0))
+        ax.tick_params(axis="y", length=0)
+    axes[0].legend(loc="lower right", fontsize=6.6, handlelength=1.8,
+                   borderpad=0.2, labelspacing=0.25, frameon=False)
+
+    fig.savefig("fig11_architecture_bounded.png")
+    plt.close(fig)
+
+
+# --------------------------------------------------------------- figure 12
+def fig_weather_effect(scale_series=CLEAN, burn_in=1095):
+    """The weather-covariate reversal behind Section 4.1.1: the GRU with
+    and without wind speed and temperature, each as a range over ten
+    seeds, by horizon. Table 4.4 reports this as numbers; this is the
+    same comparison as two range bars per horizon rather than a column of
+    text, so the width of each bar, not just its position, is visible.
+    """
+    import glob
+    s = load_series(scale_series, "date", "PM2.5")
+    scale = ev.mase_scale(s.loc[:s.index[burn_in]].values)
+
+    def seed_rmae(pattern):
+        by_h = {h: [] for h in (1, 2, 3)}
+        for f in sorted(glob.glob(pattern)):
+            g = ev.restrict_to_common(pd.read_csv(f, parse_dates=["origin"]))
+            gm = ev.regression_metrics(g, scale, reference="naive_carry")
+            for h in (1, 2, 3):
+                row = gm[(gm.model == "gru") & (gm.horizon == h)]
+                if len(row):
+                    by_h[h].append(float(row["rMAE"].iloc[0]))
+        return by_h
+
+    plain = seed_rmae("gru_seed*.csv")
+    weather = seed_rmae("gru_weather_seed*.csv")
+
+    rows = [("with weather", weather), ("plain", plain)]
+    y = np.arange(len(rows))[::-1]
+    fig, axes = plt.subplots(1, 3, figsize=(W, 1.75), sharey=True,
+                             gridspec_kw={"wspace": 0.08})
+    for col, h in enumerate([1, 2, 3]):
+        ax = axes[col]
+        for yi, (label, by_h) in zip(y, rows):
+            lo, hi = min(by_h[h]), max(by_h[h])
+            ax.plot([lo, hi], [yi, yi], color="black", lw=3.2, zorder=3,
+                    solid_capstyle="round")
+        if col == 0:
+            ax.set_yticks(y)
+            ax.set_yticklabels([r[0] for r in rows], fontsize=7.8)
+        ax.set_ylim(-0.8, len(rows) - 0.2)
+        ax.set_xlabel("rMAE")
+        ax.set_title(f"{h} day{'s' if h > 1 else ''} ahead", loc="left")
+        strip(ax, left=(col == 0))
+        ax.tick_params(axis="y", length=0)
+
+    fig.savefig("fig12_weather_effect.png")
+    plt.close(fig)
+
+
+# --------------------------------------------------------------- figure 13
+def fig_periodogram(series_path=CLEAN):
+    """The frequency-domain counterpart to Figure 3.3's time-domain test:
+    the same periodogram Section 3.3.2 quotes six dominant periods from
+    (357.9, 178.9, 188.4, 397.7, 325.4 and 60.7 days), computed the
+    identical way, now actually plotted rather than only tabulated in
+    prose. A weekly cycle would appear as a peak at 7 days; there is none.
+    """
+    from scipy.signal import periodogram
+    s = load_series(series_path, "date", "PM2.5")
+    filled = s.interpolate(limit_direction="both")
+    freqs, power = periodogram(filled - filled.mean(), fs=1.0)
+    with np.errstate(divide="ignore"):
+        periods = np.where(freqs > 0, 1.0 / freqs, np.inf)
+    keep = (periods >= 2) & (periods <= 400)
+    periods, power = periods[keep], power[keep]
+    top = np.argsort(power)[::-1][:6]
+
+    fig, ax = plt.subplots(figsize=(W, 2.3))
+    ax.plot(periods, power, color="0.4", lw=0.5, zorder=2)
+    ax.plot(periods[top], power[top], "o", ms=4, mfc="white", mec="black",
+            mew=1.0, zorder=4)
+    ax.axvline(7, color="black", ls=(0, (1, 1)), lw=0.7, zorder=1)
+    ax.text(7, power.max() * 1.02, "7 days",
+            fontsize=7.2, ha="center", va="bottom")
+    ax.set_xscale("log")
+    ax.set_xlim(2, 430)
+    ax.set_xlabel("period (days)")
+    ax.set_ylabel("power")
+    ax.set_yticks([])
+    strip(ax, left=False)
+    ax.spines["left"].set_visible(False)
+    fig.savefig("fig13_periodogram.png")
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     raw = load(RAW)
     clean = load(CLEAN)
@@ -602,6 +781,26 @@ if __name__ == "__main__":
         print("wrote fig9_gru_sensitivity.png")
     except FileNotFoundError:
         print("GRU sensitivity CSVs not found; skipping figure 9")
+    try:
+        fig_arima_stability()
+        print("wrote fig10_arima_stability.png")
+    except FileNotFoundError:
+        print("arima_coefficient_stability.csv not found; skipping figure 10")
+    try:
+        fig_architecture_bounded()
+        print("wrote fig11_architecture_bounded.png")
+    except FileNotFoundError:
+        print("bounded-check CSVs not found; skipping figure 11")
+    try:
+        fig_weather_effect()
+        print("wrote fig12_weather_effect.png")
+    except FileNotFoundError:
+        print("weather seed CSVs not found; skipping figure 12")
+    try:
+        fig_periodogram()
+        print("wrote fig13_periodogram.png")
+    except FileNotFoundError:
+        print("CLEAN series not found; skipping figure 13")
     _, r2 = deseasonalise(clean)
     print(f"annual Fourier K=4 on log PM2.5: R2 = {r2:.3f}")
     print("wrote fig1_series.png fig2_coverage.png fig3_weekly.png fig4_annual.png")
