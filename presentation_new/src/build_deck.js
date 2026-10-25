@@ -24,8 +24,8 @@ pptx.author = "Jaykumar Vinodbhai Chauhan";
 
 // ---------- structure: section and minutes per slide (the single source of truth for the roadmap and the notes) ----------
 const SECTIONS = ["Motivation", "Data", "Methods", "Results", "Discussion", "Conclusion"];
-const SEC = [0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 5, 5, 5, 5];
-const MINS = [0.5, 1.25, 1.25, 0.5, 1.25, 1.5, 1, 1.5, 1.5, 0.75, 1.25, 1.25, 1.25, 1, 1.75, 0.5, 1.25, 1.25, 1.25, 1.25, 0.75, 1.25, 2, 1.25, 1, 1, 1.25, 1, 0];
+const SEC = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 5, 5, 5, 5];
+const MINS = [0.5, 1.25, 1.25, 0.75, 0.5, 1.25, 1.5, 1, 0.5, 1.5, 1.5, 0.75, 1.25, 1.25, 1.25, 1, 1.75, 0.5, 1, 1, 1, 1.25, 0.5, 1.25, 1, 0.5, 0.5, 1.25, 1, 0.75, 1, 1.25, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 const NMAIN = SEC.length;
 const GUIDE = []; // collected as slides are built, written out as PRESENTER_GUIDE.md
 const secMinutes = (k) => SEC.reduce((a, s, i) => a + (s === k ? MINS[i] : 0), 0);
@@ -89,6 +89,32 @@ function takeaway(s, text, y = 6.2) {
   s.addText(text, { x: MX + 1.7, y, w: W - 2 * MX - 1.9, h: 0.75, fontFace: FONT, fontSize: 15.5, color: C.navy, bold: true, valign: "middle", margin: 0 });
 }
 
+const ALT = {
+  "series.png": "Daily PM2.5 at the Delhi monitor, 2016 to 2026, with days above the 121 threshold shaded; winter peaks, maximum 896 on 8 November 2017.",
+  "cadence.png": "Line chart: the sensor produced 48 readings a day until 2024 and 24 a day after, against the fixed 24 the coverage statistic assumed.",
+  "implausible.png": "Bar chart of implausible values per 1000 days by true coverage: 18.5, 14.9 and 15.2 below 90 percent coverage, 2.1 above.",
+  "periodogram.png": "Periodogram: peaks only at the annual cycle and its harmonics, nothing at 7 days.",
+  "acf.png": "Autocorrelation to lag 21: lags 7, 14 and 21 sit on the smooth decay, not above it.",
+  "dow.png": "Day-of-week effect on concentration: every one of the seven intervals contains zero.",
+  "annual.png": "Monthly median PM2.5 with interquartile band: high from November to January, lowest in the monsoon, crossing the 121 threshold in autumn and spring.",
+  "rq1.png": "Plot of relative error for nine models at one, two and three days ahead: the three networks beat ARIMA only at one day, and every machine learning regressor trails ARIMA.",
+  "seed_spread.png": "Bar chart of the spread across ten seeds for GRU, LSTM and transformer at each horizon, against a 0.004 noise floor; the GRU reaches 0.048 at three days.",
+  "winter.png": "Observed PM2.5 over winter 2024 to 2025 with ARIMA and GRU one-day-ahead forecasts both following each episode.",
+  "weather.png": "GRU ranges over ten seeds with and without weather at each horizon, against the ARIMA line; they separate only at one day.",
+  "hero_1.png": "Hit rate rising with alarms raised per year for ARIMA alone.",
+  "hero_2.png": "Hit rate against alarms per year for ARIMA, gradient boosting, persistence and climatology: the curves nearly coincide.",
+  "hero_budget.png": "The same four curves with two annotations: moving the budget from 40 to 100 alarms changes hit rate by 50 points, while choosing among models at a fixed budget changes it by about 5.",
+  "dial_vs_detector.png": "Two bar charts on one axis: swapping the model at 100 alarms a year gives hit rates 0.821 to 0.873, while turning the budget from 40 to 100 alarms gives 0.379 to 0.881.",
+  "waffle.png": "Four grids of 100 dots: the best model catches 38, 57, 74 and 88 of every 100 hazardous days at 40, 60, 80 and 100 alarms a year.",
+  "calendar.png": "Calendar heat map of the share of days above 121 by year and month: dark from October to February every year, almost clear from June to September.",
+  "skyline.png": "The last 365 days of the dataset, one bar per day, hazardous days in vermillion.",
+  "monash-logo.png": "Monash University logo",
+  "fig5_1_sensitivity.png": "Report Figure 5.1: mean relative error for each of eleven GRU settings at three horizons.",
+  "fig3_6_arima_stability.png": "Report Figure 3.6: ARIMA coefficients across 28 refits; the moving-average coefficient crosses the invertibility boundary at three.",
+  "fig5_2_architectures.png": "Report Figure 5.2: bounded-check ranges for four architectures against ARIMA.",
+  "fig4_4_arms.png": "Report Figure 4.4: hit-rate advantage of forecast-then-threshold over its matched classifier, by budget and horizon.",
+};
+
 async function figure(s, dir, file, x, y, maxW, maxH, o = {}) {
   const meta = await sharp(path.join(dir, file)).metadata();
   const r = Math.min(maxW / meta.width, maxH / meta.height);
@@ -96,7 +122,7 @@ async function figure(s, dir, file, x, y, maxW, maxH, o = {}) {
   const px = x + (maxW - w) / 2, py = y + (maxH - h) / 2;
   const pad = o.pad === undefined ? 0.12 : o.pad;
   if (!o.bare) card(s, px - pad, py - pad, w + 2 * pad, h + 2 * pad);
-  s.addImage({ path: path.join(dir, file), x: px, y: py, w, h });
+  s.addImage({ path: path.join(dir, file), x: px, y: py, w, h, altText: ALT[file] || file });
   return { x: px, y: py, w, h };
 }
 
@@ -169,7 +195,7 @@ function writeGuide() {
     "",
     ...checkpoints,
     "",
-    "If you are more than two minutes over at the end of Methods, cut slide 10 (model suite), slide 21 (weather through the threshold) and slide 25 (limitations, say two sentences) rather than rushing the results.",
+    "If you are more than two minutes over at the end of Methods, cut slide 12 (model suite), slide 23 (weather through the threshold) and slide 30 (limitations, say two sentences) rather than rushing the results.",
     "",
     "## How to deliver it",
     "",
@@ -178,6 +204,15 @@ function writeGuide() {
     "- Look at the audience on the headline numbers, and at the slide only to point.",
     "- Never read the notes: they are cues. Rehearse three times aloud with a timer, once with the backup questions B8 and B9.",
     "- Hard questions are welcome: state the limit before they do. The report already does, and the slides say so.",
+    "",
+    "## Before the day (yours to do)",
+    "",
+    "- [ ] Open the .pptx in PowerPoint (not just a viewer) and flip through once: check line breaks, since this deck was checked with a stand-in for Calibri.",
+    "- [ ] Send the deck to Dr Tian a week ahead and ask for one round of feedback; he responded quickly to the report.",
+    "- [ ] Check the oral's marking rubric. If it weights clarity, timing or questions, re-balance: the talk is built to give clarity and a defensible Q&A.",
+    "- [ ] Rehearse aloud with a timer, three times; once for someone outside mathematics. The test: can they say the main finding back in one sentence (the dial matters more than the detector)?",
+    "- [ ] Put the PDF on a USB stick and in the cloud as a fallback; check the room's screen ratio (the deck is 16:9).",
+    "- [ ] Know slides 4, 25 and 28 cold: they carry the idea in one picture, what a budget means, and the central result.",
     "",
     "## Timing table",
     "",
@@ -209,9 +244,9 @@ async function build() {
     n += 1;
     s.background = { color: C.navy };
     s.addShape(pptx.ShapeType.rect, { x: 8.4, y: 0, w: W - 8.4, h: H, fill: { color: C.white }, line: { color: C.white } });
-    s.addImage({ path: path.join(REPORT, "monash-logo.png"), x: 8.9, y: 0.55, w: 3.5, h: (3.5 * 430) / 1470 });
+    s.addImage({ path: path.join(REPORT, "monash-logo.png"), x: 8.9, y: 0.55, w: 3.5, h: (3.5 * 430) / 1470, altText: ALT["monash-logo.png"] });
     s.addText("MTH5000 MASTERS RESEARCH PROJECT  |  ORAL PRESENTATION", { x: MX, y: 0.7, w: 7.4, h: 0.35, fontFace: FONT, fontSize: 12, bold: true, color: "8FC3E8", charSpacing: 2, margin: 0 });
-    s.addText("Machine Learning for Forecasting Hazardous Air Quality Days in Indian Cities", { x: MX, y: 1.5, w: 7.4, h: 2.7, fontFace: FONT, fontSize: 38, bold: true, color: C.white, valign: "top", margin: 0 });
+    s.addText("Machine Learning for Forecasting Hazardous Air Quality Days in Indian Cities", { x: MX, y: 1.3, w: 7.4, h: 2.4, fontFace: FONT, fontSize: 38, bold: true, color: C.white, valign: "top", margin: 0 });
     s.addText(
       [
         { text: "Jaykumar Vinodbhai Chauhan", options: { bold: true, breakLine: true } },
@@ -219,8 +254,10 @@ async function build() {
         { text: "Supervisor: Dr Tianhai Tian", options: { breakLine: true } },
         { text: "School of Mathematics, Monash University  |  November 2026" },
       ],
-      { x: MX, y: 4.7, w: 7.4, h: 1.6, fontFace: FONT, fontSize: 16, color: "C9DCEC", valign: "top", margin: 0, paraSpaceAfter: 4 }
+      { x: MX, y: 3.85, w: 7.4, h: 1.5, fontFace: FONT, fontSize: 16, color: "C9DCEC", valign: "top", margin: 0, paraSpaceAfter: 4 }
     );
+    s.addImage({ path: path.join(SLIDES, "skyline.png"), x: 0, y: 5.95, w: 8.4, h: 1.5, altText: ALT["skyline.png"] });
+    s.addText("The last 365 days of the dataset: one bar a day, vermillion above the 121 threshold.", { x: MX, y: 5.5, w: 7.6, h: 0.3, fontFace: FONT, fontSize: 11.5, italic: true, color: "8FA6BD", margin: 0 });
     s.addText("THE FINDING IN TWO NUMBERS", { x: 8.9, y: 2.6, w: 3.9, h: 0.3, fontFace: FONT, fontSize: 11, bold: true, color: C.blue, charSpacing: 2, margin: 0 });
     s.addText("0.379 to 0.881", { x: 8.9, y: 2.95, w: 3.9, h: 0.75, fontFace: FONT, fontSize: 36, bold: true, color: C.verm, margin: 0 });
     s.addText("hit rate at one day ahead as the alarm budget moves from 40 to 100 alarms a year", { x: 8.9, y: 3.7, w: 3.9, h: 0.75, fontFace: FONT, fontSize: 14, color: C.grey, valign: "top", margin: 0 });
@@ -229,6 +266,7 @@ async function build() {
     GUIDE.push({ n, title: "Title", mins: MINS[0], cue: { say: "Good morning. The answer to build to: the number of alarms a health authority is willing to raise matters roughly ten times more than which model produces the forecast.", next: "First, why the question matters." } });
     s.addNotes(notesFor({
       say: "Good morning. I asked how well machine learning can forecast hazardous air quality days in Delhi. The answer I want to build to is on the right: the number of alarms a health authority is willing to raise matters roughly ten times more than which model produces the forecast.",
+      show: "the strip along the bottom: the last year of the data, one bar a day. The orange days are the ones the project is about.",
       next: "First, why the question matters.",
     }));
   }
@@ -261,7 +299,7 @@ async function build() {
       next: "Here is the route.",
     });
     const rq = [
-      ["RQ1", "Accuracy", "How accurately can daily concentrations be forecast 1 to 3 days ahead by machine learning, against classical and naive benchmarks?", "ARIMA beats every ML regressor at every horizon. The deep networks beat it only at one day ahead."],
+      ["RQ1", "Accuracy", "How accurately can daily concentrations be forecast 1 to 3 days ahead by machine learning, against classical and naive benchmarks?", "The classical model (ARIMA) beats every ML regressor at every horizon. The deep networks beat it only at one day ahead."],
       ["RQ2", "Two arms", "Is it better to forecast the concentration and then threshold it, or to classify the exceedance event directly?", "Neither dominates: 21 / 11 / 4 across 36 matched comparisons. Forecast-then-threshold is preferred."],
       ["RQ3", "Warning system", "As a warning system, what hit rate and false alarm rate does each approach achieve, and how does the threshold trade them off?", "The alarm budget moves hit rate by 50 points. The model moves it by about 5."],
     ];
@@ -279,7 +317,20 @@ async function build() {
     takeaway(s, "The third question turns out to dominate the other two, and the talk is organised around it.");
   }
 
-  // ---------- 4. Roadmap ----------
+  // ---------- 4. The idea in one picture ----------
+  {
+    const s = base("The idea in one picture: the detector matters little, the dial matters a lot", {
+      say: "Think of a smoke alarm. There are two things you can change: which detector you buy, and how sensitive you set the dial. On the left I swap the forecasting model at a fixed budget of 100 alarms a year: hit rates 0.82 to 0.87. On the right I keep the best model and turn the dial from 40 to 100 alarms a year: 0.38 to 0.88. Same axis. The rest of the talk is the evidence for this picture, and the care taken not to fool myself.",
+      show: "the left panel is almost flat; the right panel climbs. Same vertical scale.",
+      ask: "Both panels are one day ahead, from Table 4.7. The left uses four representative models at 100 alarms; the right uses the best model at each budget.",
+      next: "Here is the route to that evidence.",
+    });
+    await figure(s, SLIDES, "dial_vs_detector.png", MX, 1.75, W - 2 * MX, 3.65, { bare: true });
+    caption(s, "Hit rate at one day ahead (Table 4.7). Hit rate: the share of hazardous days that were caught.", MX, 5.55, 11);
+    takeaway(s, "Like a smoke alarm: swapping the brand moves the hit rate from 0.82 to 0.87; turning the sensitivity dial moves it from 0.38 to 0.88.");
+  }
+
+  // ---------- 5. Roadmap ----------
   {
     const s = base("The route: from the data, through the models, to the alarm budget", {
       say: "Roughly seven minutes on the data and what was wrong with it, five on the models and how they are tested, eleven on results against the three questions, then limits and conclusions. Keep one question in mind: how much does the model matter, compared with the number of alarms you allow?",
@@ -301,6 +352,12 @@ async function build() {
       s.addText(name, { x: x + 0.25, y: 2.95, w: cw - 0.4, h: 0.45, fontFace: FONT, fontSize: 20, bold: true, color: C.navy, margin: 0 });
       s.addText(`about ${secMinutes(k)} min`, { x: x + 0.25, y: 3.4, w: cw - 0.4, h: 0.3, fontFace: FONT, fontSize: 13, bold: true, color: k === 3 ? C.verm : C.blue, margin: 0 });
       s.addText(desc, { x: x + 0.25, y: 3.8, w: cw - 0.45, h: 1.4, fontFace: FONT, fontSize: 15, color: C.ink, valign: "top", margin: 0 });
+    });
+    s.addText("How to read the colours:", { x: MX, y: 5.5, w: 2.4, h: 0.35, fontFace: FONT, fontSize: 13, bold: true, color: C.grey, valign: "middle", margin: 0 });
+    [[C.blue, "data and models"], [C.navy, "ARIMA, the benchmark"], [C.verm, "the number to remember"]].forEach(([col, lab], i) => {
+      const x = MX + 2.5 + i * 3.1;
+      s.addShape(pptx.ShapeType.roundRect, { x, y: 5.55, w: 0.45, h: 0.25, rectRadius: 0.05, fill: { color: col }, line: { color: col, width: 0 } });
+      s.addText(lab, { x: x + 0.55, y: 5.5, w: 2.4, h: 0.35, fontFace: FONT, fontSize: 13, color: C.ink, valign: "middle", margin: 0 });
     });
     takeaway(s, "Hold one question in mind: how much does the model matter, compared with the number of alarms you allow?");
   }
@@ -370,6 +427,23 @@ async function build() {
       s.addText(t[1], { x: x + 1.55, y: 5.25, w: 1.35, h: 0.85, fontFace: FONT, fontSize: 14, color: C.grey, valign: "middle", margin: 0 });
     });
     takeaway(s, "Episodes make persistence a strong forecast, and the heavy right tail is why every model is fitted to log PM2.5.");
+  }
+
+  // ---------- 7b. Calendar ----------
+  {
+    const s = base("Every year, the same months: hazardous days gather from October to February", {
+      say: "Another view of the same data. Each cell is a month; darker means more of its days were above 121. The pattern repeats every year: October to February is dark, June to September is almost clear. This regularity is the annual cycle the models carry, and it is why a calendar-only forecast, climatology, is a surprisingly strong baseline.",
+      show: "the dark columns, then the pale monsoon months.",
+      ask: "Months with fewer than 15 usable days are left blank. 2016 starts in November and 2026 ends in August.",
+      next: "Is there any other seasonality, say weekly?",
+    });
+    await figure(s, SLIDES, "calendar.png", MX, 1.8, 7.6, 4.2);
+    bullets(s, [
+      ["Each cell is a month; ", "the darker, the larger the share of its days above 121."],
+      ["The pattern repeats every year: ", "October to February is dark; the monsoon months are almost clear."],
+      ["That regularity ", "is the annual cycle the models carry, and why a calendar-only forecast (climatology) is a strong baseline."],
+    ], 8.5, 1.9, 4.25, 4.1, { fontSize: 17, gap: 12 });
+    takeaway(s, "Hazard is seasonal and arrives in episodes, so the calendar alone is already a strong baseline that a model has to beat.");
   }
 
   // ---------- 8. No weekly cycle ----------
@@ -552,7 +626,8 @@ async function build() {
       ask: "The full Table 4.1 is backup B1.",
       next: "What do the forecasts actually look like?",
     });
-    await figure(s, SLIDES, "rq1.png", (W - 12.1) / 2, 1.65, 12.1, 4.0, { bare: true });
+    s.addText("rMAE: error compared with simply repeating yesterday's value (the dashed line at 1.0). Further left is better.", { x: MX, y: 1.62, w: 12, h: 0.3, fontFace: FONT, fontSize: 14, italic: true, color: C.grey, margin: 0 });
+    await figure(s, SLIDES, "rq1.png", (W - 12.1) / 2, 1.95, 12.1, 3.8, { bare: true });
     caption(s, "Report Table 4.1 drawn: bars are ranges over ten seeds; the diamond is ARIMA; dots are single fits; the dashed line is persistence (rMAE = 1).", MX, 5.8, 12, { h: 0.3 });
     takeaway(s, "Networks: 0.910 to 0.939 vs ARIMA 0.940 at one day. At three days 0.831 vs 0.832 is a tie. Every ML regressor trails ARIMA throughout.");
   }
@@ -713,20 +788,65 @@ async function build() {
     takeaway(s, "Median gap 0.011 of hit rate. Forecast-then-threshold wins 8 of 9 at a 40-alarm budget, but loses 6 of 9 at 100.", 6.3);
   }
 
-  // ---------- 23. RQ3 hero ----------
+  // ---------- RQ3a. What a budget means ----------
+  {
+    const s = base("What an alarm budget means: of every 100 hazardous days, how many are caught", {
+      say: "Translate the dial into something you can feel. Each grid is 100 hazardous days; orange dots are the ones the best model caught at one day ahead. At 40 alarms a year, one alarm about every nine days, it catches 38 of 100. At 100 alarms, one about every four days, it catches 88. Nothing changed except the dial. This is a policy choice about how many alarms the public will tolerate, not a modelling choice.",
+      show: "left to right, the orange fills up.",
+      ask: "Hit rates are Table 4.7, best model at one day ahead (0.379, 0.567, 0.735, 0.881), rounded to whole days out of 100. Alarms every N days is 365.25 divided by the budget.",
+      next: "Now let me show how this comes out of the model comparison, step by step.",
+    });
+    await figure(s, SLIDES, "waffle.png", MX, 1.75, W - 2 * MX, 3.7, { bare: true });
+    caption(s, "Best model at each budget, one day ahead (Table 4.7), rounded to whole days out of 100.", MX, 5.6, 11);
+    takeaway(s, "From one alarm every nine days to one every four, the same model catches 88 of 100 hazardous days instead of 38: a policy choice, not a modelling one.");
+  }
+
+  // ---------- RQ3b. Hero, step 1 ----------
+  {
+    const s = base("RQ3, step 1: one model, and its hit rate rises as you allow more alarms", {
+      say: "Now the chart the project is built around. Horizontal: alarms raised per year, the dial. Vertical: the share of hazardous days caught. This is one model, ARIMA. As the budget rises, so does the hit rate. That is true by construction, so on its own it proves nothing about models. The question is what happens when I change the model.",
+      show: "the two axes, then the single navy curve.",
+      next: "Add three very different models.",
+    });
+    await figure(s, SLIDES, "hero_1.png", MX, 1.78, 7.5, 4.3, { bare: true });
+    bullets(s, [
+      ["Horizontal: ", "alarms raised per year, the dial."],
+      ["Vertical: ", "the share of hazardous days caught."],
+      ["More alarms catch more days, ", "by construction, so this alone says nothing about models."],
+    ], 8.4, 2.0, 4.35, 3.8, { fontSize: 18, gap: 14 });
+    takeaway(s, "Allow more alarms and the same model catches more hazardous days: that is the dial.");
+  }
+
+  // ---------- RQ3c. Hero, step 2 ----------
+  {
+    const s = base("RQ3, step 2: add three very different models, and the curves nearly coincide", {
+      say: "Now add gradient boosting, persistence, which just repeats yesterday, and climatology, which uses only the calendar. Four very different forecasters, one almost identical curve. I have not separated them for legibility, because the overlap is the finding.",
+      show: "how closely the four lines lie on top of one another.",
+      next: "Now quantify the two effects.",
+    });
+    await figure(s, SLIDES, "hero_2.png", MX, 1.78, 7.5, 4.3, { bare: true });
+    bullets(s, [
+      ["ARIMA, gradient boosting, ", "persistence (just repeat yesterday) and climatology (the calendar alone)."],
+      ["Four very different forecasters, ", "almost one curve."],
+      ["Deliberately not separated: ", "the overlap is the finding."],
+    ], 8.4, 2.0, 4.35, 3.8, { fontSize: 18, gap: 14 });
+    takeaway(s, "Swap the detector, and the curve barely moves.");
+  }
+
+  // ---------- RQ3d. Hero, step 3 ----------
   {
     const s = base("RQ3: moving the alarm budget changes the hit rate by fifty points, and changing the model by five", {
-      say: "This is the principal result. Hit rate at one day ahead against alarms raised per year, for four models: ARIMA, gradient boosting, persistence and climatology. The curves almost coincide, and I have not separated them, because that is the finding. Move along the budget axis from 40 to 100 alarms and the best achievable hit rate goes from 0.379 to 0.881. Hold the budget fixed and switch the model, and it moves from about 0.82 to 0.88. At three days and 40 alarms a year, persistence, which just repeats yesterday, is the best model in the whole study, 0.359. At 100 alarms a climatological forecast comes within a hundredth of the best, 0.816 against 0.827.",
+      say: "Now the two effects. Along the dial, from 40 to 100 alarms a year, the best hit rate goes from 0.379 to 0.881: fifty points. At a fixed 100 alarms, switching the model moves it from about 0.82 to 0.88: about five. At three days and 40 alarms a year, persistence, which just repeats yesterday, is the best model in the whole study, 0.359. At 100 alarms a climatological forecast comes within a hundredth of the best, 0.816 against 0.827.",
       show: "the vermillion arrow on the left, then the blue bracket at 100 alarms.",
-      ask: "Higher hit rate at a bigger budget is true by construction, which is exactly why every model comparison is made at a fixed budget. The finding is the size of the two effects, not that the first exists. Full Table 4.7 is backup B7.",
+      ask: "A bigger budget raising the hit rate is true by construction, which is exactly why every model comparison is made at a fixed budget. The finding is the size of the two effects, not that the first exists. Full Table 4.7 is backup B7.",
       next: "Why this happens: episodes. Then what I checked, and what I cannot claim.",
     });
     await figure(s, SLIDES, "hero_budget.png", MX, 1.78, 7.5, 4.3, { bare: true });
-    stat(s, 8.4, 1.85, 4.35, 1.3, "50 points", "moving the budget, 40 to 100 alarms a year (h = 1)", C.verm, 34);
-    stat(s, 8.4, 3.3, 4.35, 1.3, "about 5 points", "changing the model, at a fixed budget", C.blue, 34);
+    stat(s, 8.4, 1.85, 4.35, 1.3, "50 points", "the dial: budget 40 to 100 alarms a year (h = 1)", C.verm, 34);
+    stat(s, 8.4, 3.3, 4.35, 1.3, "about 5 points", "the detector: model choice at a fixed budget", C.blue, 34);
     card(s, 8.4, 4.75, 4.35, 1.35, { fill: C.pale, flat: true });
     s.addText("At h = 3 and 40 alarms a year, persistence (0.359) is the best model in the whole study.", { x: 8.55, y: 4.75, w: 4.05, h: 1.35, fontFace: FONT, fontSize: 15.5, color: C.navy, valign: "middle", margin: 0 });
-    takeaway(s, "The alarm budget is the policy instrument; the forecasting model only supplies its input. Compare models only at a stated budget.");
+    takeaway(s, "The dial matters more than the detector: the alarm budget is the policy instrument, and the model only supplies its input.");
   }
 
   // ---------- 24. Robustness ----------
@@ -813,7 +933,7 @@ async function build() {
       s.addText(r[1], { x: MX + 1.4, y: y + 0.1, w: 3.0, h: 1.1, fontFace: FONT, fontSize: 16.5, bold: true, color: C.navy, valign: "middle", margin: 0 });
       s.addText(r[2], { x: MX + 4.55, y: y + 0.05, w: W - 2 * MX - 4.8, h: 1.2, fontFace: FONT, fontSize: 15.5, color: C.ink, valign: "middle", margin: 0 });
     });
-    takeaway(s, "Machine learning earns a real but narrow place; the alarm budget, not the model, decides how many hazardous days are caught.", 6.2);
+    takeaway(s, "Machine learning earns a real but narrow place; the dial (the alarm budget), not the detector (the model), decides how many hazardous days are caught.", 6.2);
   }
 
   // ---------- 28. Recommendation ----------
@@ -850,9 +970,9 @@ async function build() {
     s.addText("Thank you. Questions?", { x: MX, y: 2.2, w: 9, h: 1.0, fontFace: FONT, fontSize: 48, bold: true, color: C.white, margin: 0 });
     s.addText("The alarm budget a decision maker accepts dominates the choice of model.", { x: MX, y: 3.4, w: 10, h: 0.8, fontFace: FONT, fontSize: 22, color: "8FC3E8", margin: 0 });
     s.addText("Code, data and report: github.com/JC16092/mth5000-aqi-forecast", { x: MX, y: 5.0, w: 9.5, h: 0.4, fontFace: FONT, fontSize: 16, color: "C9DCEC", margin: 0 });
-    s.addText("Backup: B1 full Table 4.1, B2 ARIMA order search, B3 significance tables, B4 GRU sensitivity, B5 stability and architecture checks, B6 RQ2 at all horizons, B7 full Table 4.7, B8 to B9 likely questions.", { x: MX, y: 5.5, w: 11.5, h: 0.8, fontFace: FONT, fontSize: 14, color: "8FA6BD", valign: "top", margin: 0 });
+    s.addText("Backup: B1 full Table 4.1, B2 ARIMA order search, B3 significance tables, B4 GRU sensitivity, B5 stability and architecture checks, B6 RQ2 at all horizons, B7 full Table 4.7, B8 to B9 likely questions, B10 plain-language glossary.", { x: MX, y: 5.5, w: 11.5, h: 0.8, fontFace: FONT, fontSize: 14, color: "8FA6BD", valign: "top", margin: 0 });
     GUIDE.push({ n, title: "Thank you. Questions?", mins: 0, cue: { say: "Thank you. Happy to take questions. Detailed tables are in backup B1 to B7; the questions to expect are B8 and B9." } });
-    s.addNotes(notesFor({ say: "Thank you. Happy to take questions. If asked something detailed, the backup slides B1 to B7 hold the full tables; B8 and B9 hold the questions I expect." }));
+    s.addNotes(notesFor({ say: "Thank you. Happy to take questions. If asked something detailed, the backup slides B1 to B7 hold the full tables; B8 and B9 hold the questions I expect; B10 is the glossary." }));
   }
 
   // ====================================================================== backups
@@ -1004,6 +1124,25 @@ async function build() {
   }
 
   writeGuide();
+  {
+    const s = base("B10. The words used in this talk, in plain language", { say: "Glossary. Useful if an audience member is outside statistics: every term the talk uses, in one line each." });
+    table(s, [
+      ["Term", "In plain words"],
+      ["PM2.5", "Fine particles under 2.5 micrometres across, small enough to reach deep into the lungs."],
+      ["Hazard threshold, 121 µg/m³", "A day above this is 'hazardous': the boundary of the 'Very Poor' category of India's air quality index."],
+      ["Persistence", "The simplest forecast: tomorrow equals today."],
+      ["ARIMA", "A classical time-series model: predicts from recent values and recent errors, with the season added."],
+      ["Machine learning regressor", "A flexible model that learns from examples: ridge regression, random forest, gradient boosting."],
+      ["Neural network (GRU, LSTM, transformer)", "A model that learns patterns from a window of the last 30 days."],
+      ["rMAE", "Average error compared with persistence on the same days: 1.0 is persistence, below 1 is better."],
+      ["Hit rate", "The share of hazardous days that were caught."],
+      ["False alarm rate", "The share of quiet days that were wrongly flagged."],
+      ["Alarm budget", "How many alarms are raised per year: the dial in the talk."],
+      ["Seed", "The random starting point of a network's training; the talk reports ten, as a range."],
+      ["Rolling origin", "Testing as if each forecast were made on its own day, using only the past."],
+    ], MX, 1.65, [3.6, 8.5], 0.37, { fontSize: 13, leftCols: [1] });
+  }
+
   await pptx.writeFile({ fileName: OUT });
   console.log("wrote", OUT, "slides:", n, "| talk minutes:", MINS.reduce((a, b) => a + b, 0));
 }

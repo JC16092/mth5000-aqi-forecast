@@ -3528,13 +3528,16 @@ once the new deck is the one in use.
 
 `presentation_new/MTH5000_oral_presentation.pptx`: first built as 28 talk
 slides plus 5 backups, then rebuilt on request as a professionally
-structured deck: 29 talk slides plus 9 backups, with a roadmap slide and
+structured deck, then extended with the smoke-alarm "detector versus dial"
+framing, a days-caught-per-100 slide, a three-step build of the central
+chart, an exceedance calendar, a plain-language glossary, alt text on every
+image and a data-drawn cover: now 34 talk slides plus 10 backups, with a roadmap slide and
 progress tracker, a consistent takeaway bar, a contributions slide, and
 backup Q&A cue sheets for the questions an examiner is likely to ask. Slide
 figures are now drawn at presentation scale by `src/make_slide_figures.py`
 from the same data files and palette as the report (the central budget
 curves reproduce Table 4.7 exactly), instead of reusing the report's
-paper-scale figures. Speaker notes are cues with a running clock (32.5
+paper-scale figures. Speaker notes are cues with a running clock (33.5
 minutes for the talk), and `PRESENTER_GUIDE.md` carries them with
 timing checkpoints. A PDF export is the in-room fallback. Every number was
 checked against the report text after the final build.

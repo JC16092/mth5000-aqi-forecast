@@ -320,9 +320,10 @@ def fig_weather():
     save(fig, "weather.png")
 
 
-def fig_hero():
+def fig_hero(step=3):
     """The central result. Hit rate against alarms per year at one day ahead, for four representative models,
-    straight from threshold_sweep.csv. The curves nearly coincide; the budget axis does all the work."""
+    straight from threshold_sweep.csv. The curves nearly coincide; the budget axis does all the work.
+    step 1: ARIMA alone; step 2: all four curves; step 3: with the two quantities the finding compares."""
     sw = pd.read_csv(os.path.join(ROOT, "threshold_sweep.csv"))
     show = [("climatology", "climatology", LIGHT, ":", 2.6), ("hist_gbm_delta", "gradient boosting", SKY, "--", 2.4),
             ("naive_carry", "persistence", GREY, "-.", 2.4), ("arima_fourier", "ARIMA + Fourier", NAVY, "-", 3.2)]
@@ -330,35 +331,124 @@ def fig_hero():
     vals = {}
     grid = np.arange(1, 131)
     for key, label, col, ls, lw in show:
+        if step == 1 and key != "arima_fourier":
+            continue
         g = sw[(sw.model == key) & (sw.horizon == 1)].dropna(subset=["alarms_per_year", "hit_rate"])
         # the report's own definition (step07_warning.operating_point_at_alarms): best hit rate within a budget
         best = np.array([g[g.alarms_per_year <= b].hit_rate.max() if (g.alarms_per_year <= b).any() else np.nan for b in grid])
         ax.plot(grid, best, color=col, ls=ls, lw=lw, label=label)
         vals[key] = (best[39], best[99])
     print("best hit rate within 40 / 100 alarms per year:", {k: tuple(round(float(x), 3) for x in v) for k, v in vals.items()})
-    # the two quantities the finding compares
-    for xb in (40, 100):
-        ax.axvline(xb, color=LIGHT, lw=1.2, zorder=0)
-    lo_pt, hi_pt = 0.379, 0.881  # Table 4.7: best model at 40 and at 100 alarms a year
-    ax.plot([40], [lo_pt], "o", ms=9, color=VERM, zorder=6)
-    ax.plot([100], [hi_pt], "o", ms=9, color=VERM, zorder=6)
-    for yy, x1 in ((lo_pt, 40), (hi_pt, 100)):
-        ax.plot([14, x1], [yy, yy], color=VERM, lw=1.2, ls=(0, (2, 3)), zorder=2)
-    ax.annotate("", xy=(14, hi_pt), xytext=(14, lo_pt), arrowprops=dict(arrowstyle="<->", color=VERM, lw=2.6))
-    ax.text(17, 0.63, "budget 40 to 100\nalarms a year:\n0.379 to 0.881\n(50 points)", color=VERM, fontsize=14,
-            fontweight="bold", va="center")
-    ax.plot([106, 106], [0.821, 0.881], color=BLUE, lw=3, solid_capstyle="butt")
-    for yy in (0.821, 0.881):
-        ax.plot([103.5, 108.5], [yy, yy], color=BLUE, lw=3)
-    ax.text(111, 0.80, "model choice\nat a fixed budget:\n0.82 to 0.88\n(about 5 points)", color=BLUE, fontsize=14,
-            fontweight="bold", va="top")
+    if step == 3:
+        for xb in (40, 100):
+            ax.axvline(xb, color=LIGHT, lw=1.2, zorder=0)
+        lo_pt, hi_pt = 0.379, 0.881  # Table 4.7: best model at 40 and at 100 alarms a year
+        ax.plot([40], [lo_pt], "o", ms=9, color=VERM, zorder=6)
+        ax.plot([100], [hi_pt], "o", ms=9, color=VERM, zorder=6)
+        for yy, x1 in ((lo_pt, 40), (hi_pt, 100)):
+            ax.plot([14, x1], [yy, yy], color=VERM, lw=1.2, ls=(0, (2, 3)), zorder=2)
+        ax.annotate("", xy=(14, hi_pt), xytext=(14, lo_pt), arrowprops=dict(arrowstyle="<->", color=VERM, lw=2.6))
+        ax.text(17, 0.63, "the dial: budget 40 to\n100 alarms a year:\n0.379 to 0.881\n(50 points)", color=VERM, fontsize=14,
+                fontweight="bold", va="center")
+        ax.plot([106, 106], [0.821, 0.881], color=BLUE, lw=3, solid_capstyle="butt")
+        for yy in (0.821, 0.881):
+            ax.plot([103.5, 108.5], [yy, yy], color=BLUE, lw=3)
+        ax.text(111, 0.80, "the detector:\nmodel choice at a\nfixed budget:\n0.82 to 0.88\n(about 5 points)", color=BLUE, fontsize=14,
+                fontweight="bold", va="top")
     ax.set_xlim(0, 150)
     ax.set_ylim(0, 1.0)
     ax.set_xlabel("alarms raised per year")
     ax.set_ylabel("hit rate (share of hazardous days caught)")
     ax.set_xticks([0, 40, 60, 80, 100, 120])
     ax.legend(loc="lower right", handlelength=2.6, bbox_to_anchor=(1.0, 0.04))
-    save(fig, "hero_budget.png")
+    save(fig, {1: "hero_1.png", 2: "hero_2.png", 3: "hero_budget.png"}[step])
+
+
+def fig_detector_vs_dial():
+    """Same axis, two questions. Left: swap the model at a fixed budget (100 alarms a year, h = 1, Table 4.7).
+    Right: turn the budget with the best model (Table 4.7, best model, h = 1)."""
+    det = [("climatology", 0.821, LIGHT), ("gradient boosting", 0.854, SKY), ("ARIMA + Fourier", 0.867, NAVY), ("persistence", 0.873, GREY)]
+    dial = [("40", 0.379), ("60", 0.567), ("80", 0.735), ("100", 0.881)]
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(12.1, 3.9), sharey=True, gridspec_kw={"wspace": 0.12, "width_ratios": [1, 1]})
+    x = np.arange(len(det))
+    a1.bar(x, [d[1] for d in det], 0.62, color=[d[2] for d in det])
+    for xi, d in zip(x, det):
+        a1.text(xi, d[1] + 0.015, f"{d[1]:.3f}", ha="center", fontsize=14, fontweight="bold")
+    a1.set_xticks(x)
+    a1.set_xticklabels([d[0].replace(" + Fourier", "\n+ Fourier").replace("gradient boosting", "gradient\nboosting") for d in det], fontsize=13)
+    a1.set_title("THE DETECTOR: swap the model", loc="left", fontsize=15, fontweight="bold", color=BLUE, pad=34)
+    a1.set_ylabel("hit rate (share of hazardous days caught)")
+    a1.text(0.0, 1.04, "fixed budget: 100 alarms a year", fontsize=13, color=GREY, transform=a1.transAxes)
+    x2 = np.arange(len(dial))
+    a2.bar(x2, [d[1] for d in dial], 0.62, color=VERM)
+    for xi, d in zip(x2, dial):
+        a2.text(xi, d[1] + 0.015, f"{d[1]:.3f}", ha="center", fontsize=14, fontweight="bold", color=VERM)
+    a2.set_xticks(x2)
+    a2.set_xticklabels([d[0] for d in dial], fontsize=13)
+    a2.set_xlabel("alarms a year", fontsize=13)
+    a2.set_title("THE DIAL: turn the budget", loc="left", fontsize=15, fontweight="bold", color=VERM, pad=34)
+    a2.text(0.0, 1.04, "best model at each setting", fontsize=13, color=GREY, transform=a2.transAxes)
+    for a in (a1, a2):
+        a.set_ylim(0, 1.0)
+    a2.spines["left"].set_visible(False)
+    a2.tick_params(axis="y", length=0)
+    save(fig, "dial_vs_detector.png")
+
+
+def fig_waffle():
+    """Of every 100 hazardous days, how many the best model catches at each budget (Table 4.7, best model, h = 1)."""
+    opts = [(40, 0.379), (60, 0.567), (80, 0.735), (100, 0.881)]
+    fig, axes = plt.subplots(1, 4, figsize=(12.1, 3.7), gridspec_kw={"wspace": 0.08})
+    for ax, (b, hr) in zip(axes, opts):
+        k = int(round(hr * 100 + 1e-9))
+        for i in range(100):
+            r, c = divmod(i, 10)
+            ax.scatter(c, 9 - r, s=190, color=(VERM if i < k else "#E4EAF0"), edgecolors="none")
+        ax.set_xlim(-0.8, 9.8)
+        ax.set_ylim(-0.8, 9.8)
+        ax.axis("off")
+        ax.set_title(f"{b} alarms a year", fontsize=16, fontweight="bold", color=NAVY, pad=6)
+        ax.text(4.5, -1.7, f"{k} of 100 caught", ha="center", fontsize=15, fontweight="bold", color=VERM)
+        ax.text(4.5, -2.7, f"one alarm every {365.25 / b:.1f} days", ha="center", fontsize=13, color=GREY)
+    save(fig, "waffle.png")
+
+
+def fig_calendar(clean):
+    s = clean["PM2.5"].dropna()
+    df = pd.DataFrame({"v": s, "yr": s.index.year, "mo": s.index.month})
+    g = df.groupby(["yr", "mo"])
+    share = (g["v"].apply(lambda x: (x > THRESHOLD).mean())).unstack()
+    count = g["v"].count().unstack()
+    share = share.where(count >= 15)
+    share = share.reindex(columns=range(1, 13))
+    from matplotlib.colors import LinearSegmentedColormap
+    cmap = LinearSegmentedColormap.from_list("hz", ["#F3F7FB", "#F7D3B8", VERM])
+    fig, ax = plt.subplots(figsize=(7.6, 4.2))
+    im = ax.imshow(share.values, aspect="auto", cmap=cmap, vmin=0, vmax=1)
+    ax.set_xticks(range(12))
+    ax.set_xticklabels(list("JFMAMJJASOND"))
+    ax.set_yticks(range(len(share.index)))
+    ax.set_yticklabels(share.index)
+    ax.tick_params(length=0)
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+    cb = fig.colorbar(im, ax=ax, fraction=0.04, pad=0.02)
+    cb.set_label("share of days above 121", fontsize=13)
+    cb.outline.set_visible(False)
+    save(fig, "calendar.png")
+
+
+def fig_skyline(clean):
+    """Cover motif: the last 365 days of the dataset itself, one bar per day, hazardous days in vermillion."""
+    s = clean["PM2.5"].dropna().iloc[-365:]
+    fig, ax = plt.subplots(figsize=(8.4, 1.5))
+    cols = [VERM if v > THRESHOLD else SKY for v in s.values]
+    ax.bar(np.arange(len(s)), np.minimum(s.values, 500), width=1.0, color=cols, alpha=0.95)
+    ax.axhline(THRESHOLD, color="white", lw=1.2, ls=(0, (4, 3)))
+    ax.set_xlim(-2, len(s) + 1)
+    ax.axis("off")
+    print("skyline covers", s.index[0].date(), "to", s.index[-1].date(), "| days above threshold:", int((s > THRESHOLD).sum()))
+    save(fig, "skyline.png")
 
 
 if __name__ == "__main__":
@@ -374,4 +464,9 @@ if __name__ == "__main__":
     fig_seed_spread()
     fig_winter()
     fig_weather()
-    fig_hero()
+    for k in (1, 2, 3):
+        fig_hero(k)
+    fig_detector_vs_dial()
+    fig_waffle()
+    fig_calendar(clean)
+    fig_skyline(clean)

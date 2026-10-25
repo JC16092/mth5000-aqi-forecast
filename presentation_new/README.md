@@ -6,7 +6,7 @@ It reuses nothing from `presentation/`, which still holds the earlier 33-slide d
 
 | File | What it is |
 |---|---|
-| `MTH5000_oral_presentation.pptx` | The deck: 29 talk slides plus 9 backup slides (B1 to B9). |
+| `MTH5000_oral_presentation.pptx` | The deck: 34 talk slides plus 10 backup slides (B1 to B10). |
 | `MTH5000_oral_presentation.pdf` | A LibreOffice export, as a fallback if PowerPoint is unavailable in the room. Rendered with Carlito in place of Calibri, so check line breaks if you regenerate it. |
 | `PRESENTER_GUIDE.md` | Timing checkpoints, delivery advice, and every slide's cues. Generated from the same source as the speaker notes. |
 
@@ -17,6 +17,17 @@ It reuses nothing from `presentation/`, which still holds the earlier 33-slide d
 - **A spine**: the alarm budget moves hit rate by about 50 points, the model by about 5. The title slide
   states it, the roadmap asks the audience to hold it in mind, the results earn it, the discussion defends
   it, the conclusion repeats it.
+- **One picture people already know**: a smoke alarm. Which detector you buy (the model) matters little; where
+  you set the sensitivity dial (the alarm budget) matters a lot. Slide 4 shows it, slides 25 to 28 build the
+  evidence for it step by step, and the conclusion repeats it.
+- **Numbers you can feel**: slide 25 turns hit rates into "of every 100 hazardous days, how many are caught",
+  and budgets into "one alarm every N days".
+- **A built-up central chart**: one curve, then four models whose curves coincide, then the two annotated
+  effects, as three slides.
+- **For non-specialists**: first-mention plain wording ("the classical model (ARIMA)"), a plain definition
+  of rMAE on the accuracy slide, an exceedance calendar (slide 9), and a plain-language glossary (B10).
+- **Accessible**: every image carries alt text.
+- **A cover made of the data**: the last 365 days, one bar a day, hazardous days in vermillion.
 - **Navigation**: a roadmap slide with minutes per section, and a six-segment progress tracker on every slide.
 - **Slide-grade figures**, drawn at the size they are shown so a 14 pt label is a 14 pt label. They are drawn
   from the report's own data and palette. Three are drawn rather than quoted: Table 4.1 as a dot plot, the
@@ -31,7 +42,7 @@ It reuses nothing from `presentation/`, which still holds the earlier 33-slide d
 
 ## Timing
 
-The 29 talk slides total **32.5 minutes**, inside the 30 to 40 minute slot. If questions are taken inside
+The 34 talk slides total **33.5 minutes**, inside the 30 to 40 minute slot. If questions are taken inside
 the slot, `PRESENTER_GUIDE.md` names what to cut first.
 
 ## Provenance
@@ -41,7 +52,8 @@ the slot, `PRESENTER_GUIDE.md` names what to cut first.
   (the report writes "four thousand"), and the section minutes on the roadmap (the talk's own timing).
 - Derived, not quoted: "5 of 5 ML regressors behind ARIMA at every horizon" (read off Table 4.1 row by row);
   the ten-seed spreads (high minus low from Table 4.1); the shaded better arm on the RQ2 slide (computed from
-  Table 4.6, ties unshaded).
+  Table 4.6, ties unshaded); "of 100 caught" is Table 4.7 (best model, one day ahead) rounded to whole days, and
+  "one alarm every N days" is 365.25 divided by the budget.
 - Backup slides B2 to B6 reuse the report's own tables and figures.
 
 ## Build
