@@ -1,61 +1,64 @@
 # Oral presentation, fresh build (MTH5000, first week of November)
 
-A clean-slate deck built directly from `report/main.pdf` (77 pages, 14 tables, 13 figures, after Dr Tian's
-review). It does not reuse anything from `presentation/`, which holds the earlier 33-slide deck and is left
-untouched (see "Open question" below).
+A clean-slate deck built from `report/main.pdf` (77 pages, 14 tables, 13 figures, after Dr Tian's review).
+It reuses nothing from `presentation/`, which still holds the earlier 33-slide deck and was left untouched
+(see "Open question").
 
-- **`MTH5000_oral_presentation.pptx`** -- the deck. 28 slides for the talk plus 5 backup slides (B1 to B5).
-- **`MTH5000_oral_presentation.pdf`** -- a LibreOffice export of the same deck, for use as a fallback if
-  PowerPoint is unavailable in the room. It is rendered with Carlito in place of Calibri, so check line
-  breaks if you regenerate it.
+| File | What it is |
+|---|---|
+| `MTH5000_oral_presentation.pptx` | The deck: 29 talk slides plus 9 backup slides (B1 to B9). |
+| `MTH5000_oral_presentation.pdf` | A LibreOffice export, as a fallback if PowerPoint is unavailable in the room. Rendered with Carlito in place of Calibri, so check line breaks if you regenerate it. |
+| `PRESENTER_GUIDE.md` | Timing checkpoints, delivery advice, and every slide's cues. Generated from the same source as the speaker notes. |
+
+## How the deck is built to be presented
+
+- **One message per slide**, stated as the slide title and again in a consistent "TAKEAWAY" bar. Detail
+  lives in the speaker notes and in the backups, not on the slide.
+- **A spine**: the alarm budget moves hit rate by about 50 points, the model by about 5. The title slide
+  states it, the roadmap asks the audience to hold it in mind, the results earn it, the discussion defends
+  it, the conclusion repeats it.
+- **Navigation**: a roadmap slide with minutes per section, and a six-segment progress tracker on every slide.
+- **Slide-grade figures**, drawn at the size they are shown so a 14 pt label is a 14 pt label. They are drawn
+  from the report's own data and palette. Three are drawn rather than quoted: Table 4.1 as a dot plot, the
+  ten-seed spreads, and the central budget curves (the curves reproduce Table 4.7 exactly; the script prints
+  the check).
+- **Consistent identity system**: Monash blue, navy for ARIMA, vermillion only for a called-out point, as in
+  the report.
+- **Speaker notes are cues, not scripts**: SAY, POINT TO, IF ASKED, TRANSITION, with a running clock.
+- **Rehearsal and defence material**: a Q&A cue sheet (B8, B9) for the questions an examiner is likely to
+  ask, including the one a sharp examiner will ask about the central result (a bigger budget raises the hit
+  rate by construction, so the finding is the size of the two effects, not that one exists).
 
 ## Timing
 
-Speaker notes on every slide start with a time budget and a running total, e.g.
-`[Slide 14 | about 1.5 min | running total 18 min]`. The 28 talk slides come to **34 minutes**, inside the
-30 to 40 minute slot. If questions are taken inside the slot rather than after it, the easiest cuts are
-slide 9 (model suite), slide 20 (weather through the threshold) and slide 23 (trade-off curves). The notes
-are talking points, not a script.
-
-## Structure
-
-| Slides | Section | Content |
-|---|---|---|
-| 1 to 3 | Motivation | Title, why it matters, the three research questions with their answers |
-| 4 to 8 | Data | Station choice, the two data defects, the series, no weekly cycle, annual cycle and ARIMA |
-| 9 to 13 | Methods | Model suite, ML regressors, the three networks, rolling-origin evaluation, measures |
-| 14 to 23 | Results | RQ1 table, forecast figure, seed ranges, significance, the two tested arguments, weather, RQ2, RQ3, trade-off curves |
-| 24 to 25 | Discussion | Robustness checks, limitations |
-| 26 to 28 | Conclusion | Research-question answers, recommendation and future work, questions |
-| B1 to B5 | Backup | ARIMA order search, Diebold-Mariano tables, GRU sensitivity, coefficient stability and architecture checks, RQ2 at all horizons |
+The 29 talk slides total **32.5 minutes**, inside the 30 to 40 minute slot. If questions are taken inside
+the slot, `PRESENTER_GUIDE.md` names what to cut first.
 
 ## Provenance
 
-- Every number is read from the compiled `report/main.pdf`, and each table slide names the report table it
-  comes from. After the last build, every numeric token in the slides and notes was checked against the
-  report text; the only two not found verbatim were `3,579` (the report prints `3579`) and `4,000` (the
-  report writes "four thousand").
-- Figures are the report's own, extracted from the PDF rather than redrawn, so they carry the report's
-  recoloured palette. The deck palette (Monash blue `#006CAB`, navy, and the vermillion `#D55E00` used in
-  the report for called-out points) follows them.
-- The one derived claim is "5 of 5 ML regressors behind ARIMA at every horizon", read off Table 4.1 row by
-  row. The RQ2 slide shades the better arm computed from the table values, with exact ties left unshaded.
+- Every number is read from the compiled report. After the last build, every numeric token in the slides and
+  notes was checked against the report text. Not found verbatim: `3,579` (the report prints `3579`), `4,000`
+  (the report writes "four thousand"), and the section minutes on the roadmap (the talk's own timing).
+- Derived, not quoted: "5 of 5 ML regressors behind ARIMA at every horizon" (read off Table 4.1 row by row);
+  the ten-seed spreads (high minus low from Table 4.1); the shaded better arm on the RQ2 slide (computed from
+  Table 4.6, ties unshaded).
+- Backup slides B2 to B6 reuse the report's own tables and figures.
 
 ## Build
 
 ```
-./extract_assets.sh            # figures and logos from report/main.pdf into assets/ (PNGs are gitignored)
-cd src && npm install          # first time only
-node build_deck.js             # writes ../MTH5000_oral_presentation.pptx
+./extract_assets.sh                                   # report figures and logos from report/main.pdf into assets/
+python src/make_slide_figures.py                      # slide figures into assets_slides/ (needs the report's Python environment)
+cd src && npm install && node build_deck.js           # writes the .pptx and PRESENTER_GUIDE.md
 soffice --headless --convert-to pdf --outdir .. ../MTH5000_oral_presentation.pptx   # optional PDF fallback
 ```
 
-`assets/` is rebuilt byte-for-byte by `extract_assets.sh` (checked). The deck is typeset in Calibri.
-Coordinates in `build_deck.js` are inches on a 13.333 by 7.5 slide; the per-slide time budget is the `MINS`
-array at the top.
+PNGs are gitignored, as for `report/figures/`, so the two asset folders are rebuilt rather than committed.
+The deck is typeset in Calibri. Coordinates in `build_deck.js` are inches on a 13.333 by 7.5 slide; the
+per-slide minutes are the `MINS` array at the top.
 
 ## Open question
 
-`presentation/` was described as cleared for a fresh start, but on `main` it still contains the earlier deck
-(`slides_v2.pptx`, Beamer `slides.tex`/`slides.pdf`, `pptx_src/`, `README.md`). It was left alone. Delete it
-once this deck is the one you are keeping.
+`presentation/` was described as cleared for a fresh start, but on `main` it still holds the earlier deck
+(`slides_v2.pptx`, the Beamer files, `pptx_src/`, `README.md`). It was left alone. Delete it once this deck
+is the one you are keeping.

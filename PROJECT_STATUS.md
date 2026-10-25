@@ -3526,13 +3526,18 @@ the answer was to leave it alone and build elsewhere. Nothing in
 `presentation/` was read for content or changed, and it can be deleted
 once the new deck is the one in use.
 
-`presentation_new/MTH5000_oral_presentation.pptx`: 28 talk slides plus 5
-backups, built with pptxgenjs by `src/build_deck.js`, with a PDF export as
-the in-room fallback. Speaker notes carry a per-slide time budget and
-running total, 34 minutes for the talk. Figures are extracted from the
-report PDF by `extract_assets.sh` (the PNGs are gitignored, like
-`report/figures/`), so they match the report's recoloured palette. Every
-number was checked against the report text after the final build.
+`presentation_new/MTH5000_oral_presentation.pptx`: first built as 28 talk
+slides plus 5 backups, then rebuilt on request as a professionally
+structured deck: 29 talk slides plus 9 backups, with a roadmap slide and
+progress tracker, a consistent takeaway bar, a contributions slide, and
+backup Q&A cue sheets for the questions an examiner is likely to ask. Slide
+figures are now drawn at presentation scale by `src/make_slide_figures.py`
+from the same data files and palette as the report (the central budget
+curves reproduce Table 4.7 exactly), instead of reusing the report's
+paper-scale figures. Speaker notes are cues with a running clock (32.5
+minutes for the talk), and `PRESENTER_GUIDE.md` carries them with
+timing checkpoints. A PDF export is the in-room fallback. Every number was
+checked against the report text after the final build.
 
 Two things worth knowing. The report's List of Tables jumps from Table 3.4
 to Table 3.6 with no Table 3.5, which is a report-side numbering gap, not
