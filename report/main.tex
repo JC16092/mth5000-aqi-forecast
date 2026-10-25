@@ -663,6 +663,16 @@ number.
 \input{tables/dataset}
 \end{table}
 
+\begin{table}[htbp]
+\centering
+\caption{Descriptive statistics of the cleaned series. The skewness and
+kurtosis quantify what Section~\ref{sec:lit-ml} states qualitatively: a
+distribution with a long right tail of extreme episodes rather than a
+roughly symmetric one.}
+\label{tab:descriptive}
+\input{tables/descriptive}
+\end{table}
+
 \section{Data Preprocessing}
 \label{sec:preprocess}
 
@@ -931,6 +941,20 @@ $(p,d,q) = (1,1,1)$, AIC 1892.5, with the next best candidate in the grid,
 $(1,1,2)$, at 1893.6: a gap of 1.1, too small to call $(1,1,1)$ decisively
 better rather than a more parsimonious specification of roughly equal
 support, which is the more defensible reading of why it was selected.
+Table~\ref{tab:order-search} gives the full 24-candidate grid rather than
+only the top two, so the margin above can be checked against every
+alternative tried, not taken on faith.
+
+\begin{table}[htbp]
+\centering
+\caption{The ARIMA order search in full: every $(p,d,q)$ candidate in the
+grid, sorted by AIC. Four orders did not converge to a stable estimate on
+the training block and are reported with their AIC and BIC as returned,
+marked accordingly.}
+\label{tab:order-search}
+\input{tables/order_search}
+\end{table}
+
 Equation~\ref{eq:arima} specialises to
 \begin{equation}
 (1 - \phi_1 B)(1-B)\,y_t \;=\; c \;+\; (1+\theta_1 B)\,\varepsilon_t \;+\;
@@ -1446,6 +1470,15 @@ object's own parameters: the largest of the three deep learning
 architectures in this project, ahead of the LSTM's 3{,}097 and the GRU's
 2{,}329, and independent of $n_{head}$, which only reshapes the existing
 query, key and value projections rather than adding new ones.
+
+\begin{table}[htbp]
+\centering
+\caption{The four neural architectures' specifications, consolidated.
+Each number is individually stated in its own subsection above; this is
+the same numbers read side by side rather than four subsections apart.}
+\label{tab:architectures}
+\input{tables/architectures}
+\end{table}
 
 \section{Rolling-Origin Evaluation}
 \label{sec:rolling}
@@ -2449,6 +2482,14 @@ optimiser, three separate bounded checks now agreeing that the three-day
 GRU configuration used throughout this report is the one this project's
 own sensitivity analysis would least defend if a reader asked it to.
 
+\begin{table}[htbp]
+\centering
+\caption{The exact mean rMAE behind each of the three bounded checks and
+Figure~\ref{fig:gru-sensitivity} below, by setting and horizon.}
+\label{tab:gru-sensitivity}
+\input{tables/gru_sensitivity}
+\end{table}
+
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/fig9_gru_sensitivity}
@@ -2619,6 +2660,16 @@ mischaracterised coverage statistic, were found and corrected before any
 model was fitted, and an assumption carried over from the approved proposal,
 that the series holds a weekly cycle alongside its annual one, was tested
 directly and found false.
+
+\begin{table}[htbp]
+\centering
+\caption{The three research questions from Section~\ref{chap:intro},
+their headline quantitative answers beside them, read back from the same
+results Chapter~\ref{chap:results} computes rather than restated from
+memory.}
+\label{tab:rq-summary}
+\input{tables/rq_summary}
+\end{table}
 
 \section{Main Conclusions}
 

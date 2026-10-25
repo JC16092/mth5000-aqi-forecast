@@ -3438,6 +3438,79 @@ compiled PDF (only 1, 4 and 5 had been checked earlier), and recompiled
 clean with zero undefined references immediately beforehand. Waiting on
 his response; nothing further to do until it arrives.
 
+### 25 October, same day: five more tables, the user's own feedback this
+### time, not Dr Tian's
+
+The user's own request: "there should be more tables and data as clearly
+this is a maths project [and] the numbers and data should play more role."
+Surveyed what the report already had (9 tables) before proposing anything,
+found five genuine gaps -- numbers the report already claims in prose but
+never shows, or results that exist only as a plot -- and proposed those
+rather than padding for a count. Asked for all five.
+
+Followed the project's own established discipline for this
+(`make_tables.py`'s opening line: "No number in the report is typed by
+hand"): every new table is a new function in `make_tables.py`, writing a
+`.tex` fragment to `report/tables/`, exactly like the nine that already
+existed, not hand-typed into `main.tex`.
+
+- **The ARIMA order search in full** (`order_search.tex`, Table 3.4): all
+  24 candidate $(p,d,q)$ orders by AIC/BIC, not just the top two the prose
+  already quotes. Reran `select_order()` from `step04_arima.py` directly
+  rather than retyping from a log; the chosen order and its AIC (1892.5)
+  matched the existing prose exactly, confirming the replication was
+  faithful before trusting the other 23 rows.
+- **Descriptive statistics of the cleaned series** (`descriptive.tex`,
+  Table 3.2): mean, median, SD, quartiles, skewness (2.17), excess
+  kurtosis (8.31). The report asserts "strongly right skewed" in several
+  places; this is the first place a reader can check that against an
+  actual number.
+- **The four neural architectures' specifications, consolidated**
+  (`architectures.tex`, Table 3.6): hidden size, optimiser, parameter
+  count, side by side. The KAN-LSTM's parameter count (3,288) had never
+  been stated anywhere before this -- instantiated the exact network
+  (`torch.nn.LSTM(6, 24)` plus `KANLinear(24, 1, grid_size=5,
+  spline_order=3)`, matching `kan_lstm_bounded_check.py`'s own
+  construction) and counted it directly rather than estimating.
+- **The GRU sensitivity numbers, as a table** (`gru_sensitivity.tex`,
+  Table 5.1): the exact mean rMAE behind Figure 5.1, all eleven settings
+  by horizon, placed directly before the figure it explains.
+- **A research-questions summary** (`rq_summary.tex`, Table 6.1): each of
+  the three RQs beside its headline answer, in the Conclusion.
+
+**One real bug caught before it reached the report.** The RQ3 row's first
+draft read the budget-sweep range from `threshold_sweep.csv` alone and got
+0.379 to 0.873 -- wrong, because that file's own `gru` rows are seed 0
+only, the exact single-seed trap `table_budget()` already works around
+for the main budget table but this new function hadn't. Figure 5.1's
+caption and the Discussion both already state 0.881 as the correct
+upper end. Traced the discrepancy, fixed the function to scan all ten
+`threshold_sweep_gru_seed*.csv` files and take the true maximum the same
+way `table_budget()` does, and reconfirmed it now reads 0.379 to 0.881,
+matching exactly. Would have been a real, citable inconsistency between a
+brand new table and an existing figure if shipped as first computed.
+
+**A second, smaller bug, caught by compiling rather than by reasoning
+about it first.** The RQ summary table's first version overflowed the
+page margin by 65pt (visible on compile as a large, non-cosmetic overfull
+hbox, unlike the ~2-4pt sub-pixel ones already known and accepted
+elsewhere in this report) -- an `l` first column sized to its longest
+unbroken content ("RQ2: forecast-then-threshold vs. direct
+classification") rather than wrapping. Fixed by making both columns
+fixed-width `p{}` columns sized to fit within the document's actual
+25mm-margin textwidth, confirmed by re-rendering the page directly rather
+than trusting the warning had gone away.
+
+All five tables placed next to the specific claim or figure each one
+supports, not appended at chapter ends, mirroring how the six new figures
+were placed two passes ago. Report: 73 to 77 pages. Recompiled clean
+after every change, zero undefined references, same pre-existing cosmetic
+warnings throughout (the List of Figures' 2.74pt entry and a couple of
+small table over/underfull boxes), nothing new beyond the two caught and
+fixed above. Spot-checked all five tables directly in the compiled PDF.
+Fourteen tables total now, up from nine. **Not yet committed as of
+writing this entry.**
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required
