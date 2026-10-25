@@ -3511,6 +3511,34 @@ fixed above. Spot-checked all five tables directly in the compiled PDF.
 Fourteen tables total now, up from nine. **Not yet committed as of
 writing this entry.**
 
+### 25 October, a fresh oral presentation deck, built from the report alone
+
+Started the oral (30 to 40 minutes, first week of November, 30% of the
+grade) from scratch in `presentation_new/`, working from `report/main.pdf`
+at 77 pages, 14 tables and 13 figures. Pulled main first: the branch was
+already at `6aaa585`, so there was nothing to merge.
+
+**A discrepancy, flagged rather than resolved.** The brief said
+`presentation/` had been deliberately cleared, but on `main` it still
+holds the earlier 33-slide deck (`slides_v2.pptx`, `slides.tex`,
+`slides.pdf`, `pptx_src/`, `README.md`, last touched in `dcb5f81`). Asked;
+the answer was to leave it alone and build elsewhere. Nothing in
+`presentation/` was read for content or changed, and it can be deleted
+once the new deck is the one in use.
+
+`presentation_new/MTH5000_oral_presentation.pptx`: 28 talk slides plus 5
+backups, built with pptxgenjs by `src/build_deck.js`, with a PDF export as
+the in-room fallback. Speaker notes carry a per-slide time budget and
+running total, 34 minutes for the talk. Figures are extracted from the
+report PDF by `extract_assets.sh` (the PNGs are gitignored, like
+`report/figures/`), so they match the report's recoloured palette. Every
+number was checked against the report text after the final build.
+
+Two things worth knowing. The report's List of Tables jumps from Table 3.4
+to Table 3.6 with no Table 3.5, which is a report-side numbering gap, not
+touched here. And the deck states the transformer's result as one
+untuned configuration's, as the report does.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required
