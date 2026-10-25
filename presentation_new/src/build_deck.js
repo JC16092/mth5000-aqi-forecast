@@ -263,9 +263,9 @@ async function build() {
     s.addText("hit rate at one day ahead as the alarm budget moves from 40 to 100 alarms a year", { x: 8.9, y: 3.7, w: 3.9, h: 0.75, fontFace: FONT, fontSize: 14, color: C.grey, valign: "top", margin: 0 });
     s.addText("about 5 points", { x: 8.9, y: 4.75, w: 3.9, h: 0.75, fontFace: FONT, fontSize: 36, bold: true, color: C.blue, margin: 0 });
     s.addText("what changing the model moves it by, at a fixed budget", { x: 8.9, y: 5.5, w: 3.9, h: 0.75, fontFace: FONT, fontSize: 14, color: C.grey, valign: "top", margin: 0 });
-    GUIDE.push({ n, title: "Title", mins: MINS[0], cue: { say: "Good morning. The answer to build to: the number of alarms a health authority is willing to raise matters roughly ten times more than which model produces the forecast.", next: "First, why the question matters." } });
+    GUIDE.push({ n, title: "Title", mins: MINS[0], cue: { say: "Good morning. The answer to build to: the number of alarms a health authority is willing to raise matters many times more than which model produces the forecast.", next: "First, why the question matters." } });
     s.addNotes(notesFor({
-      say: "Good morning. I asked how well machine learning can forecast hazardous air quality days in Delhi. The answer I want to build to is on the right: the number of alarms a health authority is willing to raise matters roughly ten times more than which model produces the forecast.",
+      say: "Good morning. I asked how well machine learning can forecast hazardous air quality days in Delhi. The answer I want to build to is on the right: the number of alarms a health authority is willing to raise matters many times more than which model produces the forecast.",
       show: "the strip along the bottom: the last year of the data, one bar a day. The orange days are the ones the project is about.",
       next: "First, why the question matters.",
     }));
@@ -296,7 +296,7 @@ async function build() {
     const s = base("Three research questions, and the third turned out to dominate the other two", {
       say: "One: how accurately can concentrations be forecast one to three days ahead by machine learning, against classical and naive benchmarks. Two: forecast the concentration then threshold it, or classify the exceedance directly. Three: as a warning system, what hit rate and false alarm rate does each approach achieve, and how does the decision threshold trade them off. The answers are on the cards; I will earn each one with evidence.",
       show: "the bold answer on each card, RQ3 in vermillion.",
-      next: "Here is the route.",
+      next: "First, one picture that holds the whole talk.",
     });
     const rq = [
       ["RQ1", "Accuracy", "How accurately can daily concentrations be forecast 1 to 3 days ahead by machine learning, against classical and naive benchmarks?", "The classical model (ARIMA) beats every ML regressor at every horizon. The deep networks beat it only at one day ahead."],
@@ -322,11 +322,11 @@ async function build() {
     const s = base("The idea in one picture: the detector matters little, the dial matters a lot", {
       say: "Think of a smoke alarm. There are two things you can change: which detector you buy, and how sensitive you set the dial. On the left I swap the forecasting model at a fixed budget of 100 alarms a year: hit rates 0.82 to 0.87. On the right I keep the best model and turn the dial from 40 to 100 alarms a year: 0.38 to 0.88. Same axis. The rest of the talk is the evidence for this picture, and the care taken not to fool myself.",
       show: "the left panel is almost flat; the right panel climbs. Same vertical scale.",
-      ask: "Both panels are one day ahead, from Table 4.7. The left uses four representative models at 100 alarms; the right uses the best model at each budget.",
+      ask: "Both panels are one day ahead, from Table 4.7. The left uses four representative models at 100 alarms (as in the report's Figure 4.5); the weak lag-7 seasonal-naive benchmark would be lower, 0.758. The right uses the best model at each budget.",
       next: "Here is the route to that evidence.",
     });
     await figure(s, SLIDES, "dial_vs_detector.png", MX, 1.75, W - 2 * MX, 3.65, { bare: true });
-    caption(s, "Hit rate at one day ahead (Table 4.7). Hit rate: the share of hazardous days that were caught.", MX, 5.55, 11);
+    caption(s, "Hit rate (the share of hazardous days caught) at one day ahead, Table 4.7. Four representative models; the weak lag-7 seasonal-naive benchmark would sit lower, at 0.758 (B8).", MX, 5.55, 11.5, { h: 0.5 });
     takeaway(s, "Like a smoke alarm: swapping the brand moves the hit rate from 0.82 to 0.87; turning the sensitivity dial moves it from 0.38 to 0.88.");
   }
 
@@ -416,13 +416,13 @@ async function build() {
     const s = base("Exceedances arrive as multi-day winter episodes, and that is the structure worth forecasting", {
       say: "The cleaned series, with days above the threshold shaded. They come in winter episodes, not isolated days, which is why persistence turns out to be a strong forecast. The distribution is strongly right skewed, skewness 2.17 and excess kurtosis 8.31, so every model is fitted to the logarithm; annual Fourier terms explain 69 percent of the variance of the log.",
       show: "the shaded episodes, then the four skew statistics.",
-      next: "Is there any other seasonality, say weekly?",
+      next: "The same data as a calendar.",
     });
     const b = await figure(s, SLIDES, "series.png", MX, 1.85, W - 2 * MX, 2.85);
-    caption(s, "Figure 3.2. The cleaned daily series; days above the hazard threshold are shaded. Maximum 896.0 on 2017-11-08.", MX, b.y + b.h + 0.18, 11);
+    caption(s, "The cleaned daily series (report Figure 3.2, redrawn); days above the hazard threshold are shaded. Maximum 896.0 on 2017-11-08.", MX, b.y + b.h + 0.18, 11);
     [["102.7", "mean µg/m³"], ["71.7", "median"], ["2.17", "skewness"], ["8.31", "excess kurtosis"]].forEach((t, i) => {
-      const x = MX + i * 3.1;
-      card(s, x, 5.25, 2.95, 0.85);
+      const x = MX + i * 3.06;
+      card(s, x, 5.25, 2.9, 0.85);
       s.addText(t[0], { x: x + 0.2, y: 5.25, w: 1.4, h: 0.85, fontFace: FONT, fontSize: 28, bold: true, color: C.blue, valign: "middle", margin: 0 });
       s.addText(t[1], { x: x + 1.55, y: 5.25, w: 1.35, h: 0.85, fontFace: FONT, fontSize: 14, color: C.grey, valign: "middle", margin: 0 });
     });
@@ -478,7 +478,7 @@ async function build() {
       next: "Around that benchmark, the model suite.",
     });
     await figure(s, SLIDES, "annual.png", MX, 1.85, 5.2, 3.95);
-    caption(s, "Figure 3.5. Monthly median with interquartile range.", MX, 5.85, 5.2);
+    caption(s, "Monthly median with interquartile range (report Figure 3.5, redrawn).", MX, 5.85, 5.2);
     eq(s, "(1 − ϕ₁B)(1 − B) yₜ = c + (1 + θ₁B) εₜ\n+ Σₖ₌₁⁴ [ αₖ sin(2πkt/365.25) + βₖ cos(2πkt/365.25) ]", 6.2, 1.85, 6.55, 1.2, 16);
     s.addText("yₜ = log(PM2.5), B is the backshift operator, K = 4 annual Fourier pairs.", { x: 6.2, y: 3.12, w: 6.55, h: 0.35, fontFace: FONT, fontSize: 12.5, italic: true, color: C.grey, margin: 0 });
     bullets(s, [
@@ -597,7 +597,7 @@ async function build() {
   // ---------- 14. Measures ----------
   {
     const s = base("Scored as a warning system: an alarm budget in alarms per year, not just an error", {
-      say: "Accuracy is relative MAE against persistence on identical rows, so 1.000 is persistence. I report it rather than MASE alone because MASE divides by the training period's volatility and fell for every model on a calmer block. The warning measures come from one contingency table: hit rate, false alarm rate, and alarms per year, the unit an operator actually budgets in. I never report plain accuracy, because with hazardous days a minority a model that never alarms scores high.",
+      say: "Accuracy is relative MAE against persistence on identical rows, so 1.000 is persistence. I report it rather than MASE alone because MASE divides by the training period's volatility, so it can fall for every model on a calmer block. The warning measures come from one contingency table: hit rate, false alarm rate, and alarms per year, the unit an operator actually budgets in. I never report plain accuracy, because with hazardous days a minority a model that never alarms scores high.",
       show: "the four cards; then the takeaway.",
       ask: "Diebold-Mariano with the Harvey-Leybourne-Newbold small-sample correction and absolute-error loss, run once per seed.",
       next: "Now the results.",
@@ -628,7 +628,7 @@ async function build() {
     });
     s.addText("rMAE: error compared with simply repeating yesterday's value (the dashed line at 1.0). Further left is better.", { x: MX, y: 1.62, w: 12, h: 0.3, fontFace: FONT, fontSize: 14, italic: true, color: C.grey, margin: 0 });
     await figure(s, SLIDES, "rq1.png", (W - 12.1) / 2, 1.95, 12.1, 3.8, { bare: true });
-    caption(s, "Report Table 4.1 drawn: bars are ranges over ten seeds; the diamond is ARIMA; dots are single fits; the dashed line is persistence (rMAE = 1).", MX, 5.8, 12, { h: 0.3 });
+    caption(s, "Report Table 4.1 drawn: bars are ten-seed ranges; the diamond is ARIMA; dots are single fits. Climatology (1.415 at h = 1) and seasonal naive (1.759) are off this axis; see B1.", MX, 5.8, 12, { h: 0.3 });
     takeaway(s, "Networks: 0.910 to 0.939 vs ARIMA 0.940 at one day. At three days 0.831 vs 0.832 is a tie. Every ML regressor trails ARIMA throughout.");
   }
 
@@ -639,7 +639,7 @@ async function build() {
       next: "But a single seed can mislead, as the next slide shows.",
     });
     const b = await figure(s, SLIDES, "winter.png", MX, 1.85, W - 2 * MX, 3.6);
-    caption(s, "Figure 4.2. One representative winter, November 2024 to February 2025. The GRU line is seed 0 alone, for illustration only.", MX, b.y + b.h + 0.18, 11.5);
+    caption(s, "One representative winter, November 2024 to February 2025 (report Figure 4.2, redrawn). The GRU line is seed 0 alone, for illustration only.", MX, b.y + b.h + 0.18, 11.5);
     takeaway(s, "The edge is a short-range one: the forecast tracks the shape of each episode, with the gap on the sharpest rises.");
   }
 
@@ -699,13 +699,15 @@ async function build() {
     ];
     cols.forEach((c, i) => {
       const x = MX + i * 6.15;
-      card(s, x, 1.85, 5.95, 4.1);
+      card(s, x, 1.85, 5.95, 3.55);
       s.addText(c[0].toUpperCase(), { x: x + 0.25, y: 1.98, w: 5.45, h: 0.3, fontFace: FONT, fontSize: 11, bold: true, color: C.grey, charSpacing: 1.5, margin: 0 });
-      s.addText(c[1], { x: x + 0.25, y: 2.4, w: 5.45, h: 0.6, fontFace: FONT, fontSize: 24, bold: true, color: C.verm, margin: 0 });
+      s.addText(c[1], { x: x + 0.25, y: 2.4, w: 5.45, h: 0.6, fontFace: FONT, fontSize: 22, bold: true, color: C.verm, margin: 0 });
       s.addText(c[2], { x: x + 0.25, y: 3.0, w: 5.45, h: 0.45, fontFace: FONT, fontSize: 17, bold: true, color: C.navy, margin: 0 });
       s.addText(c[3], { x: x + 0.25, y: 3.65, w: 5.45, h: 2.2, fontFace: FONT, fontSize: 20, color: C.ink, valign: "top", margin: 0 });
     });
-    takeaway(s, "A defensible prior is not evidence: both arguments were tested directly and neither is supported. The transformer is one untuned configuration.");
+    card(s, MX, 5.55, W - 2 * MX, 0.5, { fill: C.white, flat: true });
+    s.addText("Caveat stated in the report: the transformer's four settings were inherited from a single-split check, not tuned. This is one configuration's result.", { x: MX + 0.2, y: 5.55, w: W - 2 * MX - 0.4, h: 0.5, fontFace: FONT, fontSize: 13.5, italic: true, color: C.grey, valign: "middle", margin: 0 });
+    takeaway(s, "A defensible prior is not evidence: both arguments were tested directly, and neither is supported.");
   }
 
   // ---------- 20. Weather ----------
@@ -725,15 +727,15 @@ async function build() {
       ["Ridge", "−0.031", "−0.005", "+0.023"],
       ["Random forest, level", "+0.002", "−0.006", "+0.053"],
       ["Random forest, change", "−0.003", "−0.001", "+0.022"],
-    ], 8.4, 1.9, [2.45, 0.75, 0.75, 0.75], 0.5, { fontSize: 13.5 });
-    caption(s, "Report Table 4.4: change from adding weather. Negative is an improvement.", 8.4, 5.0, 4.4, { h: 0.5 });
+    ], 8.4, 1.9, [2.2, 0.7, 0.7, 0.7], 0.5, { fontSize: 13.5 });
+    caption(s, "Report Table 4.4: change from adding weather. Negative is an improvement.", 8.4, 5.0, 4.3, { h: 0.5 });
     takeaway(s, "GRU with weather beats ARIMA at one day in all ten seeds. At two days: 3 win, 6 tie, 1 loses. At three: 3 win, 2 tie, 5 lose.");
   }
 
   // ---------- 21. Weather through the threshold ----------
   {
     const s = base("Carried through the decision threshold, a more accurate forecaster buys about one point of hit rate", {
-      say: "The test that matters for the central finding. I reran the threshold sweep with the weather models added as candidates, on identical origins. At several budgets they do not even supply the best option. Where they do win, the gain is at most 1.2 points of hit rate, at two days and a budget of 40. Compare that with the five-point spread across models and the fifty-point range the budget buys. A substantially more accurate forecast, 8.2 points of rMAE for gradient boosting at one day, buys at most a little over a point.",
+      say: "The test that matters. I reran the threshold sweep with the weather models as extra candidates. Where they win, the gain is at most 1.2 points of hit rate; elsewhere they are not even the best option. Compare that with the fifty points the budget buys. A forecast that is 8 points more accurate in rMAE buys at most a little over a point.",
       show: "the shaded cells: the largest gains.",
       next: "Now the second research question.",
     });
@@ -758,7 +760,7 @@ async function build() {
       say: "To compare fairly I matched each classifier to the regressor built on the same algorithm, so the training objective is the only thing that varies. Across three pairs, three horizons and four budgets, 36 comparisons: forecast-then-threshold wins 21, classification 11, four ties. The median gap is 0.011 of hit rate, the largest 0.056. The edge shrinks as the budget loosens: 8 of 9 at a budget of 40, but classification wins 6 of 9 at 100. I prefer forecast-then-threshold also because it yields a concentration that can be rethresholded for any future health policy without refitting.",
       show: "shaded cells: the better arm in each column.",
       ask: "All three horizons are backup B6.",
-      next: "Now the central result, RQ3.",
+      next: "Now the central result, RQ3, starting with what a budget means.",
     });
     const rows = [
       ["h = 1, alarms per year", "40", "60", "80", "100"],
@@ -784,8 +786,8 @@ async function build() {
       s.addText(t[0], { x: 9.4, y, w: 1.2, h: 1.2, fontFace: FONT, fontSize: 42, bold: true, color: t[2], valign: "middle", margin: 0 });
       s.addText(t[1], { x: 10.6, y, w: 2.05, h: 1.2, fontFace: FONT, fontSize: 15.5, color: C.ink, valign: "middle", margin: 0 });
     });
-    s.addText("of 36 matched comparisons", { x: 9.2, y: 5.9, w: 3.55, h: 0.3, fontFace: FONT, fontSize: 12, italic: true, color: C.grey, margin: 0 });
-    takeaway(s, "Median gap 0.011 of hit rate. Forecast-then-threshold wins 8 of 9 at a 40-alarm budget, but loses 6 of 9 at 100.", 6.3);
+    s.addText("of 36 matched comparisons", { x: 9.2, y: 5.8, w: 3.55, h: 0.3, fontFace: FONT, fontSize: 12, italic: true, color: C.grey, margin: 0 });
+    takeaway(s, "Median gap 0.011 of hit rate. Forecast-then-threshold wins 8 of 9 at a 40-alarm budget, but loses 6 of 9 at 100.");
   }
 
   // ---------- RQ3a. What a budget means ----------
@@ -838,10 +840,11 @@ async function build() {
     const s = base("RQ3: moving the alarm budget changes the hit rate by fifty points, and changing the model by five", {
       say: "Now the two effects. Along the dial, from 40 to 100 alarms a year, the best hit rate goes from 0.379 to 0.881: fifty points. At a fixed 100 alarms, switching the model moves it from about 0.82 to 0.88: about five. At three days and 40 alarms a year, persistence, which just repeats yesterday, is the best model in the whole study, 0.359. At 100 alarms a climatological forecast comes within a hundredth of the best, 0.816 against 0.827.",
       show: "the vermillion arrow on the left, then the blue bracket at 100 alarms.",
-      ask: "A bigger budget raising the hit rate is true by construction, which is exactly why every model comparison is made at a fixed budget. The finding is the size of the two effects, not that the first exists. Full Table 4.7 is backup B7.",
+      ask: "A bigger budget raising the hit rate is true by construction, which is exactly why every model comparison is made at a fixed budget. The finding is the size of the two effects, not that the first exists. How big is the model effect exactly? The report says about five points; recomputed from the sweep it averages 7 across all ten models (2 to 12 by horizon and budget) and 4 without the lag-7 benchmark. Full Table 4.7 is backup B7.",
       next: "Why this happens: episodes. Then what I checked, and what I cannot claim.",
     });
-    await figure(s, SLIDES, "hero_budget.png", MX, 1.78, 7.5, 4.3, { bare: true });
+    await figure(s, SLIDES, "hero_budget.png", MX, 1.75, 7.5, 3.85, { bare: true });
+    caption(s, "The bracket spans the four models shown. Across all ten models the spread averages 7 points (4 without the lag-7 benchmark): see B8.", MX, 5.68, 7.6, { h: 0.45 });
     stat(s, 8.4, 1.85, 4.35, 1.3, "50 points", "the dial: budget 40 to 100 alarms a year (h = 1)", C.verm, 34);
     stat(s, 8.4, 3.3, 4.35, 1.3, "about 5 points", "the detector: model choice at a fixed budget", C.blue, 34);
     card(s, 8.4, 4.75, 4.35, 1.35, { fill: C.pale, flat: true });
@@ -992,8 +995,8 @@ async function build() {
       ["Persistence", "1.000", "1.000", "1.000", "−0.1"],
       ["Climatology", "1.415", "1.060", "0.947", "+9.4"],
       ["Seasonal naive, lag 7", "1.759", "1.325", "1.168", "+0.1"],
-    ], MX + 0.6, 1.7, [3.4, 1.9, 1.9, 1.9, 1.4], 0.4, { fontSize: 14, boldRows: [4], hl: [[4, 1], [4, 2], [4, 3]] });
-    caption(s, "Over 2,303 origins. Lower is better; 1.000 is persistence.", MX + 0.6, 6.95, 9, { h: 0.3 });
+    ], MX + 0.6, 1.7, [3.4, 1.9, 1.9, 1.9, 1.4], 0.37, { fontSize: 14, boldRows: [4], hl: [[4, 1], [4, 2], [4, 3]] });
+    caption(s, "Over 2,303 origins. Lower is better; 1.000 is persistence.", MX + 0.6, 6.6, 9, { h: 0.3 });
   }
   {
     const s = base("B2. The ARIMA order search in full: all 24 candidates by AIC", { say: "Table 3.4. Four orders did not converge to a stable estimate on the training block and are marked. (1,1,1) is chosen; the next best is 1.1 AIC points behind." });
@@ -1053,14 +1056,14 @@ async function build() {
       ["", "SGD, lr = 0.01", "0.930", "0.889", "0.839"],
       ["", "RMSprop, lr = 0.01", "0.923", "0.914", "0.882"],
     ], MX, 1.7, [1.55, 2.5, 0.8, 0.8, 0.8], 0.4, { fontSize: 13 });
-    const b = await figure(s, REPORT, "fig5_1_sensitivity.png", 7.7, 1.7, 5.05, 4.4);
+    const b = await figure(s, REPORT, "fig5_1_sensitivity.png", 7.7, 1.7, 4.8, 4.4);
     caption(s, "Report Figure 5.1. The vertical line marks the default.", 7.7, b.y + b.h + 0.2, 5.05);
   }
   {
     const s = base("B5. ARIMA coefficient stability, and all four architectures' bounded checks", { say: "Figure 3.6: phi drifts upward; theta oscillates near the invertibility boundary and crosses it at three of 28 refits, each with fewer than 1,700 training days. The optimiser is unconstrained, so a forecast is still produced there. Figure 5.2: all four architectures' bounded checks; the KAN hybrid sits among the other three." });
     const a = await figure(s, REPORT, "fig3_6_arima_stability.png", MX, 1.8, 6.0, 4.0);
     caption(s, "Report Figure 3.6. The three open points cross the invertibility boundary.", MX, a.y + a.h + 0.2, 6.0);
-    const b = await figure(s, REPORT, "fig5_2_architectures.png", 6.95, 1.8, 5.8, 4.0);
+    const b = await figure(s, REPORT, "fig5_2_architectures.png", 6.95, 1.8, 5.6, 4.0);
     caption(s, "Report Figure 5.2. Bounded checks, ranges over three seeds, against ARIMA's rolling-origin rMAE.", 6.95, b.y + b.h + 0.2, 5.8);
   }
   {
@@ -1093,15 +1096,16 @@ async function build() {
     const qa = [
       ["Why 121 µg/m³?", "The CPCB National Air Quality Index boundary of the category below 'Severe', for the 24-hour mean: a policy threshold, not a round number. Section 3.1."],
       ["One station: is it representative?", "No claim that it is. It is the only nearby monitor with a full decade; CPCB stations serve data only from 19 Feb 2025. A second station is future work. Section 5.3."],
-      ["Isn't a higher hit rate at a bigger budget trivial?", "Yes, by construction, which is why every model comparison is made at a fixed budget. The finding is the size: about 5 points across models against 50 across budgets, and persistence is best at h = 3 and 40 alarms. Section 5.1."],
+      ["Isn't a higher hit rate at a bigger budget trivial?", "Yes, by construction, which is why every model comparison is made at a fixed budget. The finding is the size of the two effects, and that persistence is best at h = 3 and 40 alarms. Section 5.1."],
+      ["How big is the model effect, exactly?", "The report says about five points. Recomputed from the sweep file: the spread across all ten models averages 7 points (2 to 12 by horizon and budget), 4 without the lag-7 benchmark, 3 for the fitted models alone. Against 50 for the budget, the conclusion stands."],
+      ["Is the left panel of slide 4 cherry-picked?", "It shows four representative models, as the report's Figure 4.5 does. The lag-7 seasonal-naive benchmark would be lower (0.758 at 100 alarms, h = 1, from the sweep file); it is a deliberately weak reference."],
       ["Why does ARIMA beat the ML models?", "Consistent with M4: a few thousand observations and no exogenous structure favour a classical model. ML is also more exposed to the uncleaned tail: ridge 0.997 → 1.118. Sections 2.1, 5.3."],
-      ["Why rMAE rather than RMSE or MASE?", "rMAE divides by persistence on identical rows. MASE divides by training volatility and fell for every model on a calm block. DM uses absolute loss to match. Section 3.6."],
     ];
     qa.forEach((q, i) => {
-      const y = 1.7 + i * 1.02;
-      card(s, MX, y, W - 2 * MX, 0.92);
-      s.addText(q[0], { x: MX + 0.2, y, w: 3.6, h: 0.92, fontFace: FONT, fontSize: 14.5, bold: true, color: C.navy, valign: "middle", margin: 0 });
-      s.addText(q[1], { x: MX + 3.95, y, w: W - 2 * MX - 4.15, h: 0.92, fontFace: FONT, fontSize: 12.5, color: C.ink, valign: "middle", margin: 0 });
+      const y = 1.6 + i * 0.9;
+      card(s, MX, y, W - 2 * MX, 0.82);
+      s.addText(q[0], { x: MX + 0.2, y, w: 3.5, h: 0.82, fontFace: FONT, fontSize: 14, bold: true, color: C.navy, valign: "middle", margin: 0 });
+      s.addText(q[1], { x: MX + 3.85, y, w: W - 2 * MX - 4.05, h: 0.82, fontFace: FONT, fontSize: 13, color: C.ink, valign: "middle", margin: 0 });
     });
   }
   {
@@ -1109,6 +1113,7 @@ async function build() {
       say: "Cue sheet for questions, continued.",
     });
     const qa = [
+      ["Why rMAE rather than RMSE or MASE?", "rMAE divides by persistence on identical rows. MASE divides by training volatility, so it can fall for every model on a calm block. DM uses absolute loss to match. Section 3.6."],
       ["Are the network wins real?", "Numerically ahead in all ten seeds at h = 1; DM p < 0.05 in 4, 5 and 7 of ten (GRU, LSTM, transformer). None beyond one day. After Bonferroni across 27 tests none of the three survive: read as suggestive. Section 3.7."],
       ["Why ten seeds? Why not tune?", "The same seed on the same machine moved the GRU almost as much as a new seed, and five to ten overturned the weather result. The GRU was set by inspection; bounded checks say the 3-day setting is the weakest. Section 5.3."],
       ["How do you know there is no leakage?", "The invariant is tested: corrupt the series from a date, rerun, and no earlier forecast may change. One model per horizon fixes the label arithmetic. Section 3.5."],
@@ -1116,14 +1121,12 @@ async function build() {
       ["Would real weather forecasts help?", "Untested: only observed weather is used. Weather moved hit rate by at most 1.2 points. Boundary layer height from ERA5 is the stronger candidate. Sections 4.1.1, 6.2."],
     ];
     qa.forEach((q, i) => {
-      const y = 1.7 + i * 1.02;
-      card(s, MX, y, W - 2 * MX, 0.92);
-      s.addText(q[0], { x: MX + 0.2, y, w: 3.6, h: 0.92, fontFace: FONT, fontSize: 14.5, bold: true, color: C.navy, valign: "middle", margin: 0 });
-      s.addText(q[1], { x: MX + 3.95, y, w: W - 2 * MX - 4.15, h: 0.92, fontFace: FONT, fontSize: 12.5, color: C.ink, valign: "middle", margin: 0 });
+      const y = 1.6 + i * 0.9;
+      card(s, MX, y, W - 2 * MX, 0.82);
+      s.addText(q[0], { x: MX + 0.2, y, w: 3.5, h: 0.82, fontFace: FONT, fontSize: 14, bold: true, color: C.navy, valign: "middle", margin: 0 });
+      s.addText(q[1], { x: MX + 3.85, y, w: W - 2 * MX - 4.05, h: 0.82, fontFace: FONT, fontSize: 13, color: C.ink, valign: "middle", margin: 0 });
     });
   }
-
-  writeGuide();
   {
     const s = base("B10. The words used in this talk, in plain language", { say: "Glossary. Useful if an audience member is outside statistics: every term the talk uses, in one line each." });
     table(s, [

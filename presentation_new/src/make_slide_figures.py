@@ -292,6 +292,7 @@ def fig_winter():
     ax.plot(arima.index, arima.values, color=NAVY, lw=2.2, ls="--", label="ARIMA, 1 day ahead")
     ax.plot(gru.index, gru.values, color=BLUE, lw=2.2, ls=":", label="GRU, 1 day ahead (seed 0, illustration only)")
     ax.axhline(THRESHOLD, color=GREY, ls=(0, (1, 1.5)), lw=1.3, label=f"hazard threshold, {THRESHOLD:.0f}")
+    ax.xaxis.set_major_locator(mdates.MonthLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
     ax.set_ylabel("PM2.5 (µg/m³)")
     ax.legend(loc="upper right", handlelength=2.6)

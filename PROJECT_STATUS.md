@@ -3542,6 +3542,33 @@ minutes for the talk), and `PRESENTER_GUIDE.md` carries them with
 timing checkpoints. A PDF export is the in-room fallback. Every number was
 checked against the report text after the final build.
 
+**Audit pass on the deck (25 October).** Rendered all 44 slides and read
+each; checked text fit programmatically against Carlito metrics; matched 108
+of 118 table rows to single report lines (the other ten are reformatted rows,
+checked by hand); checked every numeric token; checked alt text (23 of 23),
+spelling and em dashes; and timed the notes against each slide's budget.
+Fixed: stat cards and a table past the right margin, a repeated month label
+on the winter chart, a takeaway bar out of line, dead space on the
+two-arguments slide, a caption touching the footer, small type on the Q&A
+backups, two wrong TRANSITION cues, one over-long note, "redrawn" missing from
+three figure captions, a missing off-axis note under the accuracy plot, and
+a MASE claim stronger than the report's wording.
+
+**One finding about the report itself, not fixed here.** The report's "about
+five percentage points" for the effect of model choice at a fixed alarm
+budget (abstract, 5.1, 6.1) is a rough summary. Recomputed from
+`threshold_sweep.csv` with the report's own operating-point definition, the
+spread across the ten forecast-then-threshold models at a fixed budget
+averages 7.1 points (range 4.3 to 11.5 by horizon and budget), 3.8 without
+the deliberately weak lag-7 seasonal-naive benchmark, and 2.8 for the fitted
+models alone. The conclusion is unaffected (50 points for the budget against
+roughly 3 to 12 for the model), but a reader who recomputes it will not get
+exactly five. The deck states the report's figure, discloses the range on the
+central slide and in Q&A B8, and the report's wording could be tightened to
+"roughly three to seven points" if the user wishes. Also: the left panel of the
+dial slide shows four representative models, as the report's Figure 4.5 does;
+the lag-7 benchmark would sit lower (0.758 at 100 alarms, h = 1).
+
 Two things worth knowing. The report's List of Tables jumps from Table 3.4
 to Table 3.6 with no Table 3.5, which is a report-side numbering gap, not
 touched here. And the deck states the transformer's result as one
