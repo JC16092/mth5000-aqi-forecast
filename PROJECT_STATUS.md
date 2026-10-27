@@ -3508,8 +3508,112 @@ after every change, zero undefined references, same pre-existing cosmetic
 warnings throughout (the List of Figures' 2.74pt entry and a couple of
 small table over/underfull boxes), nothing new beyond the two caught and
 fixed above. Spot-checked all five tables directly in the compiled PDF.
-Fourteen tables total now, up from nine. **Not yet committed as of
-writing this entry.**
+Fourteen tables total now, up from nine. **Committed (`6aaa585`) and
+pushed, on request.**
+
+### 25 October, same day: second reply sent to Dr Tian, re: the tables
+
+A short follow-up email was drafted and given to the user, framed
+honestly as the student's own initiative rather than something Tian
+asked for: all five points from his original feedback were followed, and
+separately the five new tables were added because the report could use
+more numbers for a maths capstone, with an explicit offer to remove any
+of them if he'd rather not have them. The user sent it themselves.
+Waiting on his response to both the report content and this specific
+question; nothing further to do until it arrives.
+
+### 25 October, same day: the old presentation/ cleared, by explicit request
+
+The user asked to open a new, separate session for the oral presentation
+(scoped to this same project folder, not a separate repo) and, in the
+same breath, asked to delete the existing `presentation/` folder (the
+twenty-first/twenty-second pass's work, above) and start fresh rather
+than build on it.
+
+Not hard-deleted: moved the whole folder to `~/.Trash/` with a timestamp
+first, since two of its files (`slides.pptx`, `slides_moda.pptx`) were
+never git-tracked and a true `rm` would have been unrecoverable. The
+fifteen git-tracked files (`README.md`, `slides.tex`, `slides.pdf`,
+`slides_v2.pptx`, the whole `pptx_src/` subtree) are also recoverable
+from git history regardless, and that removal is staged but **not
+committed**, so `git log` still has them even before any Trash recovery.
+
+One open item worth knowing about: macOS would not let this session list
+`~/.Trash`'s contents to confirm the move landed there (`Operation not
+permitted`, a standard Trash-specific privacy restriction on automated
+shell processes, not specific to this sandbox -- tried once with the
+sandbox explicitly disabled too, same result). The `mv` command itself
+reported success (exit 0), and both the git-tracked and untracked files
+vanished from `presentation/` together, which is strong evidence the
+move completed rather than partially failing, but this could not be
+independently confirmed by listing the destination the way every other
+file operation in this project has been. Told the user directly, with
+exactly how to check themselves (open Finder's actual Trash).
+
+An empty `presentation/` directory was recreated in its place so the new
+session starts clean rather than finding a missing path.
+
+### 27 October: Dr Tian's reply on the presentation, and a real bug his
+### reviewer session found fixed
+
+Two days passed with no activity in this chat. The user pasted Tian's
+reply here rather than in the presentation session: 35-minute talk plus
+5 for discussion (within the 30-40 minute window; organiser will extend
+for questions), "prepare [the slides] a little more," and "B1~B4 are
+very good... clearly show you have compared a number of methods." That
+last line only makes sense with context this session didn't have, so it
+was reconstructed from the presentation branch's own commits and its own
+copy of this file before replying to anything: the local `presentation/`
+clear (above) never reached `origin/main` (staged, never committed or
+pushed), so the presentation session forked from `origin/main` while it
+still had the old 33-slide deck intact. Rather than touch it, that
+session asked, was told to leave it and build elsewhere, and built a
+full new 44-slide deck (34 talk + 10 backup) from the report directly in
+`presentation_new/` on its own branch
+(`claude/festive-einstein-kqx1o2`), with its own audit pass. "B1~B4" are
+specifically the backup Q&A slides comparing methods -- Tian is praising
+those directly.
+
+That session's audit surfaced two findings about the report itself,
+flagged but not acted on there:
+
+1. **The List of Tables jumped from 3.4 to 3.6 with no 3.5.** Confirmed
+   this is real and reproduces on this session's own local copy too, not
+   something specific to that branch. Root cause: `table_order_search()`
+   wraps a `longtable` inside a `\begin{table}[htbp]` float in
+   `main.tex` -- a known anti-pattern, since `longtable` manages its own
+   placement and caption numbering and the two mechanisms doubled up.
+   Fixed properly: moved `\caption`/`\label` inside the `longtable`
+   itself (its native, correct usage), removed the outer `table` float
+   wrapper in `main.tex`. First attempt at this reintroduced a different
+   version of the same bug -- freed from the float, the table now spans
+   two pages, and a naive single `\endhead` repeats the caption (and
+   re-increments the counter) on every continuation page. Fixed again
+   with the proper multi-page longtable pattern
+   (`\endfirsthead`/`\endhead`/`\endfoot`/`\endlastfoot`, the same
+   convention this report's own now-deleted List of Symbols table used
+   to follow), caption once, a "(continued)" header on page 2, a
+   "continued on next page" footer on page 1. Verified by rendering both
+   pages directly, not just checking the warning went away. List of
+   Tables now reads 3.1 through 3.14 with no gaps. Recompiles clean, 77
+   pages, unchanged.
+2. **The report's "about five percentage points" for the model-choice
+   effect at a fixed alarm budget (Abstract, 5.1, 6.1) is a rough
+   summary**, not wrong but imprecise: recomputed from
+   `threshold_sweep.csv` with the report's own operating-point
+   definition, the true spread across the ten forecast-then-threshold
+   models at a fixed budget averages 7.1 points (4.3 to 11.5 depending on
+   horizon and budget), 3.8 without the deliberately weak lag-7
+   seasonal-naive benchmark, 2.8 for the fitted models alone. Does not
+   change the conclusion (fifty points for the budget against roughly
+   three to twelve for the model, however it's sliced), but a marker who
+   recomputes the headline number from the raw sweep won't land on
+   exactly five. **Not acted on -- this is the user's call**, since it
+   touches a repeated headline claim in three places rather than a
+   mechanical bug; flagging it here rather than silently tightening the
+   wording.
+
+**Not yet committed as of writing this entry.**
 
 ## Data sources
 

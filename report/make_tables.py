@@ -579,14 +579,29 @@ def table_order_search(series_path, fourier_k=4):
     order, table = select_order(y.loc[train_idx], exog.loc[train_idx], grid,
                                 verbose=False)
 
-    body = ["\\begin{longtable}{lrrl}", "\\toprule",
-            "Order $(p,d,q)$ & AIC & BIC & \\\\", "\\midrule", "\\endhead"]
+    body = ["\\begin{longtable}{lrrl}",
+            "\\caption{The ARIMA order search in full: every $(p,d,q)$ "
+            "candidate in the grid, sorted by AIC. Four orders did not "
+            "converge to a stable estimate on the training block and are "
+            "reported with their AIC and BIC as returned, marked "
+            "accordingly.}\\label{tab:order-search}\\\\",
+            "\\toprule",
+            "Order $(p,d,q)$ & AIC & BIC & \\\\", "\\midrule", "\\endfirsthead",
+            "\\multicolumn{4}{l}{\\small\\itshape "
+            "(Table~\\ref{tab:order-search}, continued)} \\\\",
+            "\\toprule",
+            "Order $(p,d,q)$ & AIC & BIC & \\\\", "\\midrule", "\\endhead",
+            "\\midrule",
+            "\\multicolumn{4}{r}{\\small\\itshape continued on next page} \\\\",
+            "\\endfoot",
+            "\\bottomrule",
+            "\\endlastfoot"]
     for i, r in table.iterrows():
         mark = "\\quad $\\leftarrow$ chosen" if i == 0 else ""
         conv = "" if r["converged"] else " (did not converge)"
         body.append(f"({r['order'][0]},{r['order'][1]},{r['order'][2]}) & "
                     f"{r['aic']:.1f} & {r['bic']:.1f} & {conv}{mark} \\\\")
-    body += ["\\bottomrule", "\\end{longtable}"]
+    body += ["\\end{longtable}"]
     write("order_search.tex", "\n".join(body) + "\n")
     print(f"  order search: {len(table)} candidates, chosen {tuple(order)}, "
           f"AIC {table.iloc[0]['aic']:.1f}")
