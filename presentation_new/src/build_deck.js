@@ -27,6 +27,7 @@ const SECTIONS = ["Motivation", "Data", "Methods", "Results", "Discussion", "Con
 const SEC = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 5, 5, 5, 5];
 const MINS = [0.5, 1.25, 1.25, 0.75, 0.5, 1.25, 1.5, 1, 0.5, 1.5, 1.5, 0.75, 1.25, 1.25, 1.25, 1, 1.75, 0.5, 1, 1, 1, 1.25, 0.5, 1.25, 1, 0.5, 0.5, 1.25, 1, 0.75, 1, 1.25, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 const NMAIN = SEC.length;
+const TAKE = {}; // takeaway line per slide, for the cue card
 const GUIDE = []; // collected as slides are built, written out as PRESENTER_GUIDE.md
 const secMinutes = (k) => SEC.reduce((a, s, i) => a + (s === k ? MINS[i] : 0), 0);
 let n = 0;
@@ -83,6 +84,7 @@ function card(s, x, y, w, h, o = {}) {
 
 // the one place a slide's conclusion is stated, in the same position on every results slide
 function takeaway(s, text, y = 6.2) {
+  TAKE[n] = text;
   s.addShape(pptx.ShapeType.rect, { x: MX, y, w: 1.5, h: 0.75, fill: { color: C.navy }, line: { color: C.navy, width: 0 } });
   s.addText("TAKEAWAY", { x: MX, y, w: 1.5, h: 0.75, fontFace: FONT, fontSize: 12, bold: true, color: C.white, align: "center", valign: "middle", charSpacing: 2, margin: 0 });
   s.addShape(pptx.ShapeType.rect, { x: MX + 1.5, y, w: W - 2 * MX - 1.5, h: 0.75, fill: { color: C.pale }, line: { color: C.pale, width: 0 } });
@@ -214,6 +216,12 @@ function writeGuide() {
     "- [ ] Put the PDF on a USB stick and in the cloud as a fallback; check the room's screen ratio (the deck is 16:9).",
     "- [ ] Know slides 4, 25 and 28 cold: they carry the idea in one picture, what a budget means, and the central result.",
     "",
+    "## One-page cue card (say the takeaway in your own words, then move on)",
+    "",
+    "| Slide | Title | Takeaway |",
+    "|---|---|---|",
+    ...main.map((g) => `| ${g.n} | ${g.title} | ${TAKE[g.n] || (g.cue.say || "").split(". ")[0] + "."} |`),
+    "",
     "## Timing table",
     "",
     "| Slide | Title | Minutes | Running total |",
@@ -263,6 +271,7 @@ async function build() {
     s.addText("hit rate at one day ahead as the alarm budget moves from 40 to 100 alarms a year", { x: 8.9, y: 3.7, w: 3.9, h: 0.75, fontFace: FONT, fontSize: 14, color: C.grey, valign: "top", margin: 0 });
     s.addText("about 5 points", { x: 8.9, y: 4.75, w: 3.9, h: 0.75, fontFace: FONT, fontSize: 36, bold: true, color: C.blue, margin: 0 });
     s.addText("what changing the model moves it by, at a fixed budget", { x: 8.9, y: 5.5, w: 3.9, h: 0.75, fontFace: FONT, fontSize: 14, color: C.grey, valign: "top", margin: 0 });
+    TAKE[1] = "The dial matters more than the detector: the alarm budget moves the hit rate by about 50 points, the model by about 5.";
     GUIDE.push({ n, title: "Title", mins: MINS[0], cue: { say: "Good morning. The answer to build to: the number of alarms a health authority is willing to raise matters many times more than which model produces the forecast.", next: "First, why the question matters." } });
     s.addNotes(notesFor({
       say: "Good morning. I asked how well machine learning can forecast hazardous air quality days in Delhi. The answer I want to build to is on the right: the number of alarms a health authority is willing to raise matters many times more than which model produces the forecast.",
@@ -1146,6 +1155,7 @@ async function build() {
     ], MX, 1.65, [3.6, 8.5], 0.37, { fontSize: 13, leftCols: [1] });
   }
 
+  writeGuide();
   await pptx.writeFile({ fileName: OUT });
   console.log("wrote", OUT, "slides:", n, "| talk minutes:", MINS.reduce((a, b) => a + b, 0));
 }

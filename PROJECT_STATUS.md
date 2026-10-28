@@ -3569,6 +3569,14 @@ central slide and in Q&A B8, and the report's wording could be tightened to
 dial slide shows four representative models, as the report's Figure 4.5 does;
 the lag-7 benchmark would sit lower (0.758 at 100 alarms, h = 1).
 
+**Presentation date set: Wednesday 18 November 2026.** Added
+`presentation_new/PREPARATION_PLAN.md` (a 21-day plan, rehearsal method,
+day-of checklist) and `QA_DRILL.md` (forty questions with answers tagged as
+report, recomputed or project notes), and a one-page cue card in the
+generated `PRESENTER_GUIDE.md`. While adding them I found that a slicing edit
+during the audit had silently dropped the `writeGuide()` call, so the guide
+had been stale since; restored and regenerated.
+
 Two things worth knowing. The report's List of Tables jumps from Table 3.4
 to Table 3.6 with no Table 3.5, which is a report-side numbering gap, not
 touched here. And the deck states the transformer's result as one

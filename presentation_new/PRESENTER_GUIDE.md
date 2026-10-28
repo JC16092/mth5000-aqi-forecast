@@ -31,6 +31,45 @@ If you are more than two minutes over at the end of Methods, cut slide 12 (model
 - [ ] Put the PDF on a USB stick and in the cloud as a fallback; check the room's screen ratio (the deck is 16:9).
 - [ ] Know slides 4, 25 and 28 cold: they carry the idea in one picture, what a budget means, and the central result.
 
+## One-page cue card (say the takeaway in your own words, then move on)
+
+| Slide | Title | Takeaway |
+|---|---|---|
+| 1 | Title | The dial matters more than the detector: the alarm budget moves the hit rate by about 50 points, the model by about 5. |
+| 2 | A forecast is only useful if it arrives before the hazardous day does | A model with good average error can still miss the extreme days that are the only ones anyone cares about. |
+| 3 | Three research questions, and the third turned out to dominate the other two | The third question turns out to dominate the other two, and the talk is organised around it. |
+| 4 | The idea in one picture: the detector matters little, the dial matters a lot | Like a smoke alarm: swapping the brand moves the hit rate from 0.82 to 0.87; turning the sensitivity dial moves it from 0.38 to 0.88. |
+| 5 | The route: from the data, through the models, to the alarm budget | Hold one question in mind: how much does the model matter, compared with the number of alarms you allow? |
+| 6 | One well-characterised Delhi monitor, nearly ten years of daily PM2.5 | One reference site with a full decade of record: good for comparing methods, not a claim about all of Delhi. |
+| 7 | Two defects in the source data were found and corrected before any model was fitted | Rules: below 0 (5 days), coverage below 50% (270), above 1000 (7): 282 of 3,375 removed, and the exceedance rate moves only 30.0% to 27.0%. |
+| 8 | Exceedances arrive as multi-day winter episodes, and that is the structure worth forecasting | Episodes make persistence a strong forecast, and the heavy right tail is why every model is fitted to log PM2.5. |
+| 9 | Every year, the same months: hazardous days gather from October to February | Hazard is seasonal and arrives in episodes, so the calendar alone is already a strong baseline that a model has to beat. |
+| 10 | An assumption from the approved proposal fails: there is no weekly cycle at this station | Three independent tests agree: ARIMA carries the annual cycle only, with no weekly seasonal order. |
+| 11 | The annual cycle is unmistakable, so ARIMA carries it with Fourier terms and no weekly order | A simpler, better-identified specification: the data justified dropping the weekly term, and the Fourier terms carry the season. |
+| 12 | Twelve specifications from three families, all scored by one protocol | Fitted to log PM2.5, forecast at h = 1, 2, 3 days, refitted as the training window expands, scored on identical origins by identical code. |
+| 13 | Three regressors, each controlling variance by a different mechanism | Trees are fitted to both the level and the change from the origin, because a tree cannot extrapolate and this series drifts. |
+| 14 | Three networks under one protocol, so the comparison is the cell and nothing else | Only the cell differs: gated recurrence, a memory cell, or attention. Each is reported as a ten-seed range. |
+| 15 | Rolling-origin evaluation: 2,303 forecasts, none of which can see the future | The protocol is the credibility of every number that follows: leakage-tested, and one draw of history is never trusted. |
+| 16 | Scored as a warning system: an alarm budget in alarms per year, not just an error | Plain accuracy is never reported: with hazardous days a minority, a model that never alarms scores high by construction. |
+| 17 | RQ1: the networks win only at one day ahead, and ARIMA beats every ML regressor | Networks: 0.910 to 0.939 vs ARIMA 0.940 at one day. At three days 0.831 vs 0.832 is a tie. Every ML regressor trails ARIMA throughout. |
+| 18 | Both models follow each winter episode; the networks' edge shows on the sharpest rises | The edge is a short-range one: the forecast tracks the shape of each episode, with the gap on the sharpest rises. |
+| 19 | A network's result is a range, not a number, and the spread rivals the gaps between models | A single seed could be reported as beating or losing to a rival at the analyst's convenience: only ranges are honest. |
+| 20 | Formal tests are more conservative than counting seeds, and the picture holds | One-day wins are real but modest; beyond one day nothing is confirmed, and the report says so. |
+| 21 | Two reasons for ruling models out did not survive being tested | A defensible prior is not evidence: both arguments were tested directly, and neither is supported. |
+| 22 | Weather helps at one day ahead and leaves two and three days a tie | GRU with weather beats ARIMA at one day in all ten seeds. At two days: 3 win, 6 tie, 1 loses. At three: 3 win, 2 tie, 5 lose. |
+| 23 | Carried through the decision threshold, a more accurate forecaster buys about one point of hit rate | The ceiling is not the models being too inaccurate: it persists after a materially more accurate forecaster is added. |
+| 24 | RQ2: forecast-then-threshold has a real but modest edge over direct classification | Median gap 0.011 of hit rate. Forecast-then-threshold wins 8 of 9 at a 40-alarm budget, but loses 6 of 9 at 100. |
+| 25 | What an alarm budget means: of every 100 hazardous days, how many are caught | From one alarm every nine days to one every four, the same model catches 88 of 100 hazardous days instead of 38: a policy choice, not a modelling one. |
+| 26 | RQ3, step 1: one model, and its hit rate rises as you allow more alarms | Allow more alarms and the same model catches more hazardous days: that is the dial. |
+| 27 | RQ3, step 2: add three very different models, and the curves nearly coincide | Swap the detector, and the curve barely moves. |
+| 28 | RQ3: moving the alarm budget changes the hit rate by fifty points, and changing the model by five | The dial matters more than the detector: the alarm budget is the policy instrument, and the model only supplies its input. |
+| 29 | The central finding survives every check, and the checks changed what I can claim | Bounded checks are single-split, three-seed: nothing in the ten-seed Table 4.1 was changed on their strength. |
+| 30 | What the results do not show | None of these overturns the central finding: it rests on several independent sources agreeing, not on any single p-value. |
+| 31 | What this project contributes | Applying a standard model suite to Delhi is not new; evaluating it as a warning system with a varying alarm budget is. |
+| 32 | Three questions asked, three answered | Machine learning earns a real but narrow place; the dial (the alarm budget), not the detector (the model), decides how many hazardous days are caught. |
+| 33 | Design the warning system around its alarm budget, and treat the model as a refinement | The recommendation: design a hazardous air quality warning system around the alarm budget its operator can justify, with the forecasting model a secondary refinement. |
+| 34 | Thank you. Questions? | Thank you. |
+
 ## Timing table
 
 | Slide | Title | Minutes | Running total |
@@ -74,7 +113,7 @@ If you are more than two minutes over at the end of Methods, cut slide 12 (model
 
 ### 1. Title
 
-- **Say:** Good morning. The answer to build to: the number of alarms a health authority is willing to raise matters roughly ten times more than which model produces the forecast.
+- **Say:** Good morning. The answer to build to: the number of alarms a health authority is willing to raise matters many times more than which model produces the forecast.
 - **Transition:** First, why the question matters.
 
 ### 2. A forecast is only useful if it arrives before the hazardous day does
@@ -88,13 +127,13 @@ If you are more than two minutes over at the end of Methods, cut slide 12 (model
 
 - **Say:** One: how accurately can concentrations be forecast one to three days ahead by machine learning, against classical and naive benchmarks. Two: forecast the concentration then threshold it, or classify the exceedance directly. Three: as a warning system, what hit rate and false alarm rate does each approach achieve, and how does the decision threshold trade them off. The answers are on the cards; I will earn each one with evidence.
 - **Point to:** the bold answer on each card, RQ3 in vermillion.
-- **Transition:** Here is the route.
+- **Transition:** First, one picture that holds the whole talk.
 
 ### 4. The idea in one picture: the detector matters little, the dial matters a lot
 
 - **Say:** Think of a smoke alarm. There are two things you can change: which detector you buy, and how sensitive you set the dial. On the left I swap the forecasting model at a fixed budget of 100 alarms a year: hit rates 0.82 to 0.87. On the right I keep the best model and turn the dial from 40 to 100 alarms a year: 0.38 to 0.88. Same axis. The rest of the talk is the evidence for this picture, and the care taken not to fool myself.
 - **Point to:** the left panel is almost flat; the right panel climbs. Same vertical scale.
-- **If asked:** Both panels are one day ahead, from Table 4.7. The left uses four representative models at 100 alarms; the right uses the best model at each budget.
+- **If asked:** Both panels are one day ahead, from Table 4.7. The left uses four representative models at 100 alarms (as in the report's Figure 4.5); the weak lag-7 seasonal-naive benchmark would be lower, 0.758. The right uses the best model at each budget.
 - **Transition:** Here is the route to that evidence.
 
 ### 5. The route: from the data, through the models, to the alarm budget
@@ -120,7 +159,7 @@ If you are more than two minutes over at the end of Methods, cut slide 12 (model
 
 - **Say:** The cleaned series, with days above the threshold shaded. They come in winter episodes, not isolated days, which is why persistence turns out to be a strong forecast. The distribution is strongly right skewed, skewness 2.17 and excess kurtosis 8.31, so every model is fitted to the logarithm; annual Fourier terms explain 69 percent of the variance of the log.
 - **Point to:** the shaded episodes, then the four skew statistics.
-- **Transition:** Is there any other seasonality, say weekly?
+- **Transition:** The same data as a calendar.
 
 ### 9. Every year, the same months: hazardous days gather from October to February
 
@@ -172,7 +211,7 @@ If you are more than two minutes over at the end of Methods, cut slide 12 (model
 
 ### 16. Scored as a warning system: an alarm budget in alarms per year, not just an error
 
-- **Say:** Accuracy is relative MAE against persistence on identical rows, so 1.000 is persistence. I report it rather than MASE alone because MASE divides by the training period's volatility and fell for every model on a calmer block. The warning measures come from one contingency table: hit rate, false alarm rate, and alarms per year, the unit an operator actually budgets in. I never report plain accuracy, because with hazardous days a minority a model that never alarms scores high.
+- **Say:** Accuracy is relative MAE against persistence on identical rows, so 1.000 is persistence. I report it rather than MASE alone because MASE divides by the training period's volatility, so it can fall for every model on a calmer block. The warning measures come from one contingency table: hit rate, false alarm rate, and alarms per year, the unit an operator actually budgets in. I never report plain accuracy, because with hazardous days a minority a model that never alarms scores high.
 - **Point to:** the four cards; then the takeaway.
 - **If asked:** Diebold-Mariano with the Harvey-Leybourne-Newbold small-sample correction and absolute-error loss, run once per seed.
 - **Transition:** Now the results.
@@ -217,7 +256,7 @@ If you are more than two minutes over at the end of Methods, cut slide 12 (model
 
 ### 23. Carried through the decision threshold, a more accurate forecaster buys about one point of hit rate
 
-- **Say:** The test that matters for the central finding. I reran the threshold sweep with the weather models added as candidates, on identical origins. At several budgets they do not even supply the best option. Where they do win, the gain is at most 1.2 points of hit rate, at two days and a budget of 40. Compare that with the five-point spread across models and the fifty-point range the budget buys. A substantially more accurate forecast, 8.2 points of rMAE for gradient boosting at one day, buys at most a little over a point.
+- **Say:** The test that matters. I reran the threshold sweep with the weather models as extra candidates. Where they win, the gain is at most 1.2 points of hit rate; elsewhere they are not even the best option. Compare that with the fifty points the budget buys. A forecast that is 8 points more accurate in rMAE buys at most a little over a point.
 - **Point to:** the shaded cells: the largest gains.
 - **Transition:** Now the second research question.
 
@@ -226,7 +265,7 @@ If you are more than two minutes over at the end of Methods, cut slide 12 (model
 - **Say:** To compare fairly I matched each classifier to the regressor built on the same algorithm, so the training objective is the only thing that varies. Across three pairs, three horizons and four budgets, 36 comparisons: forecast-then-threshold wins 21, classification 11, four ties. The median gap is 0.011 of hit rate, the largest 0.056. The edge shrinks as the budget loosens: 8 of 9 at a budget of 40, but classification wins 6 of 9 at 100. I prefer forecast-then-threshold also because it yields a concentration that can be rethresholded for any future health policy without refitting.
 - **Point to:** shaded cells: the better arm in each column.
 - **If asked:** All three horizons are backup B6.
-- **Transition:** Now the central result, RQ3.
+- **Transition:** Now the central result, RQ3, starting with what a budget means.
 
 ### 25. What an alarm budget means: of every 100 hazardous days, how many are caught
 
@@ -251,7 +290,7 @@ If you are more than two minutes over at the end of Methods, cut slide 12 (model
 
 - **Say:** Now the two effects. Along the dial, from 40 to 100 alarms a year, the best hit rate goes from 0.379 to 0.881: fifty points. At a fixed 100 alarms, switching the model moves it from about 0.82 to 0.88: about five. At three days and 40 alarms a year, persistence, which just repeats yesterday, is the best model in the whole study, 0.359. At 100 alarms a climatological forecast comes within a hundredth of the best, 0.816 against 0.827.
 - **Point to:** the vermillion arrow on the left, then the blue bracket at 100 alarms.
-- **If asked:** A bigger budget raising the hit rate is true by construction, which is exactly why every model comparison is made at a fixed budget. The finding is the size of the two effects, not that the first exists. Full Table 4.7 is backup B7.
+- **If asked:** A bigger budget raising the hit rate is true by construction, which is exactly why every model comparison is made at a fixed budget. The finding is the size of the two effects, not that the first exists. How big is the model effect exactly? The report says about five points; recomputed from the sweep it averages 7 across all ten models (2 to 12 by horizon and budget) and 4 without the lag-7 benchmark. Full Table 4.7 is backup B7.
 - **Transition:** Why this happens: episodes. Then what I checked, and what I cannot claim.
 
 ### 29. The central finding survives every check, and the checks changed what I can claim
@@ -320,3 +359,7 @@ If you are more than two minutes over at the end of Methods, cut slide 12 (model
 ### B9. B9. Likely questions, 2 of 2: evidence and method
 
 - **Say:** Cue sheet for questions, continued.
+
+### B10. B10. The words used in this talk, in plain language
+
+- **Say:** Glossary. Useful if an audience member is outside statistics: every term the talk uses, in one line each.
