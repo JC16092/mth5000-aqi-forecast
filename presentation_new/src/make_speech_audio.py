@@ -27,12 +27,18 @@ import subprocess
 import sys
 import tempfile
 
+import json
 import numpy as np
 import soundfile as sf
 from kokoro_onnx import Kokoro
+from num2words import num2words
 
 SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "SPEECH_SCRIPT.md")
 LINE_GAP, SLIDE_GAP, PAUSE = 0.40, 1.30, 1.20  # seconds of silence
+CHUNK_LIMIT = int(os.environ.get("CHUNK_LIMIT", "230"))  # characters per spoken chunk; shorter is crisper
+SAVE_CHUNKS = os.environ.get("SAVE_CHUNKS")  # a directory: keep each spoken chunk and its text for a recognition check
+# Loud and clear: remove rumble, even out quiet words, lift the consonant range, then normalise louder than a podcast.
+CLEAR_CHAIN = "highpass=f=70,acompressor=threshold=-26dB:ratio=3:attack=5:release=80:makeup=5,equalizer=f=3200:t=q:w=1:g=2.5,loudnorm=I=-14:TP=-1.0:LRA=7"
 
 NUM_WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten"}
 
@@ -48,9 +54,25 @@ SUBS = [
     (r"\bERA5\b", "E R A five"),
     (r"\bM4\b", "M four"),
     (r"Diebold-Mariano", "Dee-bold Mariano"),
-    (r"\b1990\b", "nineteen ninety"),
-    (r"\bKolmogorov-Arnold\b", "Kolmo-gorov Arnold"),
+        (r"\bKolmogorov-Arnold\b", "Kolmogorov Arnold"),
+    (r"\bAirNow\b", "Air Now"),
+    (r"\bcalmer\b", "quieter"),  # "calm" is easily misheard; "quiet" says the same thing
+    (r"\bcalm\b", "quiet"),
+    (r"Six extensions follow from the report\.", "There are six extensions in the report."),
+    (r"uses attention across the window", "uses self-attention across the window"),
+    (r"forecast-then-threshold", "forecast then threshold"),
 ]
+
+
+def say_number(m):
+    """Read numbers the way a careful speaker would: decimals digit by digit, years as years."""
+    x = m.group(0).replace(",", "")
+    if "." in x:
+        a, b = x.split(".")
+        return num2words(int(a)).replace("-", " ").replace(",", "") + " point " + " ".join(num2words(int(d)) for d in b)
+    if len(x) == 4 and x[:2] in ("19", "20") and "," not in m.group(0):
+        return num2words(int(x), to="year").replace("-", " ").replace(",", "")
+    return num2words(int(x)).replace("-", " ").replace(",", "")
 
 
 def speakable(text):
@@ -58,7 +80,7 @@ def speakable(text):
     text = text.replace("**", "").replace("*", "")
     for pat, rep in SUBS:
         text = re.sub(pat, rep, text)
-    text = re.sub(r"(?<=\d),(?=\d{3}\b)", "", text)  # 3,093 -> 3093
+    text = re.sub(r"\d[\d,]*(?:\.\d+)?", say_number, text)
     return re.sub(r"\s+", " ", text).strip()
 
 
@@ -78,7 +100,7 @@ def contract(text):
     return text
 
 
-def chunk(lines, limit=230):
+def chunk(lines, limit=CHUNK_LIMIT):
     """Group consecutive lines into chunks of a few sentences so intonation carries across them."""
     out, cur, cur_pause = [], "", False
     for text, pause in lines:
@@ -140,6 +162,35 @@ def main():
         return np.zeros(int(sr * sec), dtype=np.float32)
 
     chunks, marks, t = [], [], 0.0
+    manifest = []
+    if SAVE_CHUNKS:
+        os.makedirs(SAVE_CHUNKS, exist_ok=True)
+
+    checker = None
+    if os.environ.get("ASR_DIR"):
+        from asr_check import Checker
+        checker = Checker(os.environ["ASR_DIR"])
+    weak = []
+
+    def speak(text, sp, slide):
+        samples = kokoro.create(text, voice=style, speed=sp, lang=lang)[0]
+        if checker:  # listen to it; if the recogniser hears different words, speak it again at another pace
+            best, best_wer = samples, checker.wer(text, samples)[0]
+            for alt in (speed, speed + 0.03, speed - 0.03, speed + 0.06, speed - 0.06, 0.92):
+                if best_wer <= 0.04:
+                    break
+                cand = kokoro.create(text, voice=style, speed=float(alt), lang=lang)[0]
+                w = checker.wer(text, cand)[0]
+                if w < best_wer:
+                    best, best_wer = cand, w
+            samples = best
+            if best_wer > 0.08:
+                weak.append((slide, round(best_wer, 2), text[:80]))
+        if SAVE_CHUNKS:
+            name = f"c{len(manifest):04d}.wav"
+            sf.write(os.path.join(SAVE_CHUNKS, name), samples, sr)
+            manifest.append({"file": name, "slide": slide, "text": text})
+        return samples
 
     def add(samples):
         nonlocal t
@@ -153,12 +204,12 @@ def main():
         if natural:
             for text, pause in chunk([(contract(t), p) for t, p in lines]):
                 sp = float(np.clip(speed + rng.uniform(-0.03, 0.03), 0.6, 1.2))
-                add(kokoro.create(text, voice=style, speed=sp, lang=lang)[0])
+                add(speak(text, sp, n))
                 gap = LINE_GAP + rng.uniform(-0.08, 0.12) + (0.25 if text.rstrip().endswith("?") else 0)
                 add(silence(gap + (PAUSE if pause else 0)))
         else:
             for text, pause in lines:
-                add(kokoro.create(text, voice=style, speed=speed, lang=lang)[0])
+                add(speak(text, speed, n))
                 add(silence(LINE_GAP + (PAUSE if pause else 0)))
         add(silence(SLIDE_GAP))
         print(f"slide {n:>2} done at {t / 60:5.1f} min", flush=True)
@@ -175,8 +226,14 @@ def main():
                 f.write(f"[CHAPTER]\nTIMEBASE=1/1000\nSTART={int(start * 1000)}\nEND={int(end * 1000)}\ntitle=Slide {n}. {title}\n")
         mp3 = os.path.join(out_dir, "SPEECH_AUDIO.mp3")
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav, "-i", meta, "-map_metadata", "1", "-map_chapters", "1",
-                        "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-codec:a", "libmp3lame", "-b:a", "96k", "-ac", "1", mp3], check=True)
+                        "-af", CLEAR_CHAIN, "-codec:a", "libmp3lame", "-b:a", "96k", "-ac", "1", mp3], check=True)
 
+    if SAVE_CHUNKS:
+        json.dump(manifest, open(os.path.join(SAVE_CHUNKS, "manifest.json"), "w"), indent=1)
+    if checker:
+        print(f"chunks still above 8% word error after retries: {len(weak)}")
+        for w in weak:
+            print("  ", w)
     mm = lambda x: f"{int(x // 60)}:{int(x % 60):02d}"
     with open(os.path.join(out_dir, "SPEECH_AUDIO_INDEX.md"), "w", encoding="utf-8") as f:
         f.write(f"# Speech audio: where each slide starts\n\nVoice: {voice}, speed {speed}. Total length {mm(t)}.\n\n| Slide | Title | Starts at |\n|---|---|---|\n")
