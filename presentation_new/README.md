@@ -9,6 +9,7 @@ It reuses nothing from `presentation/`, which still holds the earlier 33-slide d
 | `MTH5000_oral_presentation.pptx` | The deck: 34 talk slides plus 10 backup slides (B1 to B10). |
 | `MTH5000_oral_presentation.pdf` | A LibreOffice export, as a fallback if PowerPoint is unavailable in the room. Rendered with Carlito in place of Calibri, so check line breaks if you regenerate it. |
 | `PREPARATION_PLAN.md` | A day-by-day plan to Wednesday 18 November 2026: three phases, the rehearsal method, word-for-word opening and closing, what to do if things go wrong, and the day-of checklist. |
+| `SPEECH_SCRIPT.md` | A full line-by-line speech for all 34 slides, in plain spoken English, to read aloud for a few days and memorise. About 3,800 words, 27 to 30 minutes. Scaffolding, not something to read on the day. |
 | `QA_DRILL.md` | Forty likely questions in four tiers with short model answers, each tagged as report, recomputed, or project notes; plus the numbers to know cold. |
 | `PRESENTER_GUIDE.md` | Timing checkpoints, delivery advice, and every slide's cues. Generated from the same source as the speaker notes. |
 
