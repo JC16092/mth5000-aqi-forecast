@@ -9,3 +9,6 @@ features.csv
 
 # PowerPoint lock files
 ~$*
+
+# Large generated audio (rebuild with src/make_speech_audio.py)
+presentation_new/*.mp3
