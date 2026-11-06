@@ -61,7 +61,7 @@ alone. The central finding is that the alarm budget a decision maker accepts
 dominates the choice of model. Across ten specifications, from simple
 benchmarks and a classical ARIMA model with annual Fourier terms to three
 machine learning regressors and a recurrent network, the spread in hit rate
-at a fixed alarm budget is about five percentage points, while moving the
+at a fixed alarm budget is about seven percentage points, while moving the
 budget from forty to one hundred alarms a year moves the hit rate by fifty.
 Machine learning earns its place only partially. The classical model beats
 every machine learning regressor at every horizon, a result strengthened
@@ -77,8 +77,8 @@ recurrent networks at every horizon and carries the strongest formal
 significance against ARIMA of the three at one day ahead.
 Adding observed wind speed and temperature narrows the one-day gap further
 but leaves two and three days a statistical tie, and the extra accuracy
-moves the achievable hit rate at a fixed alarm budget by at most a point,
-reinforcing rather than overturning the central finding above. Two
+moves the achievable hit rate at a fixed alarm budget by little more than a
+point, reinforcing rather than overturning the central finding above. Two
 real defects in the source monitor, a clipped instrument ceiling and a
 miscalculated coverage statistic, were diagnosed and corrected before
 modelling began. The recommendation is to design a warning system around its
@@ -1854,7 +1854,7 @@ reaches $p<0.05$ in five of them, a formal result if anything slightly
 stronger than the GRU's own four of ten. At two days the two models are
 close to indistinguishable, 0.882 against ARIMA's 0.883, and no seed
 reaches significance either way. At three days ARIMA remains marginally
-ahead, 0.831 against the LSTM's 0.836, again with no seed reaching
+ahead, 0.832 against the LSTM's 0.836, again with no seed reaching
 significance. The LSTM was not carried through the weather extension of
 Section~\ref{sec:weather} or the decision-threshold sweep of
 Section~\ref{sec:threshold}; Section~\ref{sec:limitations} states this
@@ -2032,7 +2032,7 @@ best option, delta exactly zero: 60 alarms a year at one day ahead; 60, 80
 and 100 at two; and 40, 80 and 100 at three. Where they do win, the
 improvement is small: at most 1.2 points of hit rate, at two days and a
 budget of 40, and one point or under at every other budget where they help
-at all. That is well below the five-point spread across models documented in
+at all. That is well below the seven-point spread across models documented in
 Table~\ref{tab:budget} and discussed in Section~\ref{sec:noise-floor}, not a
 new tier above it, and nowhere near the fifty-point range that moving the
 budget itself buys. A substantially more accurate point forecast, 8.2 points
@@ -2140,7 +2140,7 @@ checked against a printed cell rather than the prose alone.}
 Table~\ref{tab:budget} contains the principal result of this project. Moving the
 alarm budget from 40 to 100 per year changes the achievable hit rate at one day
 ahead from 0.379 to 0.881. Holding the budget fixed and changing the model
-instead moves it by around five points.
+instead moves it by around seven points.
 
 \begin{figure}[htbp]
 \centering
@@ -2231,7 +2231,8 @@ caught than a modeller choosing among the ten specifications fitted in this
 project. Moving the budget from 40 to 100 alarms a year moves the achievable
 hit rate at one day ahead from 0.379 to 0.881, a range of fifty points.
 Holding the budget fixed and switching the model instead moves the hit rate by
-about five points, and at three days ahead, at the loosest budget this report
+about seven points on average, four to eleven depending on horizon and
+budget, and at three days ahead, at the loosest budget this report
 considers, a climatology forecast that uses no recent information whatever
 comes within roughly a hundredth of the best fitted model, 0.816 against 0.827.
 
@@ -2667,7 +2668,7 @@ memory.}
 
 Across ten models spanning simple benchmarks, a classical time series model,
 three machine learning regressors, and a recurrent network, the spread in
-achievable hit rate at a fixed alarm budget is about five percentage points;
+achievable hit rate at a fixed alarm budget is about seven percentage points;
 the spread across alarm budgets, holding the model fixed, is about fifty. The
 choice a decision maker makes about how many alarms per year can be
 justified therefore has far more influence on how many hazardous days are

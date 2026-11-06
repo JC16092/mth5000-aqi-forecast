@@ -3613,7 +3613,124 @@ flagged but not acted on there:
    mechanical bug; flagging it here rather than silently tightening the
    wording.
 
-**Not yet committed as of writing this entry.**
+**Committed (`4f51b65`) and pushed, on request.**
+
+### 27 October, same day: the five-points wording tightened, on request
+
+Asked directly to tighten it. Independently recomputed before touching
+anything, rather than trusting the presentation session's relayed figure:
+same `operating_point_at_alarms` logic, the same ten models the report
+itself calls "the ten specifications" (`arima_fourier`, `climatology`,
+`gru`, `hist_gbm`, `hist_gbm_delta`, `naive_carry`, `random_forest`,
+`random_forest_delta`, `ridge`, `seasonal_naive_7`), every (horizon,
+budget) cell. Got 7.1 points mean (4.3 to 11.5), 3.8 excluding the
+deliberately weak lag-7 benchmark, 2.8 for fitted models alone -- an
+exact match to the relayed numbers, confirming they were trustworthy,
+but verified rather than assumed before being used to change the report.
+
+Found a fifth occurrence of the claim the presentation session's audit
+hadn't listed: Section 5.3's weather-covariates discussion ("well below
+the five-point spread across models documented in Table 4.7"), not just
+the three in Abstract/5.1/6.1 plus the Section 4.3 Results mention
+already known about. Swept the whole file for every phrasing (hyphenated,
+spelled out, with and without "percentage") rather than trusting the
+count from memory; confirmed no sixth copy exists.
+
+All five updated to "about seven percentage points" (Abstract, Section
+4.3, Section 6.1, the Section 5.3 weather comparison), except Section
+5.1's Discussion treatment, which got the fuller "about seven points on
+average, four to eleven depending on horizon and budget" -- the natural
+place for that nuance, since the chapter's whole job is interpreting the
+numbers rather than just stating them. Recompiled clean, zero undefined
+references, 77 pages unchanged. Verified by rendering the actual Abstract
+and Discussion pages, not just trusting `pdftotext` (which mis-reported
+two of the five as absent, purely from line-wrap splitting the search
+phrase across lines in its extraction -- confirmed both by direct page
+image instead).
+
+**Not yet committed as of writing this entry.** (The seven-points change
+stayed staged-but-uncommitted into the 6 November session below, which
+committed it together with that session's own two fixes.)
+
+### 6 November (Opus 4.8): examiner-level review of the whole report
+
+Asked to go through the report "like a professional assessor... find
+mistakes and correct it." Did a genuine critical read of all 77 pages
+from the source, verifying every load-bearing prose number against the
+data/code rather than trusting the text (the auto-generated tables can't
+drift, but hand-typed prose numbers can). Computed ARIMA's exact rMAE
+(0.940117 / 0.882712 / 0.831827 by horizon) and every network's mean and
+range directly from the forecast files; all checked out except the two
+below.
+
+**Two real errors found and fixed:**
+
+1. **Section 4.1, the LSTM paragraph: ARIMA's three-day rMAE was typed as
+   0.831, should be 0.832.** The true value is 0.831827, which rounds to
+   0.832, and it appears correctly as 0.832 in three other places (the
+   accuracy table, the GRU paragraph two above it, the transformer
+   paragraph just below, and the uncapped-sensitivity figure in 5.3). A
+   lone hand-typed slip -- almost certainly the author's eye carrying down
+   the GRU's best-seed value 0.831, which sits two paragraphs up on the
+   same page. Not a ranking change (ARIMA 0.832 still beats the LSTM's
+   0.836); just a wrong digit. Fixed.
+2. **Abstract: the weather-covariate gain was described as moving the
+   achievable hit rate "by at most a point," but the true maximum is 1.2
+   points** (h=2, budget 40: 0.388 to 0.400 in `weather_budget.tex`; every
+   other budget is one point or under). The Discussion (5.1) and
+   Conclusion both already say "a little over a point" / "at most 1.2
+   points" -- only the Abstract rounded 1.2 down to "a point," which is a
+   genuine understatement since 1.2 > 1. Changed the Abstract to "by
+   little more than a point," matching the body and the data.
+
+Recompiled clean after both, zero undefined references, 77 pages
+unchanged. Rendered the Abstract and the LSTM-paragraph page directly to
+confirm both reads, not just the source edit.
+
+**Two citation items investigated on the "fix all" instruction, and both
+left unchanged because changing them would break the project's own
+CrossRef-only standard:**
+
+1. **The transformer's self-attention and sinusoidal positional encoding
+   are cited to `lim2021survey` (Lim & Zohren 2021, a survey) rather than
+   to Vaswani et al. 2017 ("Attention is all you need"), their original
+   source.** Queried the CrossRef API directly to see whether Vaswani
+   could be added: there is NO legitimate CrossRef DOI for the 2017
+   NeurIPS paper. The only CrossRef hits are predatory 2025
+   re-registrations (prefix `10.65215/...`, no venue) and a different 2018
+   paper (Shaw, Uszkoreit & Vaswani, "Self-Attention with Relative
+   Position Representations"). This is the same wall that made the project
+   drop the Chung et al. GRU paper earlier. The arXiv DOI
+   (10.48550/arXiv.1706.03762) is DataCite, not CrossRef, so it fails the
+   same standard too. Adding Vaswani would therefore require either a
+   fabricated/predatory DOI or an arXiv DOI the project has consistently
+   rejected -- so the existing `lim2021survey` citation (a real, verifiable
+   survey that the text explicitly frames as *describing* the construction,
+   not originating it) stands as the consistent choice. Left unchanged.
+2. **`breiman1984cart` renders as "Breiman et al. [2017]"** because the bib
+   entry points at the 2017 Routledge reprint of the 1984 CART book, which
+   has a real CrossRef DOI (10.1201/9781315139470). The 1984 Wadsworth
+   original predates DOIs, so switching to it would remove the very
+   verifiability the 2017 entry provides. The odd-looking year is the price
+   of a CrossRef-verifiable entry; changing it would make the bibliography
+   less rigorous, not more. Left unchanged.
+
+**One thing checked and found NOT to be an error:** Section 5.2 says
+gradient boosting (0.983) and the random forest (0.988) sit "a gap of
+0.004" apart at h=1, which looks wrong because 0.988 - 0.983 = 0.005 by
+subtracting the printed figures. But the exact unrounded gap is 0.004264,
+which correctly rounds to 0.004; the apparent 0.005 is just a
+rounding-of-both-endpoints artifact. Left as-is -- 0.004 is the truthful
+number.
+
+Citation integrity re-checked whole: 49 keys cited, 49 defined, zero
+orphans either direction.
+
+**Committed and pushed on request**, together with the staged seven-points
+change from 27 October (all three are report-accuracy fixes). The two
+citation items above were investigated under the same "fix all"
+instruction and consciously left as-is, for the CrossRef-standard reasons
+documented.
 
 ## Data sources
 
