@@ -3732,6 +3732,66 @@ citation items above were investigated under the same "fix all"
 instruction and consciously left as-is, for the CrossRef-standard reasons
 documented.
 
+### 8 November (Opus 4.8, ultracode): humanised the whole report's prose
+
+The user asked to "humanise the writings and style of whole report
+properly." Ran this as two sequential workflows rather than a solo edit,
+given the stakes (a finished, supervisor-approved, number-verified
+document).
+
+**Workflow 1 (diagnosis, 6 agents, one per chapter-chunk):** catalogued
+the mechanical/AI-sounding patterns with real examples and produced
+before/after sample rewrites. Consistent finding across all six chapters:
+the report already reads human at the argument level (distinctive voice,
+real reasoning, honest hedges); the mechanical residue is sentence-rhythm,
+not content. Dominant tells: (1) "X rather than Y" antithesis overused
+(~140+ report-wide, often two per sentence); (2) templated skeletons (the
+"the same X, the same Y..." anaphora across the three network subsections;
+the "At one day / two days / three days" chassis reused 5-6x; "Table X
+[verb] the claim" openers); (3) 90-word colon-stacked sentences, reflexive
+meta-signposting ("worth stating plainly rather than left implicit"), and
+filler intensifiers ("directly", "exactly", "actually").
+
+Presented the synthesis + samples and asked the user to calibrate before
+touching anything. They chose: **moderate** thinning of "rather than"
+(keep the load-bearing contrasts, convert ~half of the rest), and **keep
+the distinctive flourishes** verbatim (may reposition into their own
+sentence for flow, not reword).
+
+**Workflow 2 (rewrite + verify, 6+6 agents, pipelined):** each chapter
+rewritten into surgical find/replace edits (verbatim original paragraph ->
+humanised version) under the calibration and hard constraints (every
+number/citation/ref/equation preserved, no em dashes, no meaning change,
+British spelling); each chapter's edits then independently checked by an
+adversarial verifier. 90 edits produced, 84 passed verification. The
+verifier correctly caught and rejected 6 that drifted meaning (added a
+count "three alternatives"; dropped load-bearing "directly"s that weakened
+comparisons; altered a scope-boundary statement; changed "organised by
+kind rather than alphabetically") -- those were NOT applied.
+
+**Application was deterministic, not trust-based.** A script applied only
+the 84 verified, uniquely-matching edits, then diffed the full token
+inventory of main.tex before vs after: numbers, citation keys,
+ref/label/eqref keys, and equation/align/input environment counts must be
+byte-identical multisets, and em dashes must stay at zero. First pass
+flagged one extra "268" -- a methodology-1 rewrite split a long sentence
+and restated the figure ("...the 268 days... Those 268 are the only
+ones..."); not a wrong number, but redundant, so hand-fixed to "Those
+days are the only ones". Re-diff then came back fully IDENTICAL on every
+token class, em dashes 0/0. Recompiled clean, zero undefined references,
+still 77 pages (line count 2827 -> 2612 as long sentences tightened;
+content unchanged). Spot-rendered the Abstract, a Methodology page and the
+Discussion opening: the 90-word abstract sentence is now six, the
+templated skeletons are broken, the meta-signposts and filler are gone,
+and the kept flourishes ("Machine learning earns its place only
+partially", "a question nobody who has to operate the system actually
+asked", the "not an argument against modelling... It is an argument about
+where the leverage sits" pivot) survive verbatim.
+
+Net: a genuine style pass over all six chapters with a hard guarantee that
+no fact, number, citation or reference moved. **Not yet committed as of
+writing this entry** -- shown to the user for review first.
+
 ## Data sources
 
 - **OpenAQ** (primary, cite this): https://openaq.org, API docs at https://docs.openaq.org, free key required
