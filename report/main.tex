@@ -111,7 +111,7 @@ such forecasting feasible in principle: persistence from one day to the next, a
 strong annual cycle driven by meteorology and seasonal agricultural burning,
 and dependence on recent local conditions.
 
-My interest in this question is also personal. Having grown up in India, air
+My interest in this question is also personal. Because I grew up in India, air
 pollution was not an abstract statistic but part of ordinary life: seasonal
 smog that turned daylight hazy, and days when going outside meant a sore
 throat. Whether those days can be predicted reliably enough to be worth
@@ -282,8 +282,8 @@ revisits this reading. A single daily PM2.5 series with no exogenous
 predictors is closer to the M4 setting than the M5 one, the comparison this
 project's own result in Chapter~\ref{chap:results} confirms rather than
 contradicts. A different strand of this literature asks not which family
-wins outright but whether they can be combined: \citet{zhang2003hybrid} fit
-a neural network to an ARIMA model's residuals and report a gain over either
+wins outright but whether they can be combined: \citet{zhang2003hybrid} fits
+a neural network to an ARIMA model's residuals and reports a gain over either
 model alone. This project does not pursue a hybrid. It evaluates the two
 families side by side, so that the comparison in Chapter~\ref{chap:results}
 is informative about which family suits this series rather than obscured by a
@@ -375,7 +375,7 @@ unlike an MLP; it is not limited to a fixed receptive field, unlike a CNN,
 though that limitation matters less here given the Fourier terms already
 carry the annual cycle; and, on the a priori parameter-count argument above,
 it was expected to suit a few thousand observations better than a
-Transformer would, an expectation Section~\ref{sec:transformer} tests rather
+transformer would, an expectation Section~\ref{sec:transformer} tests rather
 than confirms. Within the recurrent family, the remaining choice is between
 a plain recurrent network and a gated one, which the next two subsections
 address.
@@ -481,8 +481,7 @@ not by a health-weighted criterion. Neither paper evaluates its forecasts as
 a warning system in the sense used here, with an explicit alarm budget and a
 false alarm rate reported alongside the hit rate. Both report accuracy on
 held-out data without decomposing it by the operating point at which an
-alarm would be raised. That gap, between forecast accuracy and warning
-system performance, is the space this project's third research question
+alarm would be raised. That gap, between forecast accuracy and warning-system performance, is the space this project's third research question
 occupies.
 
 The finding that a classical benchmark beats every machine learning model in
@@ -499,8 +498,7 @@ literature rather than a surprise specific to this dataset.
 \section{Forecast Verification as a Warning System}
 \label{sec:verification}
 
-The distinction this project draws between forecast accuracy and warning
-system performance, hit rate, false alarm rate, and the trade-off between
+The distinction this project draws between forecast accuracy and warning-system performance, hit rate, false alarm rate, and the trade-off between
 them as the decision threshold moves, follows the verification framework
 standard in operational meteorology \citep{jolliffe2012forecast}. That
 literature developed around exactly the situation faced here: a forecast of
@@ -627,7 +625,7 @@ and warning-system measures reported in Chapter~\ref{chap:results}.
 \section{Data Collection and Station Selection}
 \label{sec:data}
 
-Daily mean PM$_{2.5}$ concentrations were obtained from OpenAQ. Five candidate
+Daily mean PM2.5 concentrations were obtained from OpenAQ. Five candidate
 monitoring stations within 25\,km of central Delhi were compared on data
 coverage rather than on nominal length of record.
 
@@ -645,7 +643,7 @@ the Indian official network. The project therefore forecasts at a single
 well-characterised reference site in Delhi, which is common in this literature,
 and the results should not be read as representative of the city as a whole.
 
-The event this project forecasts, a hazardous PM$_{2.5}$ day, is defined
+The event this project forecasts, a hazardous PM2.5 day, is defined
 against the Central Pollution Control Board's National Air Quality Index
 \citep{cpcb2014aqi}, which sets the boundary of its `Very Poor' category,
 the one directly below `Severe', at 121\,\textmu g\,m$^{-3}$ for the
@@ -1016,7 +1014,7 @@ that back-transforms without stating which one it reports has silently
 changed what is being forecast. The gap between the two, and specifically
 the tendency of the median variant to systematically under-forecast a
 right-skewed quantity, is a known bias rather than a property special to
-this project. \citet{miller1984bias} derive the same correction term,
+this project. \citet{miller1984bias} derives the same correction term,
 $\exp(\tfrac{1}{2}s^2)$ in Equation~\ref{eq:lognormal}, for curve-fitting
 contexts generally: the adjustment needed to recover an unbiased mean
 from a model fitted on the logarithm of a quantity.
@@ -1257,7 +1255,7 @@ A second version of this network reads two further channels, the day's mean
 temperature and wind speed from Section~\ref{sec:weather}, each paired with
 its own missingness flag in the same construction used for the
 concentration channel, ten channels in total rather than six. Wind speed in
-particular is a plausible carrier of the short range structure that already
+particular is a plausible carrier of the short-range structure that already
 let the plain network beat ARIMA at one day ahead in the negative result
 anticipated in Section~\ref{sec:lit-dl}: a calm, stagnant airmass is both the
 immediate physical precondition for a particulate episode and a quantity the
@@ -1468,7 +1466,7 @@ the same numbers read side by side rather than four subsections apart.}
 \label{sec:rolling}
 
 Every model was evaluated over 2{,}303 origins from 9 November 2019 to 24 August
-2026, spanning 6.8 years, with a three year burn-in and model state advanced
+2026, spanning 6.8 years, with a three-year burn-in and model state advanced
 daily between refits. Parameters are re-estimated every 90 days for every
 specification except the three networks, the GRU, the LSTM and the
 transformer, which refit every 180 days. Each of their refits trains a
@@ -1685,7 +1683,7 @@ The analysis runs end to end from an empty directory via twelve numbered
 pipeline scripts, the transformer of Section~\ref{sec:transformer} the most
 recent addition. Eleven of them carry an automated correctness test, run with
 \texttt{--test}, that exits before producing any output if its own
-checks fail. The rolling origin harness verifies its own leakage
+checks fail. The rolling-origin harness verifies its own leakage
 invariant before every run. Every table in this report is generated directly
 from the result files by \texttt{make\_tables.py}; no number has been
 transcribed by hand. Raw and cleaned data are held under version control so
@@ -1737,7 +1735,7 @@ out to depend on (Section~\ref{sec:threshold}).
 
 \begin{table}[htbp]
 \centering
-\caption{Relative mean absolute error against persistence, under rolling origin
+\caption{Relative mean absolute error against persistence, under rolling-origin
 evaluation over 2{,}303 origins. Lower is better and 1.000 is persistence. The
 three networks, the GRU, the LSTM and the transformer, are each given as the
 range over
@@ -1857,7 +1855,7 @@ over ten seeds, to be read against its row in Table~\ref{tab:accuracy}.}
 
 Across models the answer is uneven, and that unevenness, laid out in Table~\ref{tab:weather}, is itself informative. Gradient boosting improves substantially and at every horizon, by 8.2 points of relative error at one day, 2.0 at two and 2.9 at three on the level target, and similarly on the change target. The random forest moves the other way at the longest horizon, 5.3 points worse at three days, while ridge improves at one and two days and worsens slightly at three. No single story explains all five machine learning rows; weather is not a free improvement for every method that can accept it.
 
-The recurrent network is where the extension matters most, because Section~\ref{sec:weather} identified wind speed as a specific physical candidate for the short range structure the plain network was already exploiting at one day ahead. With weather added, the network beats ARIMA clearly under all ten seeds at one day ahead, as before. At two days, where ARIMA previously won outright, the picture becomes a genuine contest rather than a clean win for either side. Three of ten seeds beat ARIMA clearly, beyond the 0.004 noise floor established in Section~\ref{sec:noise-floor}; six are indistinguishable from it within that floor, and one is a clear loss. At three days a similar three-way split appears with different seeds in each role: three of ten beat ARIMA clearly, two are ties, and five, a majority, are clear losses, including one seed 0.041 worse than ARIMA. Doubling the seed count from the five first fitted is what surfaced this; under the first five alone, both horizons had looked like a win for the network, and that reading did not survive a second, independent batch of five seeds.
+The recurrent network is where the extension matters most, because Section~\ref{sec:weather} identified wind speed as a specific physical candidate for the short-range structure the plain network was already exploiting at one day ahead. With weather added, the network beats ARIMA clearly under all ten seeds at one day ahead, as before. At two days, where ARIMA previously won outright, the picture becomes a genuine contest rather than a clean win for either side. Three of ten seeds beat ARIMA clearly, beyond the 0.004 noise floor established in Section~\ref{sec:noise-floor}; six are indistinguishable from it within that floor, and one is a clear loss. At three days a similar three-way split appears with different seeds in each role: three of ten beat ARIMA clearly, two are ties, and five, a majority, are clear losses, including one seed 0.041 worse than ARIMA. Doubling the seed count from the five first fitted is what surfaced this; under the first five alone, both horizons had looked like a win for the network, and that reading did not survive a second, independent batch of five seeds.
 
 The same formal test behind Table~\ref{tab:significance}, in its lower block, reaches a similar verdict for the weather version. At one day ahead it favours the network in all ten seeds and reaches $p<0.05$ in seven, a stronger formal result than the plain network's four. That is consistent with wind speed carrying genuine short-range information rather than noise that a larger input simply fits more closely. At two days the direction itself splits: six seeds favour the network and four favour ARIMA, and not one seed on either side reaches significance. By this reading the three-way split the seed-counting above reports is closer to no detectable difference at all than to a genuine three-way contest. By three days one seed reaches significance, $p=0.049$, and it favours ARIMA, consistent with the majority-loss reading above, though a $p$-value that close to the threshold means a single further seed could move the count either way.
 
@@ -2056,7 +2054,7 @@ exact numbers in Table~\ref{tab:accuracy} deserve.
 Three results in this project bound that question from below. Running the
 identical pipeline on two different machines moved the tree models by up to
 0.004 in relative error, because histogram gradient boosting parallelises
-with OpenMP and floating point summation order depends on the thread count.
+with OpenMP and floating-point summation order depends on the thread count.
 Changing only the random initialisation of the GRU moved it by 0.028 to
 0.048 across ten seeds. The LSTM's own spread, measured the same way, is
 tighter at every horizon, 0.018 to 0.023, and the transformer's tighter
@@ -2097,8 +2095,7 @@ that run and nothing reliable about the architecture.
 
 Other adjacent-model gaps in Table~\ref{tab:accuracy} are of that order too,
 even for pairs where no seed or machine-level floor was measured. Any claim
-that one of those models is better than another, made without stating the run
-to run variation, is not supported by the evidence.
+that one of those models is better than another, made without stating the run-to-run variation, is not supported by the evidence.
 
 A formal test of the same question, rather than a tolerance measured by
 rerunning and compared by eye, now exists for all three seeded networks
@@ -2115,7 +2112,7 @@ ahead than the plain GRU, five and seven of ten respectively, and neither
 reaches it at two or three days at all. The two readings differ because each
 bounds something different. The noise floor measured here, 0.004 to 0.048,
 bounds how much a score moves for reasons that have nothing to do with which
-model is better: thread scheduling, floating point summation order, a
+model is better: thread scheduling, floating-point summation order, a
 different draw of initial weights. The Diebold-Mariano statistic bounds
 something else entirely, how much the mean of a loss differential computed
 over roughly 1{,}700 individually autocorrelated daily forecast errors can
@@ -2442,7 +2439,7 @@ directly and found false.
 
 \begin{table}[htbp]
 \centering
-\caption{The three research questions from Section~\ref{chap:intro},
+\caption{The three research questions from Chapter~\ref{chap:intro},
 their headline quantitative answers beside them, read back from the same
 results Chapter~\ref{chap:results} computes rather than restated from
 memory.}
