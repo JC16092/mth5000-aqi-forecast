@@ -17,7 +17,6 @@ import matplotlib.dates as mdates
 from matplotlib.ticker import MultipleLocator
 import statsmodels.api as sm
 from statsmodels.tsa.stattools import acf
-from scipy import stats
 
 import evaluation as ev
 from step01_data_check import load_series

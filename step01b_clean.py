@@ -345,7 +345,7 @@ def main():
         print("=" * 70)
         print("  This was a report. When you have decided the thresholds:")
         print(f"    python step01b_clean.py --csv {args.csv} --apply \\")
-        print(f"           --min-value 0 --max-value NNN --min-coverage NN \\")
+        print("           --min-value 0 --max-value NNN --min-coverage NN \\")
         print(f"           --out {args.out}")
         return
 

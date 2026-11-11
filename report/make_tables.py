@@ -451,7 +451,7 @@ def table_weather_budget(pattern, budgets=(40, 60, 80, 100)):
         no_cells = [f"{v:.3f}" if v is not None else "--" for v in no_wx_row]
         wx_cells = [f"{v:.3f}" if v is not None else "--" for v in wx_row]
         body.append(f"Best hit rate, $h={h}$, no weather & " + " & ".join(no_cells) + " \\\\")
-        body.append(f"\\quad with weather models added & " + " & ".join(wx_cells) + " \\\\")
+        body.append("\\quad with weather models added & " + " & ".join(wx_cells) + " \\\\")
         if h < 3:
             body.append("\\midrule")
     body += ["\\bottomrule", "\\end{tabular}"]
@@ -496,8 +496,8 @@ def table_arms(sweep_path, budgets=(40, 60, 80, 100)):
                 reg_cells.append(f"{rv:.3f}" if rv is not None else "--")
                 clf_cells.append(f"{cv:.3f}" if cv is not None else "--")
         body.append(f"{label} & \\multicolumn{{4}}{{c}}{{}} \\\\")
-        body.append(f"\\quad forecast then threshold & " + " & ".join(reg_cells) + " \\\\")
-        body.append(f"\\quad direct classification & " + " & ".join(clf_cells) + " \\\\")
+        body.append("\\quad forecast then threshold & " + " & ".join(reg_cells) + " \\\\")
+        body.append("\\quad direct classification & " + " & ".join(clf_cells) + " \\\\")
     body += ["\\bottomrule", "\\end{tabular}"]
     write("arms.tex", "\n".join(body) + "\n")
 

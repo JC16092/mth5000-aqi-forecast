@@ -96,7 +96,7 @@ def main():
     first_row = log.iloc[0]
     print(f"\n  First refit (closest to the originally-reported single fit): "
           f"phi_1={first_row.phi_1:.4f}, theta_1={first_row.theta_1:.4f}")
-    print(f"  Report currently states: phi_1=0.581, theta_1=-0.987")
+    print("  Report currently states: phi_1=0.581, theta_1=-0.987")
 
 
 if __name__ == "__main__":

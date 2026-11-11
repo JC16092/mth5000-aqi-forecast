@@ -25,7 +25,6 @@ diagnostic, not a resubmission of the main result.
 import sys
 import time
 
-import numpy as np
 import pandas as pd
 
 try:

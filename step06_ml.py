@@ -394,7 +394,7 @@ def test_ml(verbose=True):
               f"h={h}: the delta target is not target minus the anchor")
     d.start(v.loc[:origin], None)
     fc.start(v.loc[:origin], None)
-    pl = fc.predict(HORIZONS, None)
+    fc.predict(HORIZONS, None)
     pd_ = d.predict(HORIZONS, None)
     check(all(np.isfinite(x) for x in pd_.values()),
           "the delta model produced no finite forecast")
@@ -407,7 +407,6 @@ def test_ml(verbose=True):
 
     # 5. End to end through the harness, including the corruption test that the
     #    harness itself applies to every model it is given.
-    from step05_rolling import test_rolling
     ext = idx.append(pd.date_range(idx[-1] + pd.Timedelta(days=1), periods=3, freq="D"))
     exog = fourier_terms(ext, K=2)
     v.name = "PM2.5"

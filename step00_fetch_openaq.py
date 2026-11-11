@@ -56,7 +56,7 @@ import os
 import sys
 import time
 import xml.etree.ElementTree as ET
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 API = "https://api.openaq.org/v3"
 ARCHIVE_HOST = "https://openaq-data-archive.s3.amazonaws.com"

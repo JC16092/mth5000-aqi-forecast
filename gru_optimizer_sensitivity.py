@@ -38,7 +38,7 @@ try:
     from step03_benchmarks import chronological_split, HORIZONS
     from step04_arima import fourier_terms
     from step05_rolling import Naive, rolling_origin
-    from step08_gru import build_channels, GRUForecaster, SEQ_LEN, make_sequences
+    from step08_gru import build_channels, GRUForecaster, SEQ_LEN
     import evaluation as ev
 except ImportError as e:
     sys.exit(f"Needs steps 1, 3, 4, 5, 8 and evaluation.py beside this script. {e}")

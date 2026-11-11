@@ -51,8 +51,7 @@ try:
     from step01_data_check import load_series, HAZARD_THRESHOLD
     from step03_benchmarks import HORIZONS
     from step04_arima import fourier_terms
-    from step05_rolling import Forecaster, Naive, Arima, Climatology, rolling_origin
-    from step06_ml import load_features
+    from step05_rolling import Forecaster, Naive, rolling_origin
     import evaluation as ev
 except ImportError as e:
     sys.exit(f"Needs steps 1 to 6 and evaluation.py beside this script. {e}")
@@ -323,7 +322,7 @@ def test_gru(verbose=True):
           "a weather channel row before the cut changed when WEATHER was corrupted")
 
     # The label cutoff must be the origin minus h.
-    g = GRUForecaster(s, ch, min_train=100, epochs=3)
+    GRUForecaster(s, ch, min_train=100, epochs=3)
     origin = idx[600]
     for h in HORIZONS:
         cutoff = origin - pd.Timedelta(days=h)

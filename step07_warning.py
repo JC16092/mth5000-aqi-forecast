@@ -50,7 +50,7 @@ try:
     from step01_data_check import load_series, HAZARD_THRESHOLD
     from step03_benchmarks import HORIZONS
     from step04_arima import fourier_terms
-    from step05_rolling import Naive, rolling_origin
+    from step05_rolling import rolling_origin
     from step06_ml import (SklearnForecaster, load_features, TunedRegressor,
                            _single_threaded)
     import evaluation as ev
